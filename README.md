@@ -173,9 +173,11 @@ console.log(await promptWithCalculator("What is 2 + 2?"));
 
 We'll likely explore more specific APIs for tool- and function-calling in the future; follow along in [issue #7](https://github.com/webmachinelearning/prompt-api/issues/7).
 
-### Configuration of per-session options
+### Configuration of per-session parameters
 
-In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable options are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). More information about the values for these parameters can be found using the `capabilities()` API explained [below](#capabilities-detection).
+In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default, minimum, and maximum values for these parameters.
+
+_However, see [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
 ```js
 const customSession = await ai.languageModel.create({
@@ -183,17 +185,19 @@ const customSession = await ai.languageModel.create({
   topK: 10
 });
 
-const capabilities = await ai.languageModel.capabilities();
+const params = await ai.languageModel.params();
 const slightlyHighTemperatureSession = await ai.languageModel.create({
   temperature: Math.max(
-    capabilities.defaultTemperature * 1.2,
-    capabilities.maxTemperature
+    params.defaultTemperature * 1.2,
+    params.maxTemperature
   ),
   topK: 10
 });
 
-// capabilities also contains defaultTopK and maxTopK.
+// params also contains defaultTopK and maxTopK.
 ```
+
+If the language model is not available at all in this browser, `params()` will fulfill with `null`.
 
 ### Session persistence and cloning
 
@@ -316,31 +320,57 @@ session.addEventListener("contextoverflow", () => {
 });
 ```
 
-### Capabilities detection
+### Multilingual content and expected languages
 
-In all our above examples, we call `ai.languageModel.create()` and assume it will always succeed.
+The default behavior for a language model session assumes that the input languages are unknown. In this case, implementations will use whatever "base" capabilities they have available for the language model, and might throw `"NotSupportedError"` `DOMException`s if they encounter languages they don't support.
 
-However, sometimes a language model needs to be downloaded before the API can be used. In such cases, immediately calling `create()` will start the download, which might take a long time. The capabilities API gives you insight into the download status of the model:
+It's better practice, if possible, to supply the `create()` method with information about the expected input languages. This allows the implementation to download any necessary supporting material, such as fine-tunings or safety-checking models, and to immediately reject the promise returned by `create()` if the web developer needs to use languages that the browser is not capable of supporting:
 
 ```js
-const capabilities = await ai.languageModel.capabilities();
-console.log(capabilities.available);
+const session = await ai.languageModel.create({
+  systemPrompt: `
+    You are a foreign-language tutor for Japanese. The user is Korean. If necessary, either you or
+    the user might "break character" and ask for or give clarification in Korean. But by default,
+    prefer speaking in Japanese, and return to the Japanese conversation once any sidebars are
+    concluded.
+  `,
+  expectedInputLanguages: ["en" /* for the system prompt */, "ja", "kr"]
+});
 ```
 
-The `capabilities.available` property is a string that can take one of three values:
+Note that there is no way of specifying output languages, since these are governed by the language model's own decisions. Similarly, the expected input languages do not affect the context or prompt the language model sees; they only impact the process of setting up the session and performing appropriate downloads.
 
-* `"no"`, indicating the device or browser does not support prompting a language model at all.
-* `"after-download"`, indicating the device or browser supports prompting a language model, but it needs to be downloaded before it can be used.
-* `"readily"`, indicating the device or browser supports prompting a language model and it’s ready to be used without any downloading steps.
+### Testing available options before creation
 
-In the `"after-download"` case, developers might want to have users confirm before you call `create()` to start the download, since doing so uses up significant bandwidth and users might not be willing to wait for a large download before using the site or feature.
+In the simple case, web developers should call `ai.languageModel.create()`, and handle failures gracefully.
 
-Note that regardless of the return value of `available`, `create()` might also fail, if either the download fails or the session creation fails.
+However, if the web developer wants to provide a differentiated user experience, which lets users know ahead of time that the feature will not be possible or might require a download, they can use the promise-returning `ai.languageModel.availability()` method. This method lets developers know, before calling `create()`, what is possible with the implementation.
 
-The capabilities API also contains other information about the model:
+The method will return a promise that fulfills with one of the following availability values:
 
-* `defaultTemperature`, `maxTemperature`, `defaultTopK`, and `maxTopK` properties giving information about the model's sampling parameters.
-* `languageAvailable(languageTag)`, which returns `"no"`, `"after-download"`, or `"readily"` to indicate whether the model supports conversing in a given human language.
+* "`no`" means that the implementation does not support the requested options, or does not support prompting a language model at all.
+* "`after-download`" means that the implementation supports the requested options, but it will have to download something (e.g. the language model itself, or a fine-tuning) before it can create a session using those options.
+* "`readily`" means that the implementation supports the requested options without requiring any new downloads.
+
+An example usage is the following:
+
+```js
+const options = { expectedInputLanguages: ["en", "es"], temperature: 2 };
+
+const supportsOurUseCase = await ai.languageModel.availability(options);
+
+if (supportsOurUseCase !== "no") {
+  if (supportsOurUseCase === "after-download") {
+    console.log("Sit tight, we need to do some downloading...");
+  }
+
+  const session = await ai.languageModel.create({ ...options, systemPrompt: "..." });
+  // ... Use session ...
+} else {
+  // Either the API overall, or the expected languages and temperature setting, is not available.
+  console.error("No language model for us :(");
+}
+```
 
 ### Download progress
 
@@ -403,7 +433,8 @@ enum AICapabilityAvailability { "readily", "after-download", "no" };
 [Exposed=(Window,Worker), SecureContext]
 interface AILanguageModelFactory {
   Promise<AILanguageModel> create(optional AILanguageModelCreateOptions options = {});
-  Promise<AILanguageModelCapabilities> capabilities();
+  Promise<AICapabilityAvailability> availability(optional AILanguageModelCreateCoreOptions options = {});
+  Promise<AILanguageModelInfo?> params();
 };
 
 [Exposed=(Window,Worker), SecureContext]
@@ -418,6 +449,7 @@ interface AILanguageModel : EventTarget {
 
   readonly attribute unsigned long topK;
   readonly attribute float temperature;
+  readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
 
   attribute EventHandler oncontextoverflow;
 
@@ -426,25 +458,25 @@ interface AILanguageModel : EventTarget {
 };
 
 [Exposed=(Window,Worker), SecureContext]
-interface AILanguageModelCapabilities {
-  readonly attribute AICapabilityAvailability available;
-  AICapabilityAvailability languageAvailable(DOMString languageTag);
-
-  // Always null if available === "no"
-  readonly attribute unsigned long? defaultTopK;
-  readonly attribute unsigned long? maxTopK;
-  readonly attribute float? defaultTemperature;
-  readonly attribute float? maxTemperature;
+interface AILanguageModelParams {
+  readonly attribute unsigned long defaultTopK;
+  readonly attribute unsigned long maxTopK;
+  readonly attribute float defaultTemperature;
+  readonly attribute float maxTemperature;
 };
 
-dictionary AILanguageModelCreateOptions {
+dictionary AILanguageModelCreateCoreOptions {
+  [EnforceRange] unsigned long topK;
+  float temperature;
+  sequence<DOMString> expectedInputLanguages;
+}
+
+dictionary AILanguageModelCreateOptions : AILanguageModelCreateCoreOptions {
   AbortSignal signal;
   AICreateMonitorCallback monitor;
 
   DOMString systemPrompt;
   sequence<AILanguageModelInitialPrompt> initialPrompts;
-  [EnforceRange] unsigned long topK;
-  float temperature;
 };
 
 dictionary AILanguageModelInitialPrompt {
@@ -489,7 +521,7 @@ To ensure the API can be used by web developers across multiple implementations,
 To actually get a response back from the model given a prompt, the following possible stages are involved:
 
 1. Download the model, if necessary.
-2. Establish a session, including configuring [per-session options](#configuration-of-per-session-options).
+2. Establish a session, including configuring per-session options and parameters.
 3. Add an initial prompt to establish context. (This will not generate a response.)
 4. Execute a prompt and receive a response.
 
