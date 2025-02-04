@@ -200,6 +200,7 @@ Error-handling behavior:
 * If values above `maxTemperature` are passed for `temperature`, then `create()` will clamp to `maxTemperature`. (`+Infinity` is specifically allowed, as a way of requesting maximum temperature.)
 * If values below 1 are passed for `topK`, then `create()` will return a promise rejected with a `RangeError`.
 * If values above `maxTopK` are passed for `topK`, then `create()` will clamp to `maxTopK`. (This includes `+Infinity` and numbers above `Number.MAX_SAFE_INTEGER`.)
+* If fractional values are passed for `topK`, they are rounded down (using the usual [IntegerPart](https://webidl.spec.whatwg.org/#abstract-opdef-integerpart) algorithm for web specs).
 
 ### Session persistence and cloning
 
