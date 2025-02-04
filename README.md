@@ -175,7 +175,7 @@ We'll likely explore more specific APIs for tool- and function-calling in the fu
 
 ### Configuration of per-session parameters
 
-In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default, minimum, and maximum values for these parameters.
+In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
 
 _However, see [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
@@ -186,18 +186,21 @@ const customSession = await ai.languageModel.create({
 });
 
 const params = await ai.languageModel.params();
-const slightlyHighTemperatureSession = await ai.languageModel.create({
-  temperature: Math.max(
-    params.defaultTemperature * 1.2,
-    params.maxTemperature
-  ),
-  topK: 10
+const conditionalSession = await ai.languageModel.create({
+  temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
+  topK: isGeneratingIdeas ? params.maxTopK : params.defaultTopK
 });
-
-// params also contains defaultTopK and maxTopK.
 ```
 
 If the language model is not available at all in this browser, `params()` will fulfill with `null`.
+
+Error-handling behavior:
+
+* If values below 0 are passed for `temperature`, then `create()` will return a promise rejected with a `RangeError`.
+* If values above `maxTemperature` are passed for `temperature`, then `create()` will clamp to `maxTemperature`. (`+Infinity` is specifically allowed, as a way of requesting maximum temperature.)
+* If values below 1 are passed for `topK`, then `create()` will return a promise rejected with a `RangeError`.
+* If values above `maxTopK` are passed for `topK`, then `create()` will clamp to `maxTopK`. (This includes `+Infinity` and numbers above `Number.MAX_SAFE_INTEGER`.)
+* If fractional values are passed for `topK`, they are rounded down (using the usual [IntegerPart](https://webidl.spec.whatwg.org/#abstract-opdef-integerpart) algorithm for web specs).
 
 ### Session persistence and cloning
 
@@ -472,8 +475,11 @@ interface AILanguageModelParams {
 };
 
 dictionary AILanguageModelCreateCoreOptions {
-  [EnforceRange] unsigned long topK;
-  float temperature;
+  // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
+  // They are unrestricted double so as to allow +Infinity without failing.
+  unrestricted double topK;
+  unrestricted double temperature;
+
   sequence<DOMString> expectedInputLanguages;
 }
 
