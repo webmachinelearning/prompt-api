@@ -351,19 +351,20 @@ However, if the web developer wants to provide a differentiated user experience,
 
 The method will return a promise that fulfills with one of the following availability values:
 
-* "`no`" means that the implementation does not support the requested options, or does not support prompting a language model at all.
-* "`after-download`" means that the implementation supports the requested options, but it will have to download something (e.g. the language model itself, or a fine-tuning) before it can create a session using those options.
-* "`readily`" means that the implementation supports the requested options without requiring any new downloads.
+* "`unavailable`" means that the implementation does not support the requested options, or does not support prompting a language model at all.
+* "`downloadable`" means that the implementation supports the requested options, but it will have to download something (e.g. the language model itself, or a fine-tuning) before it can create a session using those options.
+* "`downloading`" means that the implementation supports the requested options, but will need to finish an ongoing download operation before it can create a session using those options.
+* "`available`" means that the implementation supports the requested options without requiring any new downloads.
 
 An example usage is the following:
 
 ```js
 const options = { expectedInputLanguages: ["en", "es"], temperature: 2 };
 
-const supportsOurUseCase = await ai.languageModel.availability(options);
+const availability = await ai.languageModel.availability(options);
 
-if (supportsOurUseCase !== "no") {
-  if (supportsOurUseCase === "after-download") {
+if (availability !== "unavailable") {
+  if (availability !== "available") {
     console.log("Sit tight, we need to do some downloading...");
   }
 
@@ -433,7 +434,7 @@ interface AICreateMonitor : EventTarget {
 
 callback AICreateMonitorCallback = undefined (AICreateMonitor monitor);
 
-enum AICapabilityAvailability { "readily", "after-download", "no" };
+enum AICapabilityAvailability { "unavailable", "downloadable", "downloading", "available" };
 ```
 
 ```webidl
