@@ -181,16 +181,16 @@ To help with programmatic processing of language model responses, the prompt API
 const session = await ai.languageModel.create();
 
 const responseJSONSchemaObj = new AILanguageModelResponseSchema({
-  "type" : "object",
-  "required" : ["Rating"],
-  "additionalProperties" : false,
-  "properties" : {
-    "Rating": {
-      "type": "number"
-      "minimum": 0,
-      "maximum": 5
-    }
-  }
+  type: "object",
+  required: ["Rating"],
+  additionalProperties: false,
+  properties: {
+    Rating: {
+      type: "number",
+      minimum: 0,
+      maximum: 5,
+    },
+  },
 });
 
 // Prompt the model and wait for the json response to come back.
