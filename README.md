@@ -434,7 +434,7 @@ interface AICreateMonitor : EventTarget {
 
 callback AICreateMonitorCallback = undefined (AICreateMonitor monitor);
 
-enum AICapabilityAvailability { "unavailable", "downloadable", "downloading", "available" };
+enum AIAvailability { "unavailable", "downloadable", "downloading", "available" };
 ```
 
 ```webidl
@@ -443,7 +443,7 @@ enum AICapabilityAvailability { "unavailable", "downloadable", "downloading", "a
 [Exposed=(Window,Worker), SecureContext]
 interface AILanguageModelFactory {
   Promise<AILanguageModel> create(optional AILanguageModelCreateOptions options = {});
-  Promise<AICapabilityAvailability> availability(optional AILanguageModelCreateCoreOptions options = {});
+  Promise<AIAvailability> availability(optional AILanguageModelCreateCoreOptions options = {});
   Promise<AILanguageModelParams?> params();
 };
 
