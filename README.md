@@ -203,7 +203,7 @@ console.log(result);
 
 The `responseJSONSchema` option for `prompt()` and `promptStreaming()` can also accept a JSON schema directly as a JavaScript object. This is particularly useful for cases where the schema is not reused for other prompts.
 
-While processing the JSON schema, in cases where the user agent detects unsupported schema a `"NotSupportedError"` `DOMException`, will be raised with appropriate error message. The result value returned is a string, that can be parsed with `JSON.parse()`. If the user agent detects the prompt response as not being complaint with the schema an `"AbortError"` `DOMException` will be raised.
+While processing the JSON schema, in cases where the user agent detects unsupported schema a `"NotSupportedError"` `DOMException`, will be raised with appropriate error message. The result value returned is a string, that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
 
 ### Configuration of per-session parameters
 
