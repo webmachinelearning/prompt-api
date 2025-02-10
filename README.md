@@ -173,6 +173,38 @@ console.log(await promptWithCalculator("What is 2 + 2?"));
 
 We'll likely explore more specific APIs for tool- and function-calling in the future; follow along in [issue #7](https://github.com/webmachinelearning/prompt-api/issues/7).
 
+### Structured output or JSON output
+
+To help with programmatic processing of language model responses, the prompt API supports structured outputs defined by a JSON schema.
+
+```js
+const session = await ai.languageModel.create();
+
+const responseJSONSchemaObj = new AILanguageModelResponseSchema({
+  type: "object",
+  required: ["Rating"],
+  additionalProperties: false,
+  properties: {
+    Rating: {
+      type: "number",
+      minimum: 0,
+      maximum: 5,
+    },
+  },
+});
+
+// Prompt the model and wait for the json response to come back.
+const result = await session.prompt("Summarize this feedback into a rating between 0-5: "+
+  "The food was delicious, service was excellent, will recommend.",
+  {responseJSONSchema : responseJSONSchemaObj}
+);
+console.log(result);
+```
+
+The `responseJSONSchema` option for `prompt()` and `promptStreaming()` can also accept a JSON schema directly as a JavaScript object. This is particularly useful for cases where the schema is not reused for other prompts.
+
+While processing the JSON schema, in cases where the user agent detects unsupported schema a `"NotSupportedError"` `DOMException`, will be raised with appropriate error message. The result value returned is a string, that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
+
 ### Configuration of per-session parameters
 
 In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
@@ -475,6 +507,11 @@ interface AILanguageModelParams {
   readonly attribute float maxTemperature;
 };
 
+[Exposed=(Window,Worker)]
+interface AILanguageModelResponseSchema {
+  constructor(object responseJSONSchemaObject);
+}
+
 dictionary AILanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
@@ -503,6 +540,7 @@ dictionary AILanguageModelPrompt {
 };
 
 dictionary AILanguageModelPromptOptions {
+  object responseJSONSchema;
   AbortSignal signal;
 };
 
