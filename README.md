@@ -175,7 +175,7 @@ We'll likely explore more specific APIs for tool- and function-calling in the fu
 
 ### Multimodal inputs
 
-All of the above examples have been of text prompts. Some language models also support other inputs. Our design initially includes the potential to support images and audio clips as inputs. This is done by using objects in the form `{ type: "image", data }` and `{ type: "audio", data }` instead of strings. The `data` values can be the following:
+All of the above examples have been of text prompts. Some language models also support other inputs. Our design initially includes the potential to support images and audio clips as inputs. This is done by using objects in the form `{ type: "image", content }` and `{ type: "audio", content }` instead of strings. The `content` values can be the following:
 
 * For image inputs: [`ImageBitmapSource`](https://html.spec.whatwg.org/#imagebitmapsource), i.e. `Blob`, `ImageData`, `ImageBitmap`, `VideoFrame`, `OffscreenCanvas`, `HTMLImageElement`, `SVGImageElement`, `HTMLCanvasElement`, or `HTMLVideoElement` (will get the current frame). Also raw bytes via `BufferSource` (i.e. `ArrayBuffer` or typed arrays).
 
@@ -195,8 +195,8 @@ const userDrawnImage = document.querySelector("canvas");
 
 const response1 = await session.prompt([
   "Give a helpful artistic critique of how well the second image matches the first:",
-  { type: "image", data: referenceImage },
-  { type: "image", data: userDrawnImage }
+  { type: "image", content: referenceImage },
+  { type: "image", content: userDrawnImage }
 ]);
 
 console.log(response1);
@@ -205,7 +205,7 @@ const audioBlob = await captureMicrophoneInput({ seconds: 10 });
 
 const response2 = await session.prompt([
   "My response to your critique:",
-  { type: "audio", data: audioBlob }
+  { type: "audio", content: audioBlob }
 ]);
 ```
 
@@ -225,11 +225,11 @@ Details:
 
 * Similarly for `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
 
-* Text prompts can also be done via `{ type: "text", data: aString }`, instead of just `aString`. This can be useful for generic code.
+* Text prompts can also be done via `{ type: "text", content: aString }`, instead of just `aString`. This can be useful for generic code.
 
-* Attempting to supply an invalid combination, e.g. `{ type: "audio", data: anImageBitmap }`, `{ type: "image", data: anAudioBuffer }`, or `{ type: "text", data: anArrayBuffer }`, will reject with a `TypeError`.
+* Attempting to supply an invalid combination, e.g. `{ type: "audio", content: anImageBitmap }`, `{ type: "image", content: anAudioBuffer }`, or `{ type: "text", content: anArrayBuffer }`, will reject with a `TypeError`.
 
-* Attempting to give an image or audio prompt with the `"assistant"` role will currently reject with a `"NotSupportedError"` `DOMException`. (Although as we explore multimodal outputs, this restriction might be lifted in the future.)
+* As described [above](#customizing-the-role-per-prompt), you can also supply a `role` value in these objects, so that the full form is `{ role, type, content }`. However, for now, using any role besides the default `"user"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
 
 ### Structured output or JSON output
 
@@ -543,10 +543,20 @@ interface AILanguageModelFactory {
 
 [Exposed=(Window,Worker), SecureContext]
 interface AILanguageModel : EventTarget {
-  Promise<DOMString> prompt(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
-  ReadableStream promptStreaming(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
+  // These will throw "NotSupportedError" DOMExceptions if role = "system"
+  Promise<DOMString> prompt(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
+  ReadableStream promptStreaming(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
 
-  Promise<unsigned long long> countPromptTokens(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
+  Promise<unsigned long long> countPromptTokens(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
   readonly attribute unsigned long long maxTokens;
   readonly attribute unsigned long long tokensSoFar;
   readonly attribute unsigned long long tokensLeft;
@@ -590,7 +600,7 @@ dictionary AILanguageModelCreateOptions : AILanguageModelCreateCoreOptions {
   AICreateMonitorCallback monitor;
 
   DOMString systemPrompt;
-  sequence<AILanguageModelInitialPromptLine> initialPrompts;
+  sequence<AILanguageModelPrompt> initialPrompts;
 };
 
 dictionary AILanguageModelPromptOptions {
@@ -604,50 +614,32 @@ dictionary AILanguageModelCloneOptions {
 
 // The argument to the prompt() method and others like it
 
-typedef (AILanguageModelPromptLine or sequence<AILanguageModelPromptLine>) AILanguageModelPromptInput;
-
-// Initial prompt lines
-
-dictionary AILanguageModelInitialPromptLineDict {
-  required AILanguageModelInitialPromptRole role;
-  required AILanguageModelPromptContent content;
-};
-
-typedef (
-  DOMString                                 // interpreted as { role: "user", content: { type: "text", data: providedValue } }
-  or AILanguageModelPromptContent           // interpreted as { role: "user", content: providedValue }
-  or AILanguageModelInitialPromptLineDict   // canonical form
-) AILanguageModelInitialPromptLine;
+typedef (AILanguageModelPrompt or sequence<AILanguageModelPrompt>) AILanguageModelPromptInput;
 
 // Prompt lines
 
-dictionary AILanguageModelPromptLineDict {
-  required AILanguageModelPromptRole role;
+typedef (
+  DOMString                     // interpreted as { role: "user", type: "text", content: providedValue }
+  or AILanguageModelPromptDict  // canonical form
+) AILanguageModelPrompt;
+
+dictionary AILanguageModelPromptDict {
+  AILanguageModelPromptRole role = "user";
+  AILanguageModelPromptType type = "text";
   required AILanguageModelPromptContent content;
 };
 
-typedef (
-  DOMString                                 // interpreted as { role: "user", content: { type: "text", data: providedValue } }
-  or AILanguageModelPromptContent           // interpreted as { role: "user", content: providedValue }
-  or AILanguageModelPromptLineDict          // canonical form
-) AILanguageModelPromptLine;
+enum AILanguageModelPromptRole { "system", "user", "assistant" };
 
-// Prompt content inside the lines
-
-dictionary AILanguageModelPromptContentDict {
-  required AILanguageModelPromptType type;
-  required AILanguageModelPromptData data;
-};
-
-typedef (DOMString or AILanguageModelPromptContentDict) AILanguageModelPromptContent;
-
-typedef (ImageBitmapSource or BufferSource or AudioBuffer or HTMLAudioElement or DOMString) AILanguageModelPromptData;
 enum AILanguageModelPromptType { "text", "image", "audio" };
 
-// Prompt roles inside the lines
-
-enum AILanguageModelInitialPromptRole { "system", "user", "assistant" };
-enum AILanguageModelPromptRole { "user", "assistant" };
+typedef (
+  ImageBitmapSource
+  or AudioBuffer
+  or HTMLAudioElement
+  or BufferSource
+  or DOMString
+) AILanguageModelPromptContent;
 ```
 
 ### Instruction-tuned versus base models
