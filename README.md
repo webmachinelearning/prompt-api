@@ -231,9 +231,41 @@ Details:
 
 * Attempting to give an image or audio prompt with the `"assistant"` role will currently reject with a `"NotSupportedError"` `DOMException`. (Although as we explore multimodal outputs, this restriction might be lifted in the future.)
 
+### Structured output or JSON output
+
+To help with programmatic processing of language model responses, the prompt API supports structured outputs defined by a JSON schema.
+
+```js
+const session = await ai.languageModel.create();
+
+const responseJSONSchemaObj = new AILanguageModelResponseSchema({
+  type: "object",
+  required: ["Rating"],
+  additionalProperties: false,
+  properties: {
+    Rating: {
+      type: "number",
+      minimum: 0,
+      maximum: 5,
+    },
+  },
+});
+
+// Prompt the model and wait for the json response to come back.
+const result = await session.prompt("Summarize this feedback into a rating between 0-5: "+
+  "The food was delicious, service was excellent, will recommend.",
+  {responseJSONSchema : responseJSONSchemaObj}
+);
+console.log(result);
+```
+
+The `responseJSONSchema` option for `prompt()` and `promptStreaming()` can also accept a JSON schema directly as a JavaScript object. This is particularly useful for cases where the schema is not reused for other prompts.
+
+While processing the JSON schema, in cases where the user agent detects unsupported schema a `"NotSupportedError"` `DOMException`, will be raised with appropriate error message. The result value returned is a string, that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
+
 ### Configuration of per-session parameters
 
-In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default, minimum, and maximum values for these parameters.
+In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
 
 _However, see [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
@@ -244,18 +276,21 @@ const customSession = await ai.languageModel.create({
 });
 
 const params = await ai.languageModel.params();
-const slightlyHighTemperatureSession = await ai.languageModel.create({
-  temperature: Math.max(
-    params.defaultTemperature * 1.2,
-    params.maxTemperature
-  ),
-  topK: 10
+const conditionalSession = await ai.languageModel.create({
+  temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
+  topK: isGeneratingIdeas ? params.maxTopK : params.defaultTopK
 });
-
-// params also contains defaultTopK and maxTopK.
 ```
 
 If the language model is not available at all in this browser, `params()` will fulfill with `null`.
+
+Error-handling behavior:
+
+* If values below 0 are passed for `temperature`, then `create()` will return a promise rejected with a `RangeError`.
+* If values above `maxTemperature` are passed for `temperature`, then `create()` will clamp to `maxTemperature`. (`+Infinity` is specifically allowed, as a way of requesting maximum temperature.)
+* If values below 1 are passed for `topK`, then `create()` will return a promise rejected with a `RangeError`.
+* If values above `maxTopK` are passed for `topK`, then `create()` will clamp to `maxTopK`. (This includes `+Infinity` and numbers above `Number.MAX_SAFE_INTEGER`.)
+* If fractional values are passed for `topK`, they are rounded down (using the usual [IntegerPart](https://webidl.spec.whatwg.org/#abstract-opdef-integerpart) algorithm for web specs).
 
 ### Session persistence and cloning
 
@@ -392,7 +427,7 @@ const session = await ai.languageModel.create({
     prefer speaking in Japanese, and return to the Japanese conversation once any sidebars are
     concluded.
   `,
-  expectedInputLanguages: ["en" /* for the system prompt */, "ja", "kr"]
+  expectedInputLanguages: ["en" /* for the system prompt */, "ja", "ko"]
 });
 ```
 
@@ -406,9 +441,10 @@ However, if the web developer wants to provide a differentiated user experience,
 
 The method will return a promise that fulfills with one of the following availability values:
 
-* "`no`" means that the implementation does not support the requested options, or does not support prompting a language model at all.
-* "`after-download`" means that the implementation supports the requested options, but it will have to download something (e.g. the language model itself, or a fine-tuning) before it can create a session using those options.
-* "`readily`" means that the implementation supports the requested options without requiring any new downloads.
+* "`unavailable`" means that the implementation does not support the requested options, or does not support prompting a language model at all.
+* "`downloadable`" means that the implementation supports the requested options, but it will have to download something (e.g. the language model itself, or a fine-tuning) before it can create a session using those options.
+* "`downloading`" means that the implementation supports the requested options, but will need to finish an ongoing download operation before it can create a session using those options.
+* "`available`" means that the implementation supports the requested options without requiring any new downloads.
 
 An example usage is the following:
 
@@ -419,10 +455,10 @@ const options = {
   temperature: 2
 };
 
-const supportsOurUseCase = await ai.languageModel.availability(options);
+const availability = await ai.languageModel.availability(options);
 
-if (supportsOurUseCase !== "no") {
-  if (supportsOurUseCase === "after-download") {
+if (availability !== "unavailable") {
+  if (availability !== "available") {
     console.log("Sit tight, we need to do some downloading...");
   }
 
@@ -436,19 +472,25 @@ if (supportsOurUseCase !== "no") {
 
 ### Download progress
 
-In cases where the model needs to be downloaded as part of creation, you can monitor the download progress (e.g. in order to show your users a progress bar) using code such as the following:
+For cases where using the API is only possible after a download, you can monitor the download progress (e.g. in order to show your users a progress bar) using code such as the following:
 
 ```js
 const session = await ai.languageModel.create({
   monitor(m) {
     m.addEventListener("downloadprogress", e => {
-      console.log(`Downloaded ${e.loaded} of ${e.total} bytes.`);
+      console.log(`Downloaded ${e.loaded * 100}%`);
     });
   }
 });
 ```
 
 If the download fails, then `downloadprogress` events will stop being emitted, and the promise returned by `create()` will be rejected with a "`NetworkError`" `DOMException`.
+
+Note that in the case that multiple entities are downloaded (e.g., a base model plus a [LoRA fine-tuning](https://arxiv.org/abs/2106.09685) for the `expectedInputLanguages`) web developers do not get the ability to monitor the individual downloads. All of them are bundled into the overall `downloadprogress` events, and the `create()` promise is not fulfilled until all downloads and loads are successful.
+
+The event is a [`ProgressEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ProgressEvent) whose `loaded` property is between 0 and 1, and whose `total` property is always 1. (The exact number of total or downloaded bytes are not exposed; see the discussion in [webmachinelearning/writing-assistance-apis issue #15](https://github.com/webmachinelearning/writing-assistance-apis/issues/15).)
+
+At least two events, with `e.loaded === 0` and `e.loaded === 1`, will always be fired. This is true even if creating the model doesn't require any downloading.
 
 <details>
 <summary>What's up with this pattern?</summary>
@@ -486,7 +528,7 @@ interface AICreateMonitor : EventTarget {
 
 callback AICreateMonitorCallback = undefined (AICreateMonitor monitor);
 
-enum AICapabilityAvailability { "readily", "after-download", "no" };
+enum AIAvailability { "unavailable", "downloadable", "downloading", "available" };
 ```
 
 ```webidl
@@ -495,8 +537,8 @@ enum AICapabilityAvailability { "readily", "after-download", "no" };
 [Exposed=(Window,Worker), SecureContext]
 interface AILanguageModelFactory {
   Promise<AILanguageModel> create(optional AILanguageModelCreateOptions options = {});
-  Promise<AICapabilityAvailability> availability(optional AILanguageModelCreateCoreOptions options = {});
-  Promise<AILanguageModelInfo?> params();
+  Promise<AIAvailability> availability(optional AILanguageModelCreateCoreOptions options = {});
+  Promise<AILanguageModelParams?> params();
 };
 
 [Exposed=(Window,Worker), SecureContext]
@@ -528,9 +570,17 @@ interface AILanguageModelParams {
   readonly attribute float maxTemperature;
 };
 
+[Exposed=(Window,Worker)]
+interface AILanguageModelResponseSchema {
+  constructor(object responseJSONSchemaObject);
+}
+
 dictionary AILanguageModelCreateCoreOptions {
-  [EnforceRange] unsigned long topK;
-  float temperature;
+  // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
+  // They are unrestricted double so as to allow +Infinity without failing.
+  unrestricted double topK;
+  unrestricted double temperature;
+
   sequence<DOMString> expectedInputLanguages;
   sequence<AILanguageModelPromptType> expectedInputTypes;
 };
@@ -544,6 +594,7 @@ dictionary AILanguageModelCreateOptions : AILanguageModelCreateCoreOptions {
 };
 
 dictionary AILanguageModelPromptOptions {
+  object responseJSONSchema;
   AbortSignal signal;
 };
 
