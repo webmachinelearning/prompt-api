@@ -181,13 +181,18 @@ All of the above examples have been of text prompts. Some language models also s
 
 * For audio inputs: for now, `Blob`, `AudioBuffer`, `HTMLAudioElement`. Also raw bytes via `BufferSource`. Other possibilities we're investigating include `AudioData` and `MediaStream`, but we're not yet sure if those are suitable to represent "clips".
 
-Sessions that will include these inputs need to be created using the `expectedInputTypes` option, to ensure that any necessary downloads are done as part of session creation, and that if the model is not capable of such multimodal prompts, the session creation fails.
+Sessions that will include these inputs need to be created using the `expectedInputs` option, to ensure that any necessary downloads are done as part of session creation, and that if the model is not capable of such multimodal prompts, the session creation fails. (See also the below discussion of [expected input languages](#multilingual-content-and-expected-languages), not just expected input types.)
 
 A sample of using these APIs:
 
 ```js
 const session = await ai.languageModel.create({
-  expectedInputTypes: ["audio", "image"] // "text" is always expected
+  // { type: "text" } is not necessary to include explicitly, unless
+  // you also want to include expected input languages for text.
+  expectedInputs: [
+    { type: "audio" },
+    { type: "image" }
+  ]
 });
 
 const referenceImage = await (await fetch("/reference-image.jpeg")).blob();
@@ -427,7 +432,30 @@ const session = await ai.languageModel.create({
     prefer speaking in Japanese, and return to the Japanese conversation once any sidebars are
     concluded.
   `,
-  expectedInputLanguages: ["en" /* for the system prompt */, "ja", "ko"]
+  expectedInputs: [{
+    type: "text",
+    languages: ["en" /* for the system prompt */, "ja", "ko"]
+  }]
+});
+```
+
+The expected input languages are supplied alongside the [expected input types](#multimodal-inputs), and can vary per type. Our above example assumes the default of `type: "text"`, but more complicated combinations are possible, e.g.:
+
+```js
+const session = await ai.languageModel.create({
+  expectedInputs: [
+    // Be sure to download any material necessary for English and Japanese text
+    // prompts, or fail-fast if the model cannot support that.
+    { type: "text", languages: ["en", "ja"] },
+
+    // `languages` omitted: audio input processing will be best-effort based on
+    // the base model's capability.
+    { type: "audio" },
+
+    // Be sure to download any material necessary for OCRing French text in
+    // images, or fail-fast if the model cannot support that.
+    { type: "image", languages: ["fr"] }
+  ]
 });
 ```
 
@@ -450,8 +478,10 @@ An example usage is the following:
 
 ```js
 const options = {
-  expectedInputLanguages: ["en", "es"],
-  expectedInputTypes: ["audio"],
+  expectedInputs: [
+    { type: "text", languages: ["en", "es"] },
+    { type: "audio", languages: ["en", "es"] }
+  ],
   temperature: 2
 };
 
@@ -486,7 +516,7 @@ const session = await ai.languageModel.create({
 
 If the download fails, then `downloadprogress` events will stop being emitted, and the promise returned by `create()` will be rejected with a "`NetworkError`" `DOMException`.
 
-Note that in the case that multiple entities are downloaded (e.g., a base model plus a [LoRA fine-tuning](https://arxiv.org/abs/2106.09685) for the `expectedInputLanguages`) web developers do not get the ability to monitor the individual downloads. All of them are bundled into the overall `downloadprogress` events, and the `create()` promise is not fulfilled until all downloads and loads are successful.
+Note that in the case that multiple entities are downloaded (e.g., a base model plus [LoRA fine-tunings](https://arxiv.org/abs/2106.09685) for the `expectedInputs`) web developers do not get the ability to monitor the individual downloads. All of them are bundled into the overall `downloadprogress` events, and the `create()` promise is not fulfilled until all downloads and loads are successful.
 
 The event is a [`ProgressEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ProgressEvent) whose `loaded` property is between 0 and 1, and whose `total` property is always 1. (The exact number of total or downloaded bytes are not exposed; see the discussion in [webmachinelearning/writing-assistance-apis issue #15](https://github.com/webmachinelearning/writing-assistance-apis/issues/15).)
 
@@ -563,8 +593,6 @@ interface AILanguageModel : EventTarget {
 
   readonly attribute unsigned long topK;
   readonly attribute float temperature;
-  readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
-  readonly attribute FrozenArray<AILanguageModelPromptType> expectedInputTypes; // always contains at least "text"
 
   attribute EventHandler oncontextoverflow;
 
@@ -591,8 +619,7 @@ dictionary AILanguageModelCreateCoreOptions {
   unrestricted double topK;
   unrestricted double temperature;
 
-  sequence<DOMString> expectedInputLanguages;
-  sequence<AILanguageModelPromptType> expectedInputTypes;
+  sequence<AILanguageModelExpectedInput> expectedInputs;
 };
 
 dictionary AILanguageModelCreateOptions : AILanguageModelCreateCoreOptions {
@@ -610,6 +637,11 @@ dictionary AILanguageModelPromptOptions {
 
 dictionary AILanguageModelCloneOptions {
   AbortSignal signal;
+};
+
+dictionary AILanguageModelExpectedInput {
+  required AILanguageModelPromptType type;
+  sequence<DOMString> languages;
 };
 
 // The argument to the prompt() method and others like it
