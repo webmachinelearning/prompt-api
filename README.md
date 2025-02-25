@@ -179,7 +179,7 @@ All of the above examples have been of text prompts. Some language models also s
 
 * For image inputs: [`ImageBitmapSource`](https://html.spec.whatwg.org/#imagebitmapsource), i.e. `Blob`, `ImageData`, `ImageBitmap`, `VideoFrame`, `OffscreenCanvas`, `HTMLImageElement`, `SVGImageElement`, `HTMLCanvasElement`, or `HTMLVideoElement` (will get the current frame). Also raw bytes via `BufferSource` (i.e. `ArrayBuffer` or typed arrays).
 
-* For audio inputs: for now, `Blob`, `AudioBuffer`, `HTMLAudioElement`. Also raw bytes via `BufferSource`. Other possibilities we're investigating include `AudioData` and `MediaStream`, but we're not yet sure if those are suitable to represent "clips".
+* For audio inputs: for now, `Blob`, `AudioBuffer`, or raw bytes via `BufferSource`. Other possibilities we're investigating include `HTMLAudioElement`, `AudioData`, and `MediaStream`, but we're not yet sure if those are suitable to represent "clips": most other uses of them on the web platform are able to handle streaming data.
 
 Sessions that will include these inputs need to be created using the `expectedInputs` option, to ensure that any necessary downloads are done as part of session creation, and that if the model is not capable of such multimodal prompts, the session creation fails. (See also the below discussion of [expected input languages](#multilingual-content-and-expected-languages), not just expected input types.)
 
@@ -218,17 +218,13 @@ Future extensions may include more ambitious multimodal inputs, such as video cl
 
 Details:
 
-* Cross-origin data that has not been exposed using the `Access-Control-Allow-Origin` header cannot be used with the prompt API, and will reject with a `"SecurityError"` `DOMException`. This applies to `HTMLImageElement`, `SVGImageElement`, `HTMLAudioElement`, `HTMLVideoElement`, `HTMLCanvasElement`, and `OffscreenCanvas`. Note that this is more strict than `createImageBitmap()`, which has a tainting mechanism which allows creating opaque image bitmaps from unexposed cross-origin resources. For the prompt API, such resources will just fail. This includes attempts to use cross-origin-tainted canvases.
+* Cross-origin data that has not been exposed using the `Access-Control-Allow-Origin` header cannot be used with the prompt API, and will reject with a `"SecurityError"` `DOMException`. This applies to `HTMLImageElement`, `SVGImageElement`, `HTMLVideoElement`, `HTMLCanvasElement`, and `OffscreenCanvas`. Note that this is more strict than `createImageBitmap()`, which has a tainting mechanism which allows creating opaque image bitmaps from unexposed cross-origin resources. For the prompt API, such resources will just fail. This includes attempts to use cross-origin-tainted canvases.
 
 * Raw-bytes cases (`Blob` and `BufferSource`) will apply the appropriate sniffing rules ([for images](https://mimesniff.spec.whatwg.org/#rules-for-sniffing-images-specifically), [for audio](https://mimesniff.spec.whatwg.org/#rules-for-sniffing-audio-and-video-specifically)) and reject with a `"NotSupportedError"` `DOMException` if the format is not supported. This behavior is similar to that of `createImageBitmap()`.
 
 * Animated images will be required to snapshot the first frame (like `createImageBitmap()`). In the future, animated image input may be supported via some separate opt-in, similar to video clip input. But we don't want interoperability problems from some implementations supporting animated images and some not, in the initial version.
 
-* `HTMLAudioElement` can also represent streaming audio data (e.g., when it is connected to a `MediaSource`). Such cases will reject with a `"NotSupportedError"` `DOMException` for now.
-
-* `HTMLAudioElement` might be connected to an audio source (e.g., a URL) that is not totally downloaded when the prompt API is called. In such cases, calling into the prompt API will force the download to complete.
-
-* Similarly for `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
+* For `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
 
 * Text prompts can also be done via `{ type: "text", content: aString }`, instead of just `aString`. This can be useful for generic code.
 
@@ -668,7 +664,6 @@ enum AILanguageModelPromptType { "text", "image", "audio" };
 typedef (
   ImageBitmapSource
   or AudioBuffer
-  or HTMLAudioElement
   or BufferSource
   or DOMString
 ) AILanguageModelPromptContent;
