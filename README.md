@@ -173,6 +173,65 @@ console.log(await promptWithCalculator("What is 2 + 2?"));
 
 We'll likely explore more specific APIs for tool- and function-calling in the future; follow along in [issue #7](https://github.com/webmachinelearning/prompt-api/issues/7).
 
+### Multimodal inputs
+
+All of the above examples have been of text prompts. Some language models also support other inputs. Our design initially includes the potential to support images and audio clips as inputs. This is done by using objects in the form `{ type: "image", content }` and `{ type: "audio", content }` instead of strings. The `content` values can be the following:
+
+* For image inputs: [`ImageBitmapSource`](https://html.spec.whatwg.org/#imagebitmapsource), i.e. `Blob`, `ImageData`, `ImageBitmap`, `VideoFrame`, `OffscreenCanvas`, `HTMLImageElement`, `SVGImageElement`, `HTMLCanvasElement`, or `HTMLVideoElement` (will get the current frame). Also raw bytes via `BufferSource` (i.e. `ArrayBuffer` or typed arrays).
+
+* For audio inputs: for now, `Blob`, `AudioBuffer`, or raw bytes via `BufferSource`. Other possibilities we're investigating include `HTMLAudioElement`, `AudioData`, and `MediaStream`, but we're not yet sure if those are suitable to represent "clips": most other uses of them on the web platform are able to handle streaming data.
+
+Sessions that will include these inputs need to be created using the `expectedInputs` option, to ensure that any necessary downloads are done as part of session creation, and that if the model is not capable of such multimodal prompts, the session creation fails. (See also the below discussion of [expected input languages](#multilingual-content-and-expected-languages), not just expected input types.)
+
+A sample of using these APIs:
+
+```js
+const session = await ai.languageModel.create({
+  // { type: "text" } is not necessary to include explicitly, unless
+  // you also want to include expected input languages for text.
+  expectedInputs: [
+    { type: "audio" },
+    { type: "image" }
+  ]
+});
+
+const referenceImage = await (await fetch("/reference-image.jpeg")).blob();
+const userDrawnImage = document.querySelector("canvas");
+
+const response1 = await session.prompt([
+  "Give a helpful artistic critique of how well the second image matches the first:",
+  { type: "image", content: referenceImage },
+  { type: "image", content: userDrawnImage }
+]);
+
+console.log(response1);
+
+const audioBlob = await captureMicrophoneInput({ seconds: 10 });
+
+const response2 = await session.prompt([
+  "My response to your critique:",
+  { type: "audio", content: audioBlob }
+]);
+```
+
+Future extensions may include more ambitious multimodal inputs, such as video clips, or realtime audio or video. (Realtime might require a different API design, more based around events or streams instead of messages.)
+
+Details:
+
+* Cross-origin data that has not been exposed using the `Access-Control-Allow-Origin` header cannot be used with the prompt API, and will reject with a `"SecurityError"` `DOMException`. This applies to `HTMLImageElement`, `SVGImageElement`, `HTMLVideoElement`, `HTMLCanvasElement`, and `OffscreenCanvas`. Note that this is more strict than `createImageBitmap()`, which has a tainting mechanism which allows creating opaque image bitmaps from unexposed cross-origin resources. For the prompt API, such resources will just fail. This includes attempts to use cross-origin-tainted canvases.
+
+* Raw-bytes cases (`Blob` and `BufferSource`) will apply the appropriate sniffing rules ([for images](https://mimesniff.spec.whatwg.org/#rules-for-sniffing-images-specifically), [for audio](https://mimesniff.spec.whatwg.org/#rules-for-sniffing-audio-and-video-specifically)) and reject with a `"NotSupportedError"` `DOMException` if the format is not supported. This behavior is similar to that of `createImageBitmap()`.
+
+* Animated images will be required to snapshot the first frame (like `createImageBitmap()`). In the future, animated image input may be supported via some separate opt-in, similar to video clip input. But we don't want interoperability problems from some implementations supporting animated images and some not, in the initial version.
+
+* For `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
+
+* Text prompts can also be done via `{ type: "text", content: aString }`, instead of just `aString`. This can be useful for generic code.
+
+* Attempting to supply an invalid combination, e.g. `{ type: "audio", content: anImageBitmap }`, `{ type: "image", content: anAudioBuffer }`, or `{ type: "text", content: anArrayBuffer }`, will reject with a `TypeError`.
+
+* As described [above](#customizing-the-role-per-prompt), you can also supply a `role` value in these objects, so that the full form is `{ role, type, content }`. However, for now, using any role besides the default `"user"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
+
 ### Structured output or JSON output
 
 To help with programmatic processing of language model responses, the prompt API supports structured outputs defined by a JSON schema.
@@ -369,7 +428,30 @@ const session = await ai.languageModel.create({
     prefer speaking in Japanese, and return to the Japanese conversation once any sidebars are
     concluded.
   `,
-  expectedInputLanguages: ["en" /* for the system prompt */, "ja", "ko"]
+  expectedInputs: [{
+    type: "text",
+    languages: ["en" /* for the system prompt */, "ja", "ko"]
+  }]
+});
+```
+
+The expected input languages are supplied alongside the [expected input types](#multimodal-inputs), and can vary per type. Our above example assumes the default of `type: "text"`, but more complicated combinations are possible, e.g.:
+
+```js
+const session = await ai.languageModel.create({
+  expectedInputs: [
+    // Be sure to download any material necessary for English and Japanese text
+    // prompts, or fail-fast if the model cannot support that.
+    { type: "text", languages: ["en", "ja"] },
+
+    // `languages` omitted: audio input processing will be best-effort based on
+    // the base model's capability.
+    { type: "audio" },
+
+    // Be sure to download any material necessary for OCRing French text in
+    // images, or fail-fast if the model cannot support that.
+    { type: "image", languages: ["fr"] }
+  ]
 });
 ```
 
@@ -391,7 +473,13 @@ The method will return a promise that fulfills with one of the following availab
 An example usage is the following:
 
 ```js
-const options = { expectedInputLanguages: ["en", "es"], temperature: 2 };
+const options = {
+  expectedInputs: [
+    { type: "text", languages: ["en", "es"] },
+    { type: "audio", languages: ["en", "es"] }
+  ],
+  temperature: 2
+};
 
 const availability = await ai.languageModel.availability(options);
 
@@ -424,7 +512,7 @@ const session = await ai.languageModel.create({
 
 If the download fails, then `downloadprogress` events will stop being emitted, and the promise returned by `create()` will be rejected with a "`NetworkError`" `DOMException`.
 
-Note that in the case that multiple entities are downloaded (e.g., a base model plus a [LoRA fine-tuning](https://arxiv.org/abs/2106.09685) for the `expectedInputLanguages`) web developers do not get the ability to monitor the individual downloads. All of them are bundled into the overall `downloadprogress` events, and the `create()` promise is not fulfilled until all downloads and loads are successful.
+Note that in the case that multiple entities are downloaded (e.g., a base model plus [LoRA fine-tunings](https://arxiv.org/abs/2106.09685) for the `expectedInputs`) web developers do not get the ability to monitor the individual downloads. All of them are bundled into the overall `downloadprogress` events, and the `create()` promise is not fulfilled until all downloads and loads are successful.
 
 The event is a [`ProgressEvent`](https://developer.mozilla.org/en-US/docs/Web/API/ProgressEvent) whose `loaded` property is between 0 and 1, and whose `total` property is always 1. (The exact number of total or downloaded bytes are not exposed; see the discussion in [webmachinelearning/writing-assistance-apis issue #15](https://github.com/webmachinelearning/writing-assistance-apis/issues/15).)
 
@@ -481,17 +569,26 @@ interface AILanguageModelFactory {
 
 [Exposed=(Window,Worker), SecureContext]
 interface AILanguageModel : EventTarget {
-  Promise<DOMString> prompt(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
-  ReadableStream promptStreaming(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
+  // These will throw "NotSupportedError" DOMExceptions if role = "system"
+  Promise<DOMString> prompt(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
+  ReadableStream promptStreaming(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
 
-  Promise<unsigned long long> countPromptTokens(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
+  Promise<unsigned long long> countPromptTokens(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
   readonly attribute unsigned long long maxTokens;
   readonly attribute unsigned long long tokensSoFar;
   readonly attribute unsigned long long tokensLeft;
 
   readonly attribute unsigned long topK;
   readonly attribute float temperature;
-  readonly attribute FrozenArray<DOMString>? expectedInputLanguages;
 
   attribute EventHandler oncontextoverflow;
 
@@ -518,25 +615,15 @@ dictionary AILanguageModelCreateCoreOptions {
   unrestricted double topK;
   unrestricted double temperature;
 
-  sequence<DOMString> expectedInputLanguages;
-}
+  sequence<AILanguageModelExpectedInput> expectedInputs;
+};
 
 dictionary AILanguageModelCreateOptions : AILanguageModelCreateCoreOptions {
   AbortSignal signal;
   AICreateMonitorCallback monitor;
 
   DOMString systemPrompt;
-  sequence<AILanguageModelInitialPrompt> initialPrompts;
-};
-
-dictionary AILanguageModelInitialPrompt {
-  required AILanguageModelInitialPromptRole role;
-  required DOMString content;
-};
-
-dictionary AILanguageModelPrompt {
-  required AILanguageModelPromptRole role;
-  required DOMString content;
+  sequence<AILanguageModelPrompt> initialPrompts;
 };
 
 dictionary AILanguageModelPromptOptions {
@@ -548,10 +635,38 @@ dictionary AILanguageModelCloneOptions {
   AbortSignal signal;
 };
 
-typedef (DOMString or AILanguageModelPrompt or sequence<AILanguageModelPrompt>) AILanguageModelPromptInput;
+dictionary AILanguageModelExpectedInput {
+  required AILanguageModelPromptType type;
+  sequence<DOMString> languages;
+};
 
-enum AILanguageModelInitialPromptRole { "system", "user", "assistant" };
-enum AILanguageModelPromptRole { "user", "assistant" };
+// The argument to the prompt() method and others like it
+
+typedef (AILanguageModelPrompt or sequence<AILanguageModelPrompt>) AILanguageModelPromptInput;
+
+// Prompt lines
+
+typedef (
+  DOMString                     // interpreted as { role: "user", type: "text", content: providedValue }
+  or AILanguageModelPromptDict  // canonical form
+) AILanguageModelPrompt;
+
+dictionary AILanguageModelPromptDict {
+  AILanguageModelPromptRole role = "user";
+  AILanguageModelPromptType type = "text";
+  required AILanguageModelPromptContent content;
+};
+
+enum AILanguageModelPromptRole { "system", "user", "assistant" };
+
+enum AILanguageModelPromptType { "text", "image", "audio" };
+
+typedef (
+  ImageBitmapSource
+  or AudioBuffer
+  or BufferSource
+  or DOMString
+) AILanguageModelPromptContent;
 ```
 
 ### Instruction-tuned versus base models
