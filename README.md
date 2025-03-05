@@ -81,7 +81,7 @@ console.log(await session.prompt("What is your favorite food?"));
 
 The system prompt is special, in that the language model will not respond to it, and it will be preserved even if the context window otherwise overflows due to too many calls to `prompt()`.
 
-If the system prompt is too large, then the promise will be rejected with a `TooManyTokens` exception. See [below](#tokenization-context-window-length-limits-and-overflow) for more details on token counting and this new exception type.
+If the system prompt is too large, then the promise will be rejected with a `QuotaExceededError` exception. See [below](#tokenization-context-window-length-limits-and-overflow) for more details on token counting and this new exception type.
 
 ### N-shot prompting
 
@@ -114,7 +114,7 @@ const result2 = await predictEmoji("This code is so good you should get promoted
 Some details on error cases:
 
 * Using both `systemPrompt` and a `{ role: "system" }` prompt in `initialPrompts`, or using multiple `{ role: "system" }` prompts, or placing the `{ role: "system" }` prompt anywhere besides at the 0th position in `initialPrompts`, will reject with a `TypeError`.
-* If the combined token length of all the initial prompts (including the separate `systemPrompt`, if provided) is too large, then the promise will be rejected with a [`TooManyTokens` exception](#tokenization-context-window-length-limits-and-overflow).
+* If the combined token length of all the initial prompts (including the separate `systemPrompt`, if provided) is too large, then the promise will be rejected with a [`QuotaExceededError` exception](#tokenization-context-window-length-limits-and-overflow).
 
 ### Customizing the role per prompt
 
@@ -389,35 +389,36 @@ Note that because sessions are stateful, and prompts can be queued, aborting a s
 A given language model session will have a maximum number of tokens it can process. Developers can check their current usage and progress toward that limit by using the following properties on the session object:
 
 ```js
-console.log(`${session.tokenCount} tokens used. ${session.tokensAvailable} tokens still left.`);
+console.log(`${session.inputUsage} tokens used, out of ${session.inputQuota} tokens available.`);
 ```
 
-To know how many tokens a string will consume, without actually processing it, developers can use the `countTokens()` method:
+To know how many tokens a string will consume, without actually processing it, developers can use the `measureInputUsage()` method:
 
 ```js
-const numTokens = await session.countTokens(promptString);
+const usage = await session.measureInputUsage(promptString);
 ```
 
 Some notes on this API:
 
 * We do not expose the actual tokenization to developers since that would make it too easy to depend on model-specific details.
 * Implementations must include in their count any control tokens that will be necessary to process the prompt, e.g. ones indicating the start or end of the input.
-* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.countTokens(promptString, { signal })`.
+* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureInputUsage(promptString, { signal })`.
+* We use the phrases "input usage" and "input quota" in the API, to avoid being specific to the current language model tokenization paradigm. In the future, even if we change paradigms, we anticipate some concept of usage and quota still being applicable, even if it's just string length.
 
-It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.countTokens(promptString) > session.tokensAvailable` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed.
+It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureInputUsage(promptString) > session.inputQuota - session.inputUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed.
 
-Such overflows can be detected by listening for the `"overflow"` event on the session:
+Such overflows can be detected by listening for the `"quotaoverflow"` event on the session:
 
 ```js
-session.addEventListener("overflow", () => {
-  console.log("Context overflow!");
+session.addEventListener("quotaoverflow", () => {
+  console.log("We've gone past the quota, and some inputs will be dropped!");
 });
 ```
 
-If it's not possible to remove enough tokens from the conversation history to process the new prompt, then the `prompt()` or `promptStreaming()` call will fail with a `TooManyTokens` exception and nothing will be removed. A `TooManyTokens` exception is a new type of exception, which subclasses `DOMException`, and adds the following additional properties:
+If it's not possible to remove enough tokens from the conversation history to process the new prompt, then the `prompt()` or `promptStreaming()` call will fail with a `QuotaExceededError` exception and nothing will be removed. This is a proposed new type of exception, which subclasses `DOMException`, and replaces the web platform's existing `"QuotaExceededError"` `DOMException`. See [whatwg/webidl#1465](https://github.com/whatwg/webidl/pull/1465) for this proposal. For our purposes, the important part is that it has the following properties:
 
-* `tokenCount`: how many tokens the input consists of
-* `tokensAvailable`: how many tokens were available (which will be less than `tokenCount`, and equal to the value of `session.tokensAvailable` at the time of the call)
+* `requested`: how many tokens the input consists of
+* `quota`: how many tokens were available (which will be less than `requested`, and equal to the value of `session.inputQuota - session.inputUsage` at the time of the call)
 
 ### Multilingual content and expected languages
 
@@ -533,8 +534,6 @@ It is also nicely future-extensible by adding more events and properties to the 
 Finally, note that there is a sort of precedent in the (never-shipped) [`FetchObserver` design](https://github.com/whatwg/fetch/issues/447#issuecomment-281731850).
 </details>
 
-### Too-large inputs
-
 ## Detailed design
 
 ### Full API surface in Web IDL
@@ -570,14 +569,16 @@ interface AILanguageModel : EventTarget {
     optional AILanguageModelPromptOptions options = {}
   );
 
-  Promise<unsigned long long> countTokens(AILanguageModelPromptInput input, optional AILanguageModelPromptOptions options = {});
-  readonly attribute unsigned long long tokensAvailable;
-  readonly attribute unsigned long long tokenCount;
+  Promise<double> measureInputUsage(
+    AILanguageModelPromptInput input,
+    optional AILanguageModelPromptOptions options = {}
+  );
+  readonly attribute double inputUsage;
+  readonly attribute unrestricted double inputQuota;
+  attribute EventHandler onquotaoverflow;
 
   readonly attribute unsigned long topK;
   readonly attribute float temperature;
-
-  attribute EventHandler onoverflow;
 
   Promise<AILanguageModel> clone(optional AILanguageModelCloneOptions options = {});
   undefined destroy();
