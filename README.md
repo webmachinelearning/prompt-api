@@ -54,7 +54,7 @@ Both of these potential goals could pose challenges to interoperability, so we w
 In this example, a single string is used to prompt the API, which is assumed to come from the user. The returned response is from the language model.
 
 ```js
-const session = await ai.languageModel.create();
+const session = await LanguageModel.create();
 
 // Prompt the model and wait for the whole result to come back.
 const result = await session.prompt("Write me a poem.");
@@ -72,7 +72,7 @@ for await (const chunk of stream) {
 The language model can be configured with a special "system prompt" which gives it the context for future interactions:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   systemPrompt: "Pretend to be an eloquent hamster."
 });
 
@@ -88,7 +88,7 @@ If the system prompt is too large, then the promise will be rejected with a `Quo
 If developers want to provide examples of the user/assistant interaction, they can use the `initialPrompts` array. This aligns with the common "chat completions API" format of `{ role, content }` pairs, including a `"system"` role which can be used instead of the `systemPrompt` option shown above.
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   initialPrompts: [
     { role: "system", content: "Predict up to 5 emojis as a response to a comment. Output emojis, comma-separated." },
     { role: "user", content: "This is amazing!" },
@@ -121,7 +121,7 @@ Some details on error cases:
 Our examples so far have provided `prompt()` and `promptStreaming()` with a single string. Such cases assume messages will come from the user role. These methods can also take in objects in the `{ role, content }` format, or arrays of such objects, in case you want to provide multiple user or assistant messages before getting another assistant message:
 
 ```js
-const multiUserSession = await ai.languageModel.create({
+const multiUserSession = await LanguageModel.create({
   systemPrompt: "You are a mediator in a discussion between two departments."
 });
 
@@ -141,7 +141,7 @@ Because of their special behavior of being preserved on context window overflow,
 A special case of the above is using the assistant role to emulate tool use or function-calling, by marking a response as coming from the assistant side of the conversation:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   systemPrompt: `
     You are a helpful assistant. You have access to the following tools:
     - calculator: A calculator. To use it, write "CALCULATOR: <expression>" where <expression> is a valid mathematical expression.
@@ -186,7 +186,7 @@ Sessions that will include these inputs need to be created using the `expectedIn
 A sample of using these APIs:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   // { type: "text" } is not necessary to include explicitly, unless
   // you also want to include expected input languages for text.
   expectedInputs: [
@@ -237,9 +237,9 @@ Details:
 To help with programmatic processing of language model responses, the prompt API supports structured outputs defined by a JSON schema.
 
 ```js
-const session = await ai.languageModel.create();
+const session = await LanguageModel.create();
 
-const responseJSONSchemaObj = new AILanguageModelResponseSchema({
+const responseJSONSchemaObj = new LanguageModelResponseSchema({
   type: "object",
   required: ["Rating"],
   additionalProperties: false,
@@ -271,13 +271,13 @@ In addition to the `systemPrompt` and `initialPrompts` options shown above, the 
 _However, see [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
 ```js
-const customSession = await ai.languageModel.create({
+const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
 
-const params = await ai.languageModel.params();
-const conditionalSession = await ai.languageModel.create({
+const params = await LanguageModel.params();
+const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
   topK: isGeneratingIdeas ? params.maxTopK : params.defaultTopK
 });
@@ -298,7 +298,7 @@ Error-handling behavior:
 Each language model session consists of a persistent series of interactions with the model:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   systemPrompt: "You are a friendly, helpful assistant specialized in clothing choices."
 });
 
@@ -316,7 +316,7 @@ const result2 = await session.prompt(`
 Multiple unrelated continuations of the same prompt can be set up by creating a session and then cloning it:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   systemPrompt: "You are a friendly, helpful assistant specialized in clothing choices."
 });
 
@@ -338,7 +338,7 @@ A language model session can be destroyed, either by using an `AbortSignal` pass
 const controller = new AbortController();
 stopButton.onclick = () => controller.abort();
 
-const session = await ai.languageModel.create({ signal: controller.signal });
+const session = await LanguageModel.create({ signal: controller.signal });
 ```
 
 or by calling `destroy()` on the session:
@@ -427,7 +427,7 @@ The default behavior for a language model session assumes that the input languag
 It's better practice, if possible, to supply the `create()` method with information about the expected input languages. This allows the implementation to download any necessary supporting material, such as fine-tunings or safety-checking models, and to immediately reject the promise returned by `create()` if the web developer needs to use languages that the browser is not capable of supporting:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   systemPrompt: `
     You are a foreign-language tutor for Japanese. The user is Korean. If necessary, either you or
     the user might "break character" and ask for or give clarification in Korean. But by default,
@@ -444,7 +444,7 @@ const session = await ai.languageModel.create({
 The expected input languages are supplied alongside the [expected input types](#multimodal-inputs), and can vary per type. Our above example assumes the default of `type: "text"`, but more complicated combinations are possible, e.g.:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   expectedInputs: [
     // Be sure to download any material necessary for English and Japanese text
     // prompts, or fail-fast if the model cannot support that.
@@ -465,9 +465,9 @@ Note that there is no way of specifying output languages, since these are govern
 
 ### Testing available options before creation
 
-In the simple case, web developers should call `ai.languageModel.create()`, and handle failures gracefully.
+In the simple case, web developers should call `LanguageModel.create()`, and handle failures gracefully.
 
-However, if the web developer wants to provide a differentiated user experience, which lets users know ahead of time that the feature will not be possible or might require a download, they can use the promise-returning `ai.languageModel.availability()` method. This method lets developers know, before calling `create()`, what is possible with the implementation.
+However, if the web developer wants to provide a differentiated user experience, which lets users know ahead of time that the feature will not be possible or might require a download, they can use the promise-returning `LanguageModel.availability()` method. This method lets developers know, before calling `create()`, what is possible with the implementation.
 
 The method will return a promise that fulfills with one of the following availability values:
 
@@ -487,14 +487,14 @@ const options = {
   temperature: 2
 };
 
-const availability = await ai.languageModel.availability(options);
+const availability = await LanguageModel.availability(options);
 
 if (availability !== "unavailable") {
   if (availability !== "available") {
     console.log("Sit tight, we need to do some downloading...");
   }
 
-  const session = await ai.languageModel.create({ ...options, systemPrompt: "..." });
+  const session = await LanguageModel.create({ ...options, systemPrompt: "..." });
   // ... Use session ...
 } else {
   // Either the API overall, or the expected languages and temperature setting, is not available.
@@ -507,7 +507,7 @@ if (availability !== "unavailable") {
 For cases where using the API is only possible after a download, you can monitor the download progress (e.g. in order to show your users a progress bar) using code such as the following:
 
 ```js
-const session = await ai.languageModel.create({
+const session = await LanguageModel.create({
   monitor(m) {
     m.addEventListener("downloadprogress", e => {
       console.log(`Downloaded ${e.loaded * 100}%`);
@@ -539,39 +539,25 @@ Finally, note that there is a sort of precedent in the (never-shipped) [`FetchOb
 ### Full API surface in Web IDL
 
 ```webidl
-// Shared self.ai APIs:
-// See https://webmachinelearning.github.io/writing-assistance-apis/#shared-ai-api for most of them.
-
-partial interface AI {
-  readonly attribute AILanguageModelFactory languageModel;
-};
-```
-
-```webidl
-// Language Model
-
 [Exposed=(Window,Worker), SecureContext]
-interface AILanguageModelFactory {
-  Promise<AILanguageModel> create(optional AILanguageModelCreateOptions options = {});
-  Promise<AIAvailability> availability(optional AILanguageModelCreateCoreOptions options = {});
-  Promise<AILanguageModelParams?> params();
-};
+interface LanguageModel : EventTarget {
+  static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
+  static Promise<AIAvailability> availability(optional LanguageModelCreateCoreOptions options = {});
+  static Promise<LanguageModelParams?> params();
 
-[Exposed=(Window,Worker), SecureContext]
-interface AILanguageModel : EventTarget {
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
   Promise<DOMString> prompt(
-    AILanguageModelPromptInput input,
-    optional AILanguageModelPromptOptions options = {}
+    LanguageModelPromptInput input,
+    optional LanguageModelPromptOptions options = {}
   );
   ReadableStream promptStreaming(
-    AILanguageModelPromptInput input,
-    optional AILanguageModelPromptOptions options = {}
+    LanguageModelPromptInput input,
+    optional LanguageModelPromptOptions options = {}
   );
 
   Promise<double> measureInputUsage(
-    AILanguageModelPromptInput input,
-    optional AILanguageModelPromptOptions options = {}
+    LanguageModelPromptInput input,
+    optional LanguageModelPromptOptions options = {}
   );
   readonly attribute double inputUsage;
   readonly attribute unrestricted double inputQuota;
@@ -580,12 +566,12 @@ interface AILanguageModel : EventTarget {
   readonly attribute unsigned long topK;
   readonly attribute float temperature;
 
-  Promise<AILanguageModel> clone(optional AILanguageModelCloneOptions options = {});
+  Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
   undefined destroy();
 };
 
 [Exposed=(Window,Worker), SecureContext]
-interface AILanguageModelParams {
+interface LanguageModelParams {
   readonly attribute unsigned long defaultTopK;
   readonly attribute unsigned long maxTopK;
   readonly attribute float defaultTemperature;
@@ -593,68 +579,68 @@ interface AILanguageModelParams {
 };
 
 [Exposed=(Window,Worker)]
-interface AILanguageModelResponseSchema {
+interface LanguageModelResponseSchema {
   constructor(object responseJSONSchemaObject);
 }
 
-dictionary AILanguageModelCreateCoreOptions {
+dictionary LanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
   unrestricted double topK;
   unrestricted double temperature;
 
-  sequence<AILanguageModelExpectedInput> expectedInputs;
+  sequence<LanguageModelExpectedInput> expectedInputs;
 };
 
-dictionary AILanguageModelCreateOptions : AILanguageModelCreateCoreOptions {
+dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
   AbortSignal signal;
   AICreateMonitorCallback monitor;
 
   DOMString systemPrompt;
-  sequence<AILanguageModelPrompt> initialPrompts;
+  sequence<LanguageModelPrompt> initialPrompts;
 };
 
-dictionary AILanguageModelPromptOptions {
+dictionary LanguageModelPromptOptions {
   object responseJSONSchema;
   AbortSignal signal;
 };
 
-dictionary AILanguageModelCloneOptions {
+dictionary LanguageModelCloneOptions {
   AbortSignal signal;
 };
 
-dictionary AILanguageModelExpectedInput {
-  required AILanguageModelPromptType type;
+dictionary LanguageModelExpectedInput {
+  required LanguageModelPromptType type;
   sequence<DOMString> languages;
 };
 
 // The argument to the prompt() method and others like it
 
-typedef (AILanguageModelPrompt or sequence<AILanguageModelPrompt>) AILanguageModelPromptInput;
+typedef (LanguageModelPrompt or sequence<LanguageModelPrompt>) LanguageModelPromptInput;
 
 // Prompt lines
 
 typedef (
-  DOMString                     // interpreted as { role: "user", type: "text", content: providedValue }
-  or AILanguageModelPromptDict  // canonical form
-) AILanguageModelPrompt;
+  DOMString                   // interpreted as { role: "user", type: "text", content: providedValue }
+  or LanguageModelPromptDict  // canonical form
+) LanguageModelPrompt;
 
-dictionary AILanguageModelPromptDict {
-  AILanguageModelPromptRole role = "user";
-  AILanguageModelPromptType type = "text";
-  required AILanguageModelPromptContent content;
+dictionary LanguageModelPromptDict {
+  LanguageModelPromptRole role = "user";
+  LanguageModelPromptType type = "text";
+  required LanguageModelPromptContent content;
 };
 
-enum AILanguageModelPromptRole { "system", "user", "assistant" };
+enum LanguageModelPromptRole { "system", "user", "assistant" };
 
-enum AILanguageModelPromptType { "text", "image", "audio" };
+enum LanguageModelPromptType { "text", "image", "audio" };
 
 typedef (
   ImageBitmapSource
   or AudioBuffer
   or BufferSource
   or DOMString
-) AILanguageModelPromptContent;
+) LanguageModelPromptContent;
 ```
 
 ### Instruction-tuned versus base models
@@ -679,7 +665,7 @@ To actually get a response back from the model given a prompt, the following pos
 3. Add an initial prompt to establish context. (This will not generate a response.)
 4. Execute a prompt and receive a response.
 
-We've chosen to manifest these 3-4 stages into the API as two methods, `ai.languageModel.create()` and `session.prompt()`/`session.promptStreaming()`, with some additional facilities for dealing with the fact that `ai.languageModel.create()` can include a download step. Some APIs simplify this into a single method, and some split it up into three (usually not four).
+We've chosen to manifest these 3-4 stages into the API as two methods, `LanguageModel.create()` and `session.prompt()`/`session.promptStreaming()`, with some additional facilities for dealing with the fact that `LanguageModel.create()` can include a download step. Some APIs simplify this into a single method, and some split it up into three (usually not four).
 
 ### Stateless or session-based
 
