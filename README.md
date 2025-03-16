@@ -635,6 +635,8 @@ enum LanguageModelPromptRole { "system", "user", "assistant" };
 
 enum LanguageModelPromptType { "text", "image", "audio" };
 
+enum AIAvailability { "unavailable", "downloadable", "downloading", "available" };
+
 typedef (
   ImageBitmapSource
   or AudioBuffer
