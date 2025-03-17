@@ -542,7 +542,7 @@ Finally, note that there is a sort of precedent in the (never-shipped) [`FetchOb
 [Exposed=(Window,Worker), SecureContext]
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
-  static Promise<AIAvailability> availability(optional LanguageModelCreateCoreOptions options = {});
+  static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
   static Promise<LanguageModelParams?> params();
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
