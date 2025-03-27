@@ -232,6 +232,41 @@ Details:
 
 * As described [above](#customizing-the-role-per-prompt), you can also supply a `role` value in these objects, so that the full form is `{ role, type, content }`. However, for now, using any role besides the default `"user"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
 
+### Multiple modalities in a single message
+
+Consider a prompt such as `Here is an image: <<<image>>>. Please describe it.`. This is intended to be a single prompt from the user role. To express this, you can use an array for the `content` value:
+
+```js
+const response = await session.prompt({
+  type: "user",
+  content: [
+    "Here is an image: ",
+    { type: "image", content: imageBytes },
+    ". Please describe it."
+  ]
+});
+```
+
+This has _different semantics_ than prompting with multiple user messages:
+
+```js
+// THESE ARE PROBABLY NOT WHAT YOU WANT
+const probablyWrongResponse = await session.prompt([
+  "Here is an image": ",
+  { type: "image", content: imageBytes },
+  ". Please describe it."
+]);
+
+// Equivalent (and also probably wrong)
+const probablyWrongResponse2 = await session.prompt([
+  { role: "user", type: "text", content: "Here is an image: " },
+  { role: "user", type: "image", content: imageBytes },
+  { role: "user", type: "text",  content: ". Please describe it." }
+]);
+```
+
+Those examples involve three separate user messages, which the underlying model will likely interpret differently. (To see this, compare with [our above multi-user example](#customizing-the-role-per-prompt), or with how you react when someone texts you three messages in a row vs. a single message.)
+
 ### Structured output or JSON output
 
 To help with programmatic processing of language model responses, the prompt API supports structured outputs defined by a JSON schema.
@@ -618,17 +653,36 @@ dictionary LanguageModelExpectedInput {
 
 typedef (LanguageModelPrompt or sequence<LanguageModelPrompt>) LanguageModelPromptInput;
 
-// Prompt lines
+typedef (
+  // canonical form
+  LanguageModelPromptDict
+  // interpreted as { role: providedValue.role, content: [{ type: providedValue.type, content: providedValue.content }] }
+  or LanguageModelPromptDictFlattened
+  // interpreted as { role: "user", content: [{ type: "text", content: providedValue }] }
+  or DOMString
+) LanguageModelPrompt;
 
 typedef (
-  DOMString                   // interpreted as { role: "user", type: "text", content: providedValue }
-  or LanguageModelPromptDict  // canonical form
-) LanguageModelPrompt;
+  // canonical form
+  LanguageModelPromptContentDict
+  // interpreted as { type: "text", content: providedValue }
+  or DOMString
+) LanguageModelPromptContent;
 
 dictionary LanguageModelPromptDict {
   LanguageModelPromptRole role = "user";
+  required (LanguageModelPromptContent or sequence<LanguageModelPromptContent>) content;
+};
+
+dictionary LanguageModelPromptDictFlattened {
+  LanguageModelPromptRole role = "user";
   LanguageModelPromptType type = "text";
-  required LanguageModelPromptContent content;
+  required LanguageModelPromptContentValue content;
+};
+
+dictionary LanguageModelPromptContentDict {
+  LanguageModelPromptType type = "text";
+  required LanguageModelPromptContentValue content;
 };
 
 enum LanguageModelPromptRole { "system", "user", "assistant" };
@@ -640,7 +694,7 @@ typedef (
   or AudioBuffer
   or BufferSource
   or DOMString
-) LanguageModelPromptContent;
+) LanguageModelPromptContentValue;
 ```
 
 ### Instruction-tuned versus base models
