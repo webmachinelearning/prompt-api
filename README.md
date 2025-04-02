@@ -259,7 +259,7 @@ Details:
 
 * Attempting to supply an invalid combination, e.g. `{ type: "audio", content: anImageBitmap }`, `{ type: "image", content: anAudioBuffer }`, or `{ type: "text", content: anArrayBuffer }`, will reject with a `TypeError`.
 
-* For now, using any role besides `"user"` with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
+* For now, using the `"assistant"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
 
 Future extensions may include more ambitious multimodal inputs, such as video clips, or realtime audio or video. (Realtime might require a different API design, more based around events or streams instead of messages.)
 
