@@ -650,7 +650,7 @@ dictionary LanguageModelExpectedInput {
 typedef (
   // Canonical format
   sequence<LanguageModelMessage>
-  // Shorthand per the above comment
+  // Shorthand per the below comment
   or sequence<LanguageModelMessageShorthand>
   // Shorthand for [{ role: "user", content: [{ type: "text", content: providedValue }] }]
   or DOMString
@@ -660,7 +660,7 @@ typedef (
 typedef (
   // Canonical format
   sequence<LanguageModelMessage>
-  // Shorthand per the above comment
+  // Shorthand per the below comment
   or sequence<LanguageModelMessageShorthand>
 ) LanguageModelInitialPrompts;
 
