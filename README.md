@@ -158,7 +158,7 @@ async function promptWithCalculator(prompt) {
     const mathResult = evaluateMathExpression(expression);
 
     // Add the result to the session so it's in context going forward.
-    await session.prompt({ role: "assistant", content: mathResult });
+    await session.prompt([{ role: "assistant", content: mathResult }]);
 
     // Return it as if that's what the assistant said to the user.
     return mathResult;
@@ -198,23 +198,54 @@ const session = await LanguageModel.create({
 const referenceImage = await (await fetch("/reference-image.jpeg")).blob();
 const userDrawnImage = document.querySelector("canvas");
 
-const response1 = await session.prompt([
-  "Give a helpful artistic critique of how well the second image matches the first:",
-  { type: "image", content: referenceImage },
-  { type: "image", content: userDrawnImage }
-]);
+const response1 = await session.prompt([{
+  role: "user",
+  content: [
+    { type: "text", content: "Give a helpful artistic critique of how well the second image matches the first:" },
+    { type: "image", content: referenceImage },
+    { type: "image", content: userDrawnImage }
+  ]
+}]);
 
 console.log(response1);
 
 const audioBlob = await captureMicrophoneInput({ seconds: 10 });
 
-const response2 = await session.prompt([
-  "My response to your critique:",
-  { type: "audio", content: audioBlob }
-]);
+const response2 = await session.prompt([{
+  role: "user",
+  content: [
+    { type: "text", content: "My response to your critique:" },
+    { type: "audio", content: audioBlob }
+  ]
+}]);
 ```
 
-Future extensions may include more ambitious multimodal inputs, such as video clips, or realtime audio or video. (Realtime might require a different API design, more based around events or streams instead of messages.)
+Note how once we move to multimodal prompting, the prompt format becomes more explicit:
+
+* We must always pass an array of messages, instead of a single string value.
+* Each message must have a `role` property: unlike with the string shorthand, `"user"` is no longer assumed.
+* The `content` property must be an array of content, if it contains any multimodal content.
+
+This extra ceremony is necessary to make it clear that we are sending a single message that contains multimodal content, versus sending multiple messages, one per each piece of content. To avoid such confusion, the multimodal format has fewer defaults and shorthands than if you interact with the API using only text. (See some discussion in [issue #89](https://github.com/webmachinelearning/prompt-api/pull/89).)
+
+To illustrate, the following extension of our above [multi-user example](#customizing-the-role-per-prompt) has a similar sequence of text + image + image values compared to our artistic critique example. However, it uses a multi-message structure instead of the artistic critique example's single-message structure, so the model will interpret it differently:
+
+```js
+const response = await session.prompt([
+  {
+    role: "user",
+    content: "Your compromise just made the discussion more heated. The two departments drew up posters to illustrate their strategies' advantages:"
+  },
+  {
+    role: "user",
+    content: [{ type: "image", content: brochureFromTheMarketingDepartment }]
+  },
+  {
+    role: "user",
+    content: [{ type: "image", content: brochureFromTheFinanceDepartment }]
+  }
+]);
+```
 
 Details:
 
@@ -226,11 +257,11 @@ Details:
 
 * For `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
 
-* Text prompts can also be done via `{ type: "text", content: aString }`, instead of just `aString`. This can be useful for generic code.
-
 * Attempting to supply an invalid combination, e.g. `{ type: "audio", content: anImageBitmap }`, `{ type: "image", content: anAudioBuffer }`, or `{ type: "text", content: anArrayBuffer }`, will reject with a `TypeError`.
 
-* As described [above](#customizing-the-role-per-prompt), you can also supply a `role` value in these objects, so that the full form is `{ role, type, content }`. However, for now, using any role besides the default `"user"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
+* For now, using the `"assistant"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
+
+Future extensions may include more ambitious multimodal inputs, such as video clips, or realtime audio or video. (Realtime might require a different API design, more based around events or streams instead of messages.)
 
 ### Structured output or JSON output
 
@@ -547,16 +578,16 @@ interface LanguageModel : EventTarget {
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
   Promise<DOMString> prompt(
-    LanguageModelPromptInput input,
+    LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
   ReadableStream promptStreaming(
-    LanguageModelPromptInput input,
+    LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
 
   Promise<double> measureInputUsage(
-    LanguageModelPromptInput input,
+    LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
   readonly attribute double inputUsage;
@@ -597,7 +628,7 @@ dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
   AICreateMonitorCallback monitor;
 
   DOMString systemPrompt;
-  sequence<LanguageModelPrompt> initialPrompts;
+  LanguageModelInitialPrompts initialPrompts;
 };
 
 dictionary LanguageModelPromptOptions {
@@ -610,37 +641,62 @@ dictionary LanguageModelCloneOptions {
 };
 
 dictionary LanguageModelExpectedInput {
-  required LanguageModelPromptType type;
+  required LanguageModelMessageType type;
   sequence<DOMString> languages;
 };
 
 // The argument to the prompt() method and others like it
 
-typedef (LanguageModelPrompt or sequence<LanguageModelPrompt>) LanguageModelPromptInput;
-
-// Prompt lines
-
 typedef (
-  DOMString                   // interpreted as { role: "user", type: "text", content: providedValue }
-  or LanguageModelPromptDict  // canonical form
+  // Canonical format
+  sequence<LanguageModelMessage>
+  // Shorthand per the above comment
+  or sequence<LanguageModelMessageShorthand>
+  // Shorthand for [{ role: "user", content: [{ type: "text", content: providedValue }] }]
+  or DOMString
 ) LanguageModelPrompt;
 
-dictionary LanguageModelPromptDict {
-  LanguageModelPromptRole role = "user";
-  LanguageModelPromptType type = "text";
-  required LanguageModelPromptContent content;
+// The initialPrompts value omits the single string shorthand
+typedef (
+  // Canonical format
+  sequence<LanguageModelMessage>
+  // Shorthand per the above comment
+  or sequence<LanguageModelMessageShorthand>
+) LanguageModelInitialPrompts;
+
+
+dictionary LanguageModelMessage {
+  required LanguageModelMessageRole role;
+  required sequence<LanguageModelMessageContent> content;
 };
 
-enum LanguageModelPromptRole { "system", "user", "assistant" };
+// Shorthand for { role: providedValue.role, content: [{ type: "text", content: providedValue.content }] }
+dictionary LanguageModelMessageShorthand {
+  required LanguageModelMessageRole role;
+  required DOMString content;
+};
 
-enum LanguageModelPromptType { "text", "image", "audio" };
+dictionary LanguageModelMessageContent {
+  required LanguageModelMessageType type;
+  required LanguageModelMessageContentValue content;
+};
+
+dictionary LanguageModelPromptDict {
+  LanguageModelMessageRole role = "user";
+  LanguageModelMessageType type = "text";
+  required LanguageModelMessageContent content;
+};
+
+enum LanguageModelMessageRole { "system", "user", "assistant" };
+
+enum LanguageModelMessageType { "text", "image", "audio" };
 
 typedef (
   ImageBitmapSource
   or AudioBuffer
   or BufferSource
   or DOMString
-) LanguageModelPromptContent;
+) LanguageModelMessageContentValue;
 ```
 
 ### Instruction-tuned versus base models
