@@ -295,6 +295,35 @@ The `responseJSONSchema` option for `prompt()` and `promptStreaming()` can also 
 
 While processing the JSON schema, in cases where the user agent detects unsupported schema a `"NotSupportedError"` `DOMException`, will be raised with appropriate error message. The result value returned is a string, that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
 
+### Appending messages without prompting for a response
+
+In some cases, you know which messages you'll want to use to populate the session, but not yet the final message before you prompt the model for a response. Because processing messages can take some time (especially for multimodal inputs), it's useful to be able to send such messages to the model ahead of time. This allows it to get a head-start on processing, while you wait for the right time to prompt for a response.
+
+(The `initialPrompts` array serves this purpose at session creation time, but this can be useful after session creation as well, as we show in the example below.)
+
+For such cases, in addition to the `prompt()` and `promptStreaming()` methods, the prompt API provides an `append()` method, which takes the same message format as `prompt()`. Here's an example of how that could be useful:
+
+```js
+const session = await LanguageModel.create({
+  systemPrompt: "You are a skilled analyst who correlates patterns across multiple images.",
+  expectedInputs: [{ type: "image" }]
+});
+
+fileUpload.onchange = async (e) => {
+  await session.append([{
+    role: "user",
+    content: [
+      { type: "text", content: `Here's one image. Notes: ${fileNotesInput.value}` },
+      { type: "image", content: fileUpload.files[0] }
+    ]
+  }]);
+};
+
+analyzeButton.onclick = async (e) => {
+  analysisResult.textContent = await session.prompt(userQuestionInput.value);
+};
+```
+
 ### Configuration of per-session parameters
 
 In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
@@ -400,7 +429,7 @@ The ability to manually destroy a session allows applications to free up memory 
 
 ### Aborting a specific prompt
 
-Specific calls to `prompt()` or `promptStreaming()` can be aborted by passing an `AbortSignal` to them:
+Specific calls to `prompt()`, `promptStreaming()`, or `append()` can be aborted by passing an `AbortSignal` to them:
 
 ```js
 const controller = new AbortController();
@@ -412,8 +441,10 @@ const result = await session.prompt("Write me a poem", { signal: controller.sign
 Note that because sessions are stateful, and prompts can be queued, aborting a specific prompt is slightly complicated:
 
 * If the prompt is still queued behind other prompts in the session, then it will be removed from the queue.
-* If the prompt is being currently processed by the model, then it will be aborted, and the prompt/response pair will be removed from the conversation history.
-* If the prompt has already been fully processed by the model, then attempting to abort the prompt will do nothing.
+* If the prompt is being currently responded to by the model, then it will be aborted, and the prompt/response pair will be removed from the conversation history.
+* If the prompt has already been fully responded to by the model, then attempting to abort the prompt will do nothing.
+
+Since `append()`ed prompts are not responded to immediately, they can be aborted until a subsequent call to `prompt()` or `promptStreaming()` happens and that response has been finished.
 
 ### Tokenization, context window length limits, and overflow
 
@@ -585,6 +616,10 @@ interface LanguageModel : EventTarget {
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
+  Promise<undefined> append(
+    LanguageModelPrompt input,
+    optional LanguageModelAppendOptions options = {}
+  );
 
   Promise<double> measureInputUsage(
     LanguageModelPrompt input,
@@ -633,6 +668,10 @@ dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
 
 dictionary LanguageModelPromptOptions {
   object responseJSONSchema;
+  AbortSignal signal;
+};
+
+dictionary LanguageModelAppendOptions {
   AbortSignal signal;
 };
 
