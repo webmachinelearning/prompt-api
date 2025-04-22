@@ -445,10 +445,17 @@ const result = await session.prompt("Write me a poem", { signal: controller.sign
 Note that because sessions are stateful, and prompts can be queued, aborting a specific prompt is slightly complicated:
 
 * If the prompt is still queued behind other prompts in the session, then it will be removed from the queue, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
-* If the prompt is being currently responded to by the model, then it will be aborted, the prompt/response pair will be removed from the conversation history, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
+* If the prompt is being currently responded to by the model, then it will be aborted, the prompt/response pair will be removed from the session, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
 * If the prompt has already been fully responded to by the model, then attempting to abort the prompt will do nothing.
 
-(Note: `append()` calls cannot currently be aborted. We could consider adding that in the future, if people have strong use cases. But see [this discussion](https://github.com/webmachinelearning/prompt-api/issues/92#issuecomment-2811773119) for all the complexities involved in designing such a system.)
+Similarly, the `append()` operation can also be aborted. In this case the behavior is:
+
+* If the append is queued behind other appends in the session, then it will be removed from the queue, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
+* If the append operation is currently ongoing, then it will be aborted, any part of the prompt that was appended so far will be removed from the session, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
+* If the append operation is complete, then attempting to abort it will do nothing. This includes all the following states:
+  * The append operation is complete, but another append operation is processing.
+  * The append operation is complete, and a prompt generation step is processing.
+  * The append operation is complete, and a prompt generation step has used it to produce a result.
 
 ### Tokenization, context window length limits, and overflow
 
@@ -620,7 +627,10 @@ interface LanguageModel : EventTarget {
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
-  Promise<undefined> append(LanguageModelPrompt input);
+  Promise<undefined> append(
+    LanguageModelPrompt input,
+    optional LanguageModelAppendOptions options = {}
+  );
 
   Promise<double> measureInputUsage(
     LanguageModelPrompt input,
@@ -669,6 +679,10 @@ dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
 
 dictionary LanguageModelPromptOptions {
   object responseJSONSchema;
+  AbortSignal signal;
+};
+
+dictionary LanguageModelAppendOptions {
   AbortSignal signal;
 };
 
