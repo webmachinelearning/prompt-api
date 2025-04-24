@@ -453,7 +453,7 @@ Similarly, the `append()` operation can also be aborted. In this case the behavi
 * If the append is queued behind other appends in the session, then it will be removed from the queue, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
 * If the append operation is currently ongoing, then it will be aborted, any part of the prompt that was appended so far will be removed from the session, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
 * If the append operation is complete (i.e., the returned promise has resolved), then attempting to abort it will do nothing. This includes all the following states:
-  * The append operation is complete, but another append operation is processing.
+  * The append operation is complete, but a prompt generation step has not yet triggered.
   * The append operation is complete, and a prompt generation step is processing.
   * The append operation is complete, and a prompt generation step has used it to produce a result.
 
