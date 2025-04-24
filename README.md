@@ -324,6 +324,10 @@ analyzeButton.onclick = async (e) => {
 };
 ```
 
+The promise returned by `append()` will reject if the prompt cannot be appended (e.g., too big, invalid modalities for the session, etc.), or will fulfill once the prompt has been validated, processed, and appended to the session.
+
+Note that `append()` can also cause [overflow](#tokenization-context-window-length-limits-and-overflow), in which case it will evict the oldest non-system prompts from the session and fire the `"quotaoverflow"` event.
+
 ### Configuration of per-session parameters
 
 In addition to the `systemPrompt` and `initialPrompts` options shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
@@ -429,7 +433,7 @@ The ability to manually destroy a session allows applications to free up memory 
 
 ### Aborting a specific prompt
 
-Specific calls to `prompt()`, `promptStreaming()`, or `append()` can be aborted by passing an `AbortSignal` to them:
+Specific calls to `prompt()` or `promptStreaming()` can be aborted by passing an `AbortSignal` to them:
 
 ```js
 const controller = new AbortController();
@@ -440,11 +444,20 @@ const result = await session.prompt("Write me a poem", { signal: controller.sign
 
 Note that because sessions are stateful, and prompts can be queued, aborting a specific prompt is slightly complicated:
 
-* If the prompt is still queued behind other prompts in the session, then it will be removed from the queue.
-* If the prompt is being currently responded to by the model, then it will be aborted, and the prompt/response pair will be removed from the conversation history.
+* If the prompt is still queued behind other prompts in the session, then it will be removed from the queue, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
+* If the prompt is being currently responded to by the model, then it will be aborted, the prompt/response pair will be removed from the session, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
 * If the prompt has already been fully responded to by the model, then attempting to abort the prompt will do nothing.
 
-Since `append()`ed prompts are not responded to immediately, they can be aborted until a subsequent call to `prompt()` or `promptStreaming()` happens and that response has been finished.
+Similarly, the `append()` operation can also be aborted. In this case the behavior is:
+
+* If the append is queued behind other appends in the session, then it will be removed from the queue, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
+* If the append operation is currently ongoing, then it will be aborted, any part of the prompt that was appended so far will be removed from the session, and the returned promise will be rejected with an `"AbortError"` `DOMException`.
+* If the append operation is complete (i.e., the returned promise has resolved), then attempting to abort it will do nothing. This includes all the following states:
+  * The append operation is complete, but a prompt generation step has not yet triggered.
+  * The append operation is complete, and a prompt generation step is processing.
+  * The append operation is complete, and a prompt generation step has used it to produce a result.
+
+Finally, note that if either prompting or appending has caused an [overflow](#tokenization-context-window-length-limits-and-overflow), aborting the operation does not re-introduce the overflowed messages into the session.
 
 ### Tokenization, context window length limits, and overflow
 
