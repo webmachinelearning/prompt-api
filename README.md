@@ -269,19 +269,17 @@ Details:
 
 Future extensions may include more ambitious multimodal inputs, such as video clips, or realtime audio or video. (Realtime might require a different API design, more based around events or streams instead of messages.)
 
-### Structured output or JSON output
+### Structured output with JSON schema or RegExp constraints
 
-To help with programmatic processing of language model responses, the prompt API supports structured outputs defined by a JSON schema.
+To help with programmatic processing of language model responses, the prompt API supports constraining the response with either a JSON schema object or a `RegExp` passed as the `responseConstraint` option:
 
 ```js
-const session = await LanguageModel.create();
-
-const responseJSONSchema = {
+const schema = {
   type: "object",
   required: ["Rating"],
   additionalProperties: false,
   properties: {
-    Rating: {
+    rating: {
       type: "number",
       minimum: 0,
       maximum: 5,
@@ -292,14 +290,31 @@ const responseJSONSchema = {
 // Prompt the model and wait for the JSON response to come back.
 const result = await session.prompt("Summarize this feedback into a rating between 0-5: "+
   "The food was delicious, service was excellent, will recommend.",
-  { responseJSONSchema }
+  { responseConstraint: schema }
 );
-console.log(result);
+
+const { rating } = JSON.parse(result);
+console.log(rating);
 ```
 
-While processing the JSON schema, in cases where the user agent detects unsupported schema, a `"NotSupportedError"` `DOMException` will be raised with an appropriate error message.
+If the input value is a valid JSON schema object, but uses JSON schema features not supported by the user agent, the method will error with a `"NotSupportedError"` `DOMException`.
 
-The result value returned is a string that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
+The result value returned is a string that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, the method will error with a `"SyntaxError"` `DOMException`.
+
+```js
+const emailRegExp = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
+const emailAddress = await session.prompt(
+  `Create a fictional email address for ${characterName}.`,
+  { responseConstraint: emailRegExp }
+);
+
+console.log(emailAddress);
+```
+
+The returned value will be a string that matches the input `RegExp`. If the user agent is unable to produce a response that matches, the method will error with a `"SyntaxError"` `DOMException`.
+
+If a value that is neither a `RegExp` object or a valid JSON schema object is given, the method will error with a `TypeError`.
 
 ### Appending messages without prompting for a response
 
@@ -692,7 +707,7 @@ dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
 };
 
 dictionary LanguageModelPromptOptions {
-  object responseJSONSchema;
+  object responseConstraint;
   AbortSignal signal;
 };
 
