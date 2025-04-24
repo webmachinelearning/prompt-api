@@ -270,7 +270,7 @@ To help with programmatic processing of language model responses, the prompt API
 ```js
 const session = await LanguageModel.create();
 
-const responseJSONSchemaObj = new LanguageModelResponseSchema({
+const responseJSONSchema = {
   type: "object",
   required: ["Rating"],
   additionalProperties: false,
@@ -281,19 +281,19 @@ const responseJSONSchemaObj = new LanguageModelResponseSchema({
       maximum: 5,
     },
   },
-});
+};
 
-// Prompt the model and wait for the json response to come back.
+// Prompt the model and wait for the JSON response to come back.
 const result = await session.prompt("Summarize this feedback into a rating between 0-5: "+
   "The food was delicious, service was excellent, will recommend.",
-  {responseJSONSchema : responseJSONSchemaObj}
+  { responseJSONSchema }
 );
 console.log(result);
 ```
 
-The `responseJSONSchema` option for `prompt()` and `promptStreaming()` can also accept a JSON schema directly as a JavaScript object. This is particularly useful for cases where the schema is not reused for other prompts.
+While processing the JSON schema, in cases where the user agent detects unsupported schema, a `"NotSupportedError"` `DOMException` will be raised with an appropriate error message.
 
-While processing the JSON schema, in cases where the user agent detects unsupported schema a `"NotSupportedError"` `DOMException`, will be raised with appropriate error message. The result value returned is a string, that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
+The result value returned is a string that can be parsed with `JSON.parse()`. If the user agent is unable to produce a response that is compliant with the schema, a `"SyntaxError"` `DOMException` will be raised.
 
 ### Appending messages without prompting for a response
 
@@ -643,11 +643,6 @@ interface LanguageModelParams {
   readonly attribute float defaultTemperature;
   readonly attribute float maxTemperature;
 };
-
-[Exposed=(Window,Worker)]
-interface LanguageModelResponseSchema {
-  constructor(object responseJSONSchemaObject);
-}
 
 dictionary LanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
