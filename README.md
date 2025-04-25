@@ -276,7 +276,7 @@ To help with programmatic processing of language model responses, the prompt API
 ```js
 const schema = {
   type: "object",
-  required: ["Rating"],
+  required: ["rating"],
   additionalProperties: false,
   properties: {
     rating: {
