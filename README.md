@@ -61,7 +61,7 @@ const result = await session.prompt("Write me a poem.");
 console.log(result);
 
 // Prompt the model and stream the result:
-const stream = await session.promptStreaming("Write me an extra-long poem.");
+const stream = session.promptStreaming("Write me an extra-long poem.");
 for await (const chunk of stream) {
   console.log(chunk);
 }
