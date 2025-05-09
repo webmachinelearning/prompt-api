@@ -545,7 +545,12 @@ const session = await LanguageModel.create({
   expectedInputs: [{
     type: "text",
     languages: ["en" /* for the system prompt */, "ja", "ko"]
-  }]
+  }],
+  // See below section
+  expectedOutputs: [{
+    type: "text",
+    languages: ["ja", "ko"]
+  }],
 });
 ```
 
