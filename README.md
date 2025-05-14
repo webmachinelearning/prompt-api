@@ -12,7 +12,7 @@ Browsers and operating systems are increasingly expected to gain access to a lan
 * Translation between languages
 * Proofreading
 
-Although the Chrome built-in AI team is exploring purpose-built APIs for some of these use cases (e.g. [translation](https://github.com/webmachinelearning/translation-api), and perhaps in the future summarization and compose), we are also exploring a general-purpose "prompt API" which allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
+The Chrome built-in AI team and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proposals/issues/7)). This proposal additionally exploring a general-purpose "prompt API" which allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
 
 Currently, web developers wishing to use language models must either call out to cloud APIs, or bring their own and run them using technologies like WebAssembly and WebGPU. By providing access to the browser or operating system's existing language model, we can provide the following benefits compared to cloud APIs:
 
@@ -23,8 +23,6 @@ Currently, web developers wishing to use language models must either call out to
 * Allowing hybrid approaches, e.g. free users of a website use on-device AI whereas paid users use a more powerful API-based model.
 
 Similarly, compared to bring-your-own-AI approaches, using a built-in language model can save the user's bandwidth, likely benefit from more optimizations, and have a lower barrier to entry for web developers.
-
-**Even more so than many other behind-a-flag APIs, the prompt API is an experiment, designed to help us understand web developers' use cases to inform a roadmap of purpose-built APIs.** However, we want to publish an explainer to provide documentation and a public discussion place for the experiment while it is ongoing.
 
 ## Goals
 
@@ -810,20 +808,18 @@ This can be slightly more flexible; for example, it allows manually correcting t
 
 However, our understanding is that the session-based model can be more efficiently implemented, at least for browsers with on-device models. (Implementing it for a cloud-based model would likely be more work.) And, developers can always achieve a stateless model by using a new session for each interaction.
 
-## Privacy considerations
+## Privacy and security considerations
 
-If cloud-based language models are exposed through this API, then there are potential privacy issues with exposing user or website data to the relevant cloud and model providers. This is not a concern specific to this API, as websites can already choose to expose user or website data to other origins using APIs such as `fetch()`. However, it's worth keeping in mind, and in particular as discussed in our [Goals](#goals), perhaps we should make it easier for web developers to know whether a cloud-based model is in use, or which one.
-
-If on-device language models are updated separately from browser and operating system versions, this API could enhance the web's fingerprinting service by providing extra identifying bits. Mandating that older browser versions not receive updates or be able to download models from too far into the future might be a possible remediation for this.
-
-Finally, we intend to prohibit (in the specification) any use of user-specific information that is not directly supplied through the API. For example, it would not be permissible to fine-tune the language model based on information the user has entered into the browser in the past.
+Please see [the _Writing Assistance APIs_ specification](https://webmachinelearning.github.io/writing-assistance-apis/#privacy), where we have centralized the normative privacy and security considerations that apply to all APIs of this type.
 
 ## Stakeholder feedback
 
-* W3C TAG: not yet requested
+* W3C TAG: [w3ctag/design-reviews#1093](https://github.com/w3ctag/design-reviews/issues/1093)
 * Browser engines and browsers:
   * Chromium: prototyping behind a flag
-  * Gecko: not yet requested
-  * WebKit: not yet requested
-  * Edge: not yet requested
-* Web developers: positive ([example](https://x.com/mortenjust/status/1805190952358650251), [example](https://tyingshoelaces.com/blog/chrome-ai-prompt-api), [example](https://labs.thinktecture.com/local-small-language-models-in-the-browser-a-first-glance-at-chromes-built-in-ai-and-prompt-api-with-gemini-nano/))
+  * Mozilla: [mozilla/standards-positions#1213](https://github.com/mozilla/standards-positions/issues/1213)
+  * WebKit: [WebKit/standards-positions#495](https://github.com/WebKit/standards-positions/issues/495)
+* Web developers: positive
+  * See [issue #74](https://github.com/webmachinelearning/prompt-api/issues/74) for some developer feedback
+  * Examples of organic enthusiasm: [X post](https://x.com/mortenjust/status/1805190952358650251), [blog post](https://tyingshoelaces.com/blog/chrome-ai-prompt-api), [blog post](https://labs.thinktecture.com/local-small-language-models-in-the-browser-a-first-glance-at-chromes-built-in-ai-and-prompt-api-with-gemini-nano/)
+  * [Feedback from developer surveys](https://docs.google.com/presentation/d/1DhFC2oB4PRrchavxUY3h9U4w4hrX5DAc5LoMqhn5hnk/edit#slide=id.g349a9ada368_1_6327)
