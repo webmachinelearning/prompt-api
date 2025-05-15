@@ -773,7 +773,7 @@ typedef (
   sequence<LanguageModelMessage>
   // Shorthand per the below comment
   or sequence<LanguageModelMessageShorthand>
-  // Shorthand for [{ role: "user", content: [{ type: "text", content: providedValue }] }]
+  // Shorthand for [{ role: "user", content: [{ type: "text", value: providedValue }] }]
   or DOMString
 ) LanguageModelPrompt;
 
@@ -791,7 +791,7 @@ dictionary LanguageModelMessage {
   required sequence<LanguageModelMessageContent> content;
 };
 
-// Shorthand for { role: providedValue.role, content: [{ type: "text", content: providedValue.content }] }
+// Shorthand for { role: providedValue.role, content: [{ type: "text", value: providedValue.content }] }
 dictionary LanguageModelMessageShorthand {
   required LanguageModelMessageRole role;
   required DOMString content;
@@ -799,7 +799,7 @@ dictionary LanguageModelMessageShorthand {
 
 dictionary LanguageModelMessageContent {
   required LanguageModelMessageType type;
-  required LanguageModelMessageContentValue content;
+  required LanguageModelMessageValue value;
 };
 
 enum LanguageModelMessageRole { "system", "user", "assistant" };
@@ -811,7 +811,7 @@ typedef (
   or AudioBuffer
   or BufferSource
   or DOMString
-) LanguageModelMessageContentValue;
+) LanguageModelMessageValue;
 ```
 
 ### Instruction-tuned versus base models
