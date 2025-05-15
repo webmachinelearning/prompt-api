@@ -802,12 +802,6 @@ dictionary LanguageModelMessageContent {
   required LanguageModelMessageContentValue content;
 };
 
-dictionary LanguageModelPromptDict {
-  LanguageModelMessageRole role = "user";
-  LanguageModelMessageType type = "text";
-  required LanguageModelMessageContent content;
-};
-
 enum LanguageModelMessageRole { "system", "user", "assistant" };
 
 enum LanguageModelMessageType { "text", "image", "audio" };
