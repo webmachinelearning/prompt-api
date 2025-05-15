@@ -523,7 +523,7 @@ If it's not possible to remove enough tokens from the conversation history to pr
 * `requested`: how many tokens the input consists of
 * `quota`: how many tokens were available (which will be less than `requested`, and equal to the value of `session.inputQuota - session.inputUsage` at the time of the call)
 
-### Multilingual content and expected languages
+### Multilingual content and expected input languages
 
 The default behavior for a language model session assumes that the input languages are unknown. In this case, implementations will use whatever "base" capabilities they have available for the language model, and might throw `"NotSupportedError"` `DOMException`s if they encounter languages they don't support.
 
@@ -543,7 +543,12 @@ const session = await LanguageModel.create({
   expectedInputs: [{
     type: "text",
     languages: ["en" /* for the system prompt */, "ja", "ko"]
-  }]
+  }],
+  // See below section
+  expectedOutputs: [{
+    type: "text",
+    languages: ["ja", "ko"]
+  }],
 });
 ```
 
@@ -567,7 +572,45 @@ const session = await LanguageModel.create({
 });
 ```
 
-Note that there is no way of specifying output languages, since these are governed by the language model's own decisions. Similarly, the expected input languages do not affect the context or prompt the language model sees; they only impact the process of setting up the session and performing appropriate downloads.
+Note that the expected input languages do not affect the context or prompt the language model sees; they only impact the process of setting up the session, performing appropriate downloads, and failing creation if those input languages are unsupported.
+
+If you want to check the availability of a given `expectedInputs` configuration before initiating session creation, you can use the `LanguageModel.availability()` method:
+
+```js
+const availability = await LanguageModel.availability({
+  expectedInputs: [
+    { type: "text", languages: ["en", "ja"] },
+    { type: "audio", languages: ["en", "ja"] }
+  ]
+});
+
+// `availability` will be one of "unavailable", "downloadable", "downloading", or "available".
+```
+
+### Expected output languages
+
+In general, what output language the model responds in will be governed by the language model's own decisions. For example, a prompt such as "Please say something in French" could produce "Bonjour" or it could produce "I'm sorry, I don't know French".
+
+However, if you know ahead of time what languages you are hoping for the language model to output, it's best practice to use the `expectedOutputs` option to `LanguageModel.create()` to indicate them. This allows the implementation to download any necessary supporting material for those output languages, and to immediately reject the returned promise if it's known that the model cannot support that language:
+
+```js
+const session = await LanguageModel.create({
+  initialPrompts: [{
+    role: "system",
+    content: `You are a helpful, harmless French chatbot.`
+  }],
+  expectedInputs: [
+    { type: "text", languages: ["en" /* for the system prompt */, "fr"] }
+  ],
+  expectedOutputs: [
+    { type: "text", languages: ["fr"] }
+  ]
+});
+```
+
+As with `expectedInputs`, specifying a given language in `expectedOutputs` does not actually influence the language model's output. It's only expressing an expectation that can help set up the session, perform downloads, and fail creation if necessary. And as with `expectedInputs`, you can use `LanguageModel.availability()` to check ahead of time, before creating a session.
+
+(Note that presently, the prompt API does not support multimodal outputs, so including anything array entries with `type`s other than `"text"` will always fail. However, we've chosen this general shape so that in the future, if multimodal output support is added, it fits into the API naturally.)
 
 ### Testing available options before creation
 
@@ -694,7 +737,8 @@ dictionary LanguageModelCreateCoreOptions {
   unrestricted double topK;
   unrestricted double temperature;
 
-  sequence<LanguageModelExpectedInput> expectedInputs;
+  sequence<LanguageModelExpected> expectedInputs;
+  sequence<LanguageModelExpected> expectedOutputs;
 };
 
 dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
@@ -717,7 +761,7 @@ dictionary LanguageModelCloneOptions {
   AbortSignal signal;
 };
 
-dictionary LanguageModelExpectedInput {
+dictionary LanguageModelExpected {
   required LanguageModelMessageType type;
   sequence<DOMString> languages;
 };
