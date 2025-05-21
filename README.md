@@ -745,7 +745,7 @@ dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
   AbortSignal signal;
   AICreateMonitorCallback monitor;
 
-  LanguageModelInitialPrompts initialPrompts;
+  sequence<LanguageModelMessage> initialPrompts;
 };
 
 dictionary LanguageModelPromptOptions {
@@ -769,32 +769,16 @@ dictionary LanguageModelExpected {
 // The argument to the prompt() method and others like it
 
 typedef (
-  // Canonical format
   sequence<LanguageModelMessage>
-  // Shorthand per the below comment
-  or sequence<LanguageModelMessageShorthand>
-  // Shorthand for [{ role: "user", content: [{ type: "text", value: providedValue }] }]
+  // Shorthand for `[{ role: "user", content: [{ type: "text", value: providedValue }] }]`
   or DOMString
 ) LanguageModelPrompt;
 
-// The initialPrompts value omits the single string shorthand
-typedef (
-  // Canonical format
-  sequence<LanguageModelMessage>
-  // Shorthand per the below comment
-  or sequence<LanguageModelMessageShorthand>
-) LanguageModelInitialPrompts;
-
-
 dictionary LanguageModelMessage {
   required LanguageModelMessageRole role;
-  required sequence<LanguageModelMessageContent> content;
-};
 
-// Shorthand for { role: providedValue.role, content: [{ type: "text", value: providedValue.content }] }
-dictionary LanguageModelMessageShorthand {
-  required LanguageModelMessageRole role;
-  required DOMString content;
+  // The DOMString branch is shorthand for `[{ type: "text", value: providedValue }]`
+  required (DOMString or sequence<LanguageModelMessageContent>) content;
 };
 
 dictionary LanguageModelMessageContent {
