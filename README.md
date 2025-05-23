@@ -185,7 +185,7 @@ All of the above examples have been of text prompts. Some language models also s
 
 * For audio inputs: for now, `Blob`, `AudioBuffer`, or raw bytes via `BufferSource`. Other possibilities we're investigating include `HTMLAudioElement`, `AudioData`, and `MediaStream`, but we're not yet sure if those are suitable to represent "clips": most other uses of them on the web platform are able to handle streaming data.
 
-Sessions that will include these inputs need to be created using the `expectedInputs` option, to ensure that any necessary downloads are done as part of session creation, and that if the model is not capable of such multimodal prompts, the session creation fails. (See also the below discussion of [expected input languages](#multilingual-content-and-expected-languages), not just expected input types.)
+Sessions that will include these inputs need to be created using the `expectedInputs` option, to ensure that any necessary downloads are done as part of session creation, and that if the model is not capable of such multimodal prompts, the session creation fails. (See also the below discussion of [expected input languages](#multilingual-content-and-expected-input-languages), not just expected input types.)
 
 A sample of using these APIs:
 
@@ -688,7 +688,7 @@ Finally, note that there is a sort of precedent in the (never-shipped) [`FetchOb
 ### Full API surface in Web IDL
 
 ```webidl
-[Exposed=(Window,Worker), SecureContext]
+[Exposed=Window, SecureContext]
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
   static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
@@ -723,7 +723,7 @@ interface LanguageModel : EventTarget {
   undefined destroy();
 };
 
-[Exposed=(Window,Worker), SecureContext]
+[Exposed=Window, SecureContext]
 interface LanguageModelParams {
   readonly attribute unsigned long defaultTopK;
   readonly attribute unsigned long maxTopK;
@@ -808,6 +808,18 @@ To illustrate the difference and how it impacts web developer expectations:
 * Whereas, in an instruction-tuned model, the model will generally _follow_ instructions like "Write a poem about trees.", and respond with a poem about trees.
 
 To ensure the API can be used by web developers across multiple implementations, all browsers should be sure their models behave like instruction-tuned models.
+
+### Permissions policy, iframes, and workers
+
+By default, this API is only available to top-level `Window`s, and to their same-origin iframes. Access to the API can be delegated to cross-origin iframes using the [Permissions Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Permissions_Policy) `allow=""` attribute:
+
+```html
+<iframe src="https://example.com/" allow="language-model"></iframe>
+```
+
+This API is currently not available in workers, due to the complexity of establishing a responsible document for each worker in order to check the permissions policy status. See [this discussion](https://github.com/webmachinelearning/translation-api/issues/18#issuecomment-2705630392) for more. It may be possible to loosen this restriction over time, if use cases arise.
+
+Note that although the API is not exposed to web platform workers, a browser could expose them to extension service workers, which are outside the scope of web platform specifications and have a different permissions model.
 
 ## Alternatives considered and under consideration
 
