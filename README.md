@@ -71,7 +71,7 @@ The language model can be configured with a special "system prompt" which gives 
 
 ```js
 const session = await LanguageModel.create({
-  initialPrompts: [{ role: "system", content: "Pretend to be an eloquent hamster." }]
+  initialPrompts: [{ role: "system", value: "Pretend to be an eloquent hamster." }]
 });
 
 console.log(await session.prompt("What is your favorite food?"));
@@ -88,11 +88,11 @@ If developers want to provide examples of the user/assistant interaction, they c
 ```js
 const session = await LanguageModel.create({
   initialPrompts: [
-    { role: "system", content: "Predict up to 5 emojis as a response to a comment. Output emojis, comma-separated." },
-    { role: "user", content: "This is amazing!" },
-    { role: "assistant", content: "❤️, ➕" },
-    { role: "user", content: "LGTM" },
-    { role: "assistant", content: "👍, 🚢" }
+    { role: "system", value: "Predict up to 5 emojis as a response to a comment. Output emojis, comma-separated." },
+    { role: "user", value: "This is amazing!" },
+    { role: "assistant", value: "❤️, ➕" },
+    { role: "user", value: "LGTM" },
+    { role: "assistant", value: "👍, 🚢" }
   ]
 });
 
@@ -122,14 +122,14 @@ Our examples so far have provided `prompt()` and `promptStreaming()` with a sing
 const multiUserSession = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: "You are a mediator in a discussion between two departments."
+    value: "You are a mediator in a discussion between two departments."
   }]
 });
 
 const result = await multiUserSession.prompt([
-  { role: "user", content: "Marketing: We need more budget for advertising campaigns." },
-  { role: "user", content: "Finance: We need to cut costs and advertising is on the list." },
-  { role: "assistant", content: "Let's explore a compromise that satisfies both departments." }
+  { role: "user", value: "Marketing: We need more budget for advertising campaigns." },
+  { role: "user", value: "Finance: We need to cut costs and advertising is on the list." },
+  { role: "assistant", value: "Let's explore a compromise that satisfies both departments." }
 ]);
 
 // `result` will contain a compromise proposal from the assistant.
@@ -145,7 +145,7 @@ A special case of the above is using the assistant role to emulate tool use or f
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: `
+    value: `
       You are a helpful assistant. You have access to the following tools:
       - calculator: A calculator. To use it, write "CALCULATOR: <expression>" where <expression> is a valid mathematical expression.
     `
@@ -162,7 +162,7 @@ async function promptWithCalculator(prompt) {
     const mathResult = evaluateMathExpression(expression);
 
     // Add the result to the session so it's in context going forward.
-    await session.prompt([{ role: "assistant", content: mathResult }]);
+    await session.prompt([{ role: "assistant", value: mathResult }]);
 
     // Return it as if that's what the assistant said to the user.
     return mathResult;
@@ -205,9 +205,9 @@ const userDrawnImage = document.querySelector("canvas");
 const response1 = await session.prompt([{
   role: "user",
   content: [
-    { type: "text", content: "Give a helpful artistic critique of how well the second image matches the first:" },
-    { type: "image", content: referenceImage },
-    { type: "image", content: userDrawnImage }
+    { type: "text", value: "Give a helpful artistic critique of how well the second image matches the first:" },
+    { type: "image", value: referenceImage },
+    { type: "image", value: userDrawnImage }
   ]
 }]);
 
@@ -218,8 +218,8 @@ const audioBlob = await captureMicrophoneInput({ seconds: 10 });
 const response2 = await session.prompt([{
   role: "user",
   content: [
-    { type: "text", content: "My response to your critique:" },
-    { type: "audio", content: audioBlob }
+    { type: "text", value: "My response to your critique:" },
+    { type: "audio", value: audioBlob }
   ]
 }]);
 ```
@@ -238,15 +238,15 @@ To illustrate, the following extension of our above [multi-user example](#custom
 const response = await session.prompt([
   {
     role: "user",
-    content: "Your compromise just made the discussion more heated. The two departments drew up posters to illustrate their strategies' advantages:"
+    value: "Your compromise just made the discussion more heated. The two departments drew up posters to illustrate their strategies' advantages:"
   },
   {
     role: "user",
-    content: [{ type: "image", content: brochureFromTheMarketingDepartment }]
+    content: [{ type: "image", value: brochureFromTheMarketingDepartment }]
   },
   {
     role: "user",
-    content: [{ type: "image", content: brochureFromTheFinanceDepartment }]
+    content: [{ type: "image", value: brochureFromTheFinanceDepartment }]
   }
 ]);
 ```
@@ -261,7 +261,7 @@ Details:
 
 * For `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
 
-* Attempting to supply an invalid combination, e.g. `{ type: "audio", content: anImageBitmap }`, `{ type: "image", content: anAudioBuffer }`, or `{ type: "text", content: anArrayBuffer }`, will reject with a `TypeError`.
+* Attempting to supply an invalid combination, e.g. `{ type: "audio", value: anImageBitmap }`, `{ type: "image", value: anAudioBuffer }`, or `{ type: "text", value: anArrayBuffer }`, will reject with a `TypeError`.
 
 * For now, using the `"assistant"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
 
@@ -326,7 +326,7 @@ For such cases, in addition to the `prompt()` and `promptStreaming()` methods, t
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: "You are a skilled analyst who correlates patterns across multiple images."
+    value: "You are a skilled analyst who correlates patterns across multiple images."
   }],
   expectedInputs: [{ type: "image" }]
 });
@@ -335,8 +335,8 @@ fileUpload.onchange = async (e) => {
   await session.append([{
     role: "user",
     content: [
-      { type: "text", content: `Here's one image. Notes: ${fileNotesInput.value}` },
-      { type: "image", content: fileUpload.files[0] }
+      { type: "text", value: `Here's one image. Notes: ${fileNotesInput.value}` },
+      { type: "image", value: fileUpload.files[0] }
     ]
   }]);
 };
@@ -387,7 +387,7 @@ Each language model session consists of a persistent series of interactions with
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: "You are a friendly, helpful assistant specialized in clothing choices."
+    value: "You are a friendly, helpful assistant specialized in clothing choices."
   }]
 });
 
@@ -408,7 +408,7 @@ Multiple unrelated continuations of the same prompt can be set up by creating a 
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: "You are a friendly, helpful assistant specialized in clothing choices."
+    value: "You are a friendly, helpful assistant specialized in clothing choices."
   }]
 });
 
@@ -533,7 +533,7 @@ It's better practice, if possible, to supply the `create()` method with informat
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: `
+    value: `
       You are a foreign-language tutor for Japanese. The user is Korean. If necessary, either you or
       the user might "break character" and ask for or give clarification in Korean. But by default,
       prefer speaking in Japanese, and return to the Japanese conversation once any sidebars are
@@ -597,7 +597,7 @@ However, if you know ahead of time what languages you are hoping for the languag
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    content: `You are a helpful, harmless French chatbot.`
+    value: `You are a helpful, harmless French chatbot.`
   }],
   expectedInputs: [
     { type: "text", languages: ["en" /* for the system prompt */, "fr"] }
