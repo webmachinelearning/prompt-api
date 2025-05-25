@@ -238,7 +238,7 @@ To illustrate, the following extension of our above [multi-user example](#custom
 const response = await session.prompt([
   {
     role: "user",
-    value: "Your compromise just made the discussion more heated. The two departments drew up posters to illustrate their strategies' advantages:"
+    content: "Your compromise just made the discussion more heated. The two departments drew up posters to illustrate their strategies' advantages:"
   },
   {
     role: "user",
