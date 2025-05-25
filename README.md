@@ -88,11 +88,11 @@ If developers want to provide examples of the user/assistant interaction, they c
 ```js
 const session = await LanguageModel.create({
   initialPrompts: [
-    { role: "system", value: "Predict up to 5 emojis as a response to a comment. Output emojis, comma-separated." },
-    { role: "user", value: "This is amazing!" },
-    { role: "assistant", value: "❤️, ➕" },
-    { role: "user", value: "LGTM" },
-    { role: "assistant", value: "👍, 🚢" }
+    { role: "system", content: "Predict up to 5 emojis as a response to a comment. Output emojis, comma-separated." },
+    { role: "user", content: "This is amazing!" },
+    { role: "assistant", content: "❤️, ➕" },
+    { role: "user", content: "LGTM" },
+    { role: "assistant", content: "👍, 🚢" }
   ]
 });
 
