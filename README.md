@@ -387,7 +387,7 @@ Each language model session consists of a persistent series of interactions with
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: "You are a friendly, helpful assistant specialized in clothing choices."
+    content: "You are a friendly, helpful assistant specialized in clothing choices."
   }]
 });
 
@@ -408,7 +408,7 @@ Multiple unrelated continuations of the same prompt can be set up by creating a 
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: "You are a friendly, helpful assistant specialized in clothing choices."
+    content: "You are a friendly, helpful assistant specialized in clothing choices."
   }]
 });
 
@@ -533,7 +533,7 @@ It's better practice, if possible, to supply the `create()` method with informat
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: `
+    content: `
       You are a foreign-language tutor for Japanese. The user is Korean. If necessary, either you or
       the user might "break character" and ask for or give clarification in Korean. But by default,
       prefer speaking in Japanese, and return to the Japanese conversation once any sidebars are
@@ -597,7 +597,7 @@ However, if you know ahead of time what languages you are hoping for the languag
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: `You are a helpful, harmless French chatbot.`
+    content: `You are a helpful, harmless French chatbot.`
   }],
   expectedInputs: [
     { type: "text", languages: ["en" /* for the system prompt */, "fr"] }
