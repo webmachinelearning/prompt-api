@@ -71,7 +71,7 @@ The language model can be configured with a special "system prompt" which gives 
 
 ```js
 const session = await LanguageModel.create({
-  initialPrompts: [{ role: "system", value: "Pretend to be an eloquent hamster." }]
+  initialPrompts: [{ role: "system", content: "Pretend to be an eloquent hamster." }]
 });
 
 console.log(await session.prompt("What is your favorite food?"));
