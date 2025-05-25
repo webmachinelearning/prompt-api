@@ -127,9 +127,9 @@ const multiUserSession = await LanguageModel.create({
 });
 
 const result = await multiUserSession.prompt([
-  { role: "user", value: "Marketing: We need more budget for advertising campaigns." },
-  { role: "user", value: "Finance: We need to cut costs and advertising is on the list." },
-  { role: "assistant", value: "Let's explore a compromise that satisfies both departments." }
+  { role: "user", content: "Marketing: We need more budget for advertising campaigns." },
+  { role: "user", content: "Finance: We need to cut costs and advertising is on the list." },
+  { role: "assistant", content: "Let's explore a compromise that satisfies both departments." }
 ]);
 
 // `result` will contain a compromise proposal from the assistant.
