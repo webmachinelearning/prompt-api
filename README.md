@@ -145,7 +145,7 @@ A special case of the above is using the assistant role to emulate tool use or f
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: `
+    content: `
       You are a helpful assistant. You have access to the following tools:
       - calculator: A calculator. To use it, write "CALCULATOR: <expression>" where <expression> is a valid mathematical expression.
     `
