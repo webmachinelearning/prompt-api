@@ -326,7 +326,7 @@ For such cases, in addition to the `prompt()` and `promptStreaming()` methods, t
 const session = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: "You are a skilled analyst who correlates patterns across multiple images."
+    content: "You are a skilled analyst who correlates patterns across multiple images."
   }],
   expectedInputs: [{ type: "image" }]
 });
