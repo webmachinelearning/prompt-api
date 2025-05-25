@@ -162,7 +162,7 @@ async function promptWithCalculator(prompt) {
     const mathResult = evaluateMathExpression(expression);
 
     // Add the result to the session so it's in context going forward.
-    await session.prompt([{ role: "assistant", value: mathResult }]);
+    await session.prompt([{ role: "assistant", content: mathResult }]);
 
     // Return it as if that's what the assistant said to the user.
     return mathResult;
