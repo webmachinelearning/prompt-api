@@ -122,7 +122,7 @@ Our examples so far have provided `prompt()` and `promptStreaming()` with a sing
 const multiUserSession = await LanguageModel.create({
   initialPrompts: [{
     role: "system",
-    value: "You are a mediator in a discussion between two departments."
+    content: "You are a mediator in a discussion between two departments."
   }]
 });
 
