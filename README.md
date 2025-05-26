@@ -205,9 +205,9 @@ const userDrawnImage = document.querySelector("canvas");
 const response1 = await session.prompt([{
   role: "user",
   content: [
-    { type: "text", content: "Give a helpful artistic critique of how well the second image matches the first:" },
-    { type: "image", content: referenceImage },
-    { type: "image", content: userDrawnImage }
+    { type: "text", value: "Give a helpful artistic critique of how well the second image matches the first:" },
+    { type: "image", value: referenceImage },
+    { type: "image", value: userDrawnImage }
   ]
 }]);
 
@@ -218,8 +218,8 @@ const audioBlob = await captureMicrophoneInput({ seconds: 10 });
 const response2 = await session.prompt([{
   role: "user",
   content: [
-    { type: "text", content: "My response to your critique:" },
-    { type: "audio", content: audioBlob }
+    { type: "text", value: "My response to your critique:" },
+    { type: "audio", value: audioBlob }
   ]
 }]);
 ```
@@ -242,11 +242,11 @@ const response = await session.prompt([
   },
   {
     role: "user",
-    content: [{ type: "image", content: brochureFromTheMarketingDepartment }]
+    content: [{ type: "image", value: brochureFromTheMarketingDepartment }]
   },
   {
     role: "user",
-    content: [{ type: "image", content: brochureFromTheFinanceDepartment }]
+    content: [{ type: "image", value: brochureFromTheFinanceDepartment }]
   }
 ]);
 ```
@@ -261,7 +261,7 @@ Details:
 
 * For `HTMLVideoElement`, even a single frame might not yet be downloaded when the prompt API is called. In such cases, calling into the prompt API will force at least a single frame's worth of video to download. (The intent is to behave the same as `createImageBitmap(videoEl)`.)
 
-* Attempting to supply an invalid combination, e.g. `{ type: "audio", content: anImageBitmap }`, `{ type: "image", content: anAudioBuffer }`, or `{ type: "text", content: anArrayBuffer }`, will reject with a `TypeError`.
+* Attempting to supply an invalid combination, e.g. `{ type: "audio", value: anImageBitmap }`, `{ type: "image", value: anAudioBuffer }`, or `{ type: "text", value: anArrayBuffer }`, will reject with a `TypeError`.
 
 * For now, using the `"assistant"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
 
@@ -335,8 +335,8 @@ fileUpload.onchange = async (e) => {
   await session.append([{
     role: "user",
     content: [
-      { type: "text", content: `Here's one image. Notes: ${fileNotesInput.value}` },
-      { type: "image", content: fileUpload.files[0] }
+      { type: "text", value: `Here's one image. Notes: ${fileNotesInput.value}` },
+      { type: "image", value: fileUpload.files[0] }
     ]
   }]);
 };
