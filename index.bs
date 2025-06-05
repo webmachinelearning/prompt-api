@@ -1,0 +1,155 @@
+<pre class='metadata'>
+Title: Prompt API
+Shortname: prompt
+Level: None
+Status: CG-DRAFT
+Group: webml
+Repository: webmachinelearning/prompt-api
+URL: https://webmachinelearning.github.io/prompt-api
+Editor: Domenic Denicola, Google https://google.com, d@domenic.me, https://domenic.me/
+Abstract: The prompt API gives web pages the ability to directly prompt a language model
+Markup Shorthands: markdown yes, css no
+Complain About: accidental-2119 yes, missing-example-ids yes
+Assume Explicit For: yes
+Default Biblio Status: current
+Boilerplate: omit conformance
+Indent: 2
+Die On: warning
+</pre>
+
+<h2 id="intro">Introduction</h2>
+
+TODO
+
+<h2 id="dependencies">Dependencies</h2>
+
+This specification depends on the Infra Standard. [[!INFRA]]
+
+As with the rest of the web platform, human languages are identified in these APIs by BCP 47 language tags, such as "`ja`", "`en-US`", "`sr-Cyrl`", or "`de-CH-1901-x-phonebk-extended`". The specific algorithms used for validation, canonicalization, and language tag matching are those from the <cite>ECMAScript Internationalization API Specification</cite>, which in turn defers some of its processing to <cite>Unicode Locale Data Markup Language (LDML)</cite>. [[BCP47]] [[!ECMA-402]] [[UTS35]].
+
+These APIs are part of a family of APIs expected to be powered by machine learning models, which share common API surface idioms and specification patterns. Currently, the specification text for these shared parts lives in [[WRITING-ASSISTANCE-APIS#supporting]], and the common privacy and security considerations are discussed in [[WRITING-ASSISTANCE-APIS#privacy]] and [[WRITING-ASSISTANCE-APIS#security]]. Implementing these APIs requires implementing that shared infrastructure, and conforming to those privacy and security considerations. But it does not require implementing or exposing the actual writing assistance APIs. [[!WRITING-ASSISTANCE-APIS]]
+
+<h2 id="api">The API</h2>
+
+<xmp class="idl">
+[Exposed=Window, SecureContext]
+interface LanguageModel : EventTarget {
+  static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
+  static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
+  static Promise<LanguageModelParams?> params();
+
+  // These will throw "NotSupportedError" DOMExceptions if role = "system"
+  Promise<DOMString> prompt(
+    LanguageModelPrompt input,
+    optional LanguageModelPromptOptions options = {}
+  );
+  ReadableStream promptStreaming(
+    LanguageModelPrompt input,
+    optional LanguageModelPromptOptions options = {}
+  );
+  Promise<undefined> append(
+    LanguageModelPrompt input,
+    optional LanguageModelAppendOptions options = {}
+  );
+
+  Promise<double> measureInputUsage(
+    LanguageModelPrompt input,
+    optional LanguageModelPromptOptions options = {}
+  );
+  readonly attribute double inputUsage;
+  readonly attribute unrestricted double inputQuota;
+  attribute EventHandler onquotaoverflow;
+
+  readonly attribute unsigned long topK;
+  readonly attribute float temperature;
+
+  Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
+  undefined destroy();
+};
+
+[Exposed=Window, SecureContext]
+interface LanguageModelParams {
+  readonly attribute unsigned long defaultTopK;
+  readonly attribute unsigned long maxTopK;
+  readonly attribute float defaultTemperature;
+  readonly attribute float maxTemperature;
+};
+
+dictionary LanguageModelCreateCoreOptions {
+  // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
+  // They are unrestricted double so as to allow +Infinity without failing.
+  unrestricted double topK;
+  unrestricted double temperature;
+
+  sequence<LanguageModelExpected> expectedInputs;
+  sequence<LanguageModelExpected> expectedOutputs;
+};
+
+dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
+  AbortSignal signal;
+  CreateMonitorCallback monitor;
+
+  sequence<LanguageModelMessage> initialPrompts;
+};
+
+dictionary LanguageModelPromptOptions {
+  object responseConstraint;
+  AbortSignal signal;
+};
+
+dictionary LanguageModelAppendOptions {
+  AbortSignal signal;
+};
+
+dictionary LanguageModelCloneOptions {
+  AbortSignal signal;
+};
+
+dictionary LanguageModelExpected {
+  required LanguageModelMessageType type;
+  sequence<DOMString> languages;
+};
+
+// The argument to the prompt() method and others like it
+
+typedef (
+  sequence<LanguageModelMessage>
+  // Shorthand for `[{ role: "user", content: [{ type: "text", value: providedValue }] }]`
+  or DOMString
+) LanguageModelPrompt;
+
+dictionary LanguageModelMessage {
+  required LanguageModelMessageRole role;
+
+  // The DOMString branch is shorthand for `[{ type: "text", value: providedValue }]`
+  required (DOMString or sequence<LanguageModelMessageContent>) content;
+};
+
+dictionary LanguageModelMessageContent {
+  required LanguageModelMessageType type;
+  required LanguageModelMessageValue value;
+};
+
+enum LanguageModelMessageRole { "system", "user", "assistant" };
+
+enum LanguageModelMessageType { "text", "image", "audio" };
+
+typedef (
+  ImageBitmapSource
+  or AudioBuffer
+  or BufferSource
+  or DOMString
+) LanguageModelMessageValue;
+</xmp>
+
+<h3 id="permissions-policy">Permissions policy integration</h3>
+
+Access to the prompt API is gated behind the [=policy-controlled feature=] "<dfn permission>language-model</dfn>", which has a [=policy-controlled feature/default allowlist=] of <code>[=default allowlist/'self'=]</code>.
+
+<h2 id="privacy">Privacy considerations</h2>
+
+Please see [[WRITING-ASSISTANCE-APIS#privacy]] for a discussion of privacy considerations for the prompt API. That text was written to apply to all APIs sharing the same infrastructure, as noted in [[#dependencies]].
+
+<h2 id="security">Security considerations</h2>
+
+Please see [[WRITING-ASSISTANCE-APIS#security]] for a discussion of security considerations for the prompt API. That text was written to apply to all APIs sharing the same infrastructure, as noted in [[#dependencies]].
