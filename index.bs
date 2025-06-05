@@ -123,6 +123,8 @@ dictionary LanguageModelMessage {
 
   // The DOMString branch is shorthand for `[{ type: "text", value: providedValue }]`
   required (DOMString or sequence<LanguageModelMessageContent>) content;
+
+  boolean prefix = false;
 };
 
 dictionary LanguageModelMessageContent {
@@ -159,7 +161,8 @@ typedef (
             "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
             "{{LanguageModelMessageContent/value}}" → |input|&nbsp;&nbsp;&nbsp;&nbsp;<!-- https://github.com/speced/bikeshed/issues/3118 -->
           ]»
-        »
+        »,
+        "{{LanguageModelMessage/prefix}}" → false
       ]»
     »</span>.
 
@@ -178,8 +181,15 @@ typedef (
             "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
             "{{LanguageModelMessageContent/value}}" → |message|&nbsp;&nbsp;&nbsp;&nbsp;<!-- https://github.com/speced/bikeshed/issues/3118 -->
           ]»
-        »
-      ]»</span> to |messages|.
+        »,
+        "{{LanguageModelMessage/prefix}}" → |message|["{{LanguageModelMessage/prefix}}"]
+      ]»</span>.
+
+    1. If |message|["{{LanguageModelMessage/prefix}}"] is true, then:
+
+      1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/assistant}}", then throw a "{{SyntaxError}}" {{DOMException}}.
+
+      1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
 
