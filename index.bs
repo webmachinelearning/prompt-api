@@ -142,6 +142,78 @@ typedef (
 ) LanguageModelMessageValue;
 </xmp>
 
+<h3 id="prompt-processing">Prompt processing</h3>
+
+<p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
+
+<div algorithm>
+  To <dfn>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
+
+  1. [=Assert=]: |expectedTypes| [=list/contains=] "{{LanguageModelMessageType/text}}".
+
+  1. If |input| is a [=string=], then return <span style="white-space: pre-wrap">«
+      «[
+        "{{LanguageModelMessage/role}}" → "{{LanguageModelMessageRole/user}}",
+        "{{LanguageModelMessage/content}}" → «
+          «[
+            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContent/value}}" → |input|&nbsp;&nbsp;&nbsp;&nbsp;<!-- https://github.com/speced/bikeshed/issues/3118 -->
+          ]»
+        »
+      ]»
+    »</span>.
+
+  1. [=Assert=]: |input| is a [=list=] of {{LanguageModelMessage}}s.
+
+  1. Let |seenNonSystemRole| be false.
+
+  1. Let |messages| be an empty [=list=] of {{LanguageModelMessage}}s.
+
+  1. [=list/For each=] |message| of |input|:
+
+    1. If |message|["{{LanguageModelMessage/content}}"] is a [=string=], then set |message| to <span style="white-space: pre-wrap">«[
+        "{{LanguageModelMessage/role}}" → |message|["{{LanguageModelMessage/role}}"],
+        "{{LanguageModelMessage/content}}" → «
+          «[
+            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContent/value}}" → |message|&nbsp;&nbsp;&nbsp;&nbsp;<!-- https://github.com/speced/bikeshed/issues/3118 -->
+          ]»
+        »
+      ]»</span> to |messages|.
+
+    1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
+
+      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
+
+        1. If |isInitial| is false, then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+        1. If |seenNonSystemRole| is true, then throw a "{{SyntaxError}}" {{DOMException}}.
+
+      1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/system}}", then set |seenNonSystemRole| to true.
+
+      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/image}}", then:
+
+        1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/image}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/audio}}", then:
+
+        1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+
+    1. [=list/Append=] |message| to |messages|.
+
+  1. If |messages| [=list/is empty=], then throw a "{{SyntaxError}}" {{DOMException}}.
+
+  1. Return |messages|.
+</div>
+
 <h3 id="permissions-policy">Permissions policy integration</h3>
 
 Access to the prompt API is gated behind the [=policy-controlled feature=] "<dfn permission>language-model</dfn>", which has a [=policy-controlled feature/default allowlist=] of <code>[=default allowlist/'self'=]</code>.
