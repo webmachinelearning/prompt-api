@@ -314,6 +314,52 @@ The returned value will be a string that matches the input `RegExp`. If the user
 
 If a value that is neither a `RegExp` object or a valid JSON schema object is given, the method will error with a `TypeError`.
 
+### Constraining responses by providing a prefix
+
+As discussed in [Customizing the role per prompt](#customizing-the-role-per-prompt), it is possible to prompt the language model to add a new `"assistant"`-role response in addition to a previous one. Usually it will elaborate on its previous messages. For example:
+
+```js
+const followup = await session.prompt([
+[
+    {
+      role: "user",
+      content: "I'm nervous about my presentation tomorrow"
+    },
+    {
+      role: "assistant"
+      content: "Presentations are tough!"
+    }
+  ]
+]);
+
+// `followup` might be something like "Here are some tips for staying calm.", or
+// "I remember my first presentation, I was nervous too!" or...
+```
+
+In some cases, instead of asking for a new response message, you want to "prefill" part of the `"assistant"`-role response message. An example use case is to guide the language model toward specific response formats. To do this, add `prefix: true` to the trailing `"assistant"`-role message. For example:
+
+```js
+const characterSheet = await session.prompt([
+  {
+    role: "user",
+    content: "Create a TOML character sheet for a gnome barbarian"
+  },
+  {
+    role: "assistant",
+    content: "```toml\n",
+    prefix: true
+  }
+]);
+```
+
+(Such examples work best if we also support [stop sequences](https://github.com/webmachinelearning/prompt-api/issues/44); stay tuned for that!)
+
+Without this continuation, the output might be something like "Sure! Here's a TOML character sheet...". Whereas the prefix message sets the assistant on the right path immediately.
+
+(Kudos to the [Standard Completions project](https://standardcompletions.org/) for [discussion](https://github.com/standardcompletions/rfcs/pull/8) of this functionality, as well as [the example](https://x.com/stdcompletions/status/1928565134080778414).)
+
+If `prefix` is used in any message besides a final `"assistant"`-role one, a `"SyntaxError"` `DOMException` will occur.
+
 ### Appending messages without prompting for a response
 
 In some cases, you know which messages you'll want to use to populate the session, but not yet the final message before you prompt the model for a response. Because processing messages can take some time (especially for multimodal inputs), it's useful to be able to send such messages to the model ahead of time. This allows it to get a head-start on processing, while you wait for the right time to prompt for a response.
