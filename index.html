@@ -5,10 +5,10 @@
   <title>Prompt API</title>
   <meta content="CG-DRAFT" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/cg-draft" rel="stylesheet">
-  <meta content="Bikeshed version 9a7a6709a, updated Tue May 27 16:45:34 2025 -0700" name="generator">
+  <meta content="Bikeshed version 275834c42, updated Wed Jun 11 14:18:15 2025 -0700" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="e91269e6fc7a4da198755569bbf7fa2156f05e8b" name="revision">
+  <meta content="eb8768b67a6937a7334a738adaff338195bc8768" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -692,11 +692,58 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     c-[il] { color: #657b83 } /* Literal.Number.Integer.Long */
 }
 </style>
+<style>/* Boilerplate: style-var-click-highlighting */
+/*
+Colors were chosen in Lab using https://nixsensor.com/free-color-converter/
+D50 2deg illuminant, L in [0,100], a and b in [-128, 128]
+0 = lab(85,0,85)
+1 = lab(85,80,30)
+2 = lab(85,-40,40)
+3 = lab(85,-50,0)
+4 = lab(85,5,15)
+5 = lab(85,-10,-50)
+6 = lab(85,35,-15)
+
+For darkmode:
+0 = oklab(50%   0%  108%)
+1 = oklab(50% -51%   51%)
+2 = oklab(50% -64%  -20%)
+3 = oklab(50%   6%   19%)
+4 = oklab(50% -12%  -64%)
+5 = oklab(50%  44%  -19%)  
+6 = oklab(50% 102%   38%)
+*/
+
+[data-algorithm] var { cursor: pointer; }
+var[data-var-color] { background-color: var(--var-bg); box-shadow: 0 0 0 2px var(--var-bg); }
+
+var[data-var-color] { --var-bg: #F4D200; }
+var[data-var-color="1"] { --var-bg: #FF87A2; }
+var[data-var-color="2"] { --var-bg: #96E885; }
+var[data-var-color="3"] { --var-bg: #3EEED2; }
+var[data-var-color="4"] { --var-bg: #EACFB6; }
+var[data-var-color="5"] { --var-bg: #82DDFF; }
+var[data-var-color="6"] { --var-vg: #FFBCF2; }
+
+@media (prefers-color-scheme: dark) {
+	var[data-var-color] { --var-bg: #bc1a00; }
+	var[data-var-color="1"] { --var-bg: #007f00; }
+	var[data-var-color="2"] { --var-bg: #008698; }
+	var[data-var-color="3"] { --var-bg: #7f5b2b; }
+	var[data-var-color="4"] { --var-bg: #004df3; }
+	var[data-var-color="5"] { --var-bg: #a1248a; }
+	var[data-var-color="6"] { --var-vg: #ff0000; }
+}
+</style>
  <body class="h-entry">
   <div class="head">
-   <p data-fill-with="logo"><a class="logo" href="https://webmachinelearning.github.io/"> <img alt="Logo" height="100" src="https://webmachinelearning.github.io/webmachinelearning-logo.png" width="100"> </a> </p>
+   <p data-fill-with="logo"><a class="logo" href="https://webmachinelearning.github.io/">
+    <img alt="Logo" height="100" src="https://webmachinelearning.github.io/webmachinelearning-logo.png" width="100">
+</a>
+</p>
    <h1 class="p-name no-ref" id="title">Prompt API</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>, <time class="dt-updated" datetime="2025-06-05">5 June 2025</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
+    <time class="dt-updated" datetime="2025-06-13">13 June 2025</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -712,7 +759,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </details>
    <div data-fill-with="warning"></div>
    <p class="copyright" data-fill-with="copyright"><a href="https://www.w3.org/policies/#copyright">Copyright</a> © 2025 the Contributors to the Prompt API Specification, published by the <a href="https://www.w3.org/community/webmachinelearning/">Web Machine Learning Community Group</a> under the <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a>.
-A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/">summary</a> is available. </p>
+A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/">summary</a> is available.
+</p>
    <hr title="Separator for header">
   </div>
   <div class="p-summary" data-fill-with="abstract">
@@ -721,12 +769,17 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   </div>
   <h2 class="no-num no-toc no-ref heading settled" id="sotd"><span class="content">Status of this document</span></h2>
   <div data-fill-with="status">
-   <p> This specification was published by the <a href="https://www.w3.org/community/webmachinelearning/">Web Machine Learning Community Group</a>.
+   <p>
+  This specification was published by the <a href="https://www.w3.org/community/webmachinelearning/">Web Machine Learning Community Group</a>.
   It is not a W3C Standard nor is it on the W3C Standards Track.
 
-  Please note that under the <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a> there is a limited opt-out and other conditions apply.
+  Please note that under the
+  <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a>
+  there is a limited opt-out and other conditions apply.
 
-  Learn more about <a href="http://www.w3.org/community/">W3C Community and Business Groups</a>. </p>
+  Learn more about
+  <a href="http://www.w3.org/community/">W3C Community and Business Groups</a>.
+</p>
    <p></p>
   </div>
   <div data-fill-with="at-risk"></div>
@@ -738,7 +791,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
     <li>
      <a href="#api"><span class="secno">3</span> <span class="content">The API</span></a>
      <ol class="toc">
-      <li><a href="#permissions-policy"><span class="secno">3.1</span> <span class="content">Permissions policy integration</span></a>
+      <li><a href="#prompt-processing"><span class="secno">3.1</span> <span class="content">Prompt processing</span></a>
+      <li><a href="#permissions-policy"><span class="secno">3.2</span> <span class="content">Permissions policy integration</span></a>
      </ol>
     <li><a href="#privacy"><span class="secno">4</span> <span class="content">Privacy considerations</span></a>
     <li><a href="#security"><span class="secno">5</span> <span class="content">Security considerations</span></a>
@@ -874,7 +928,91 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>or</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString④"><c- b>DOMString</c-></a>
 ) <dfn class="dfn-paneled idl-code" data-dfn-type="typedef" data-export id="typedefdef-languagemodelmessagevalue"><code><c- g>LanguageModelMessageValue</c-></code></dfn>;
 </pre>
-   <h3 class="heading settled" data-level="3.1" id="permissions-policy"><span class="secno">3.1. </span><span class="content">Permissions policy integration</span><a class="self-link" href="#permissions-policy"></a></h3>
+   <h3 class="heading settled" data-level="3.1" id="prompt-processing"><span class="secno">3.1. </span><span class="content">Prompt processing</span><a class="self-link" href="#prompt-processing"></a></h3>
+   <p class="note" role="note">This will be incorporated into a proper part of the specification later. For now, we’re just writing out this algorithm as a full spec, since it’s complicated.</p>
+   <div class="algorithm" data-algorithm="validate and canonicalize a prompt">
+    
+  To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="validate-and-canonicalize-a-prompt">validate and canonicalize a prompt</dfn> given a <code class="idl"><a data-link-type="idl" href="#typedefdef-languagemodelprompt" id="ref-for-typedefdef-languagemodelprompt④">LanguageModelPrompt</a></code> <var>input</var>, a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list">list</a> of <code class="idl"><a data-link-type="idl" href="#enumdef-languagemodelmessagetype" id="ref-for-enumdef-languagemodelmessagetype②">LanguageModelMessageType</a></code>s <var>expectedTypes</var>, and a boolean <var>isInitial</var>, perform the following steps. The return value will be a non-empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list①">list</a> of <code class="idl"><a data-link-type="idl" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage②">LanguageModelMessage</a></code>s in their "longhand" form.
+
+
+    <ol>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert">Assert</a>: <var>expectedTypes</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain">contains</a> "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-text" id="ref-for-dom-languagemodelmessagetype-text">text</a></code>".</p>
+     <li data-md>
+      <p>If <var>input</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string">string</a>, then return <span style="white-space: pre-wrap">«
+  «[
+    "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-role" id="ref-for-dom-languagemodelmessage-role">role</a></code>" → "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagerole-user" id="ref-for-dom-languagemodelmessagerole-user">user</a></code>",
+    "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-content" id="ref-for-dom-languagemodelmessage-content">content</a></code>" → «
+      «[
+        "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-type" id="ref-for-dom-languagemodelmessagecontent-type">type</a></code>" → "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-text" id="ref-for-dom-languagemodelmessagetype-text①">text</a></code>",
+        "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-value" id="ref-for-dom-languagemodelmessagecontent-value">value</a></code>" → <var>input</var>    
+      ]»
+    »
+  ]»
+»</span>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert①">Assert</a>: <var>input</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②">list</a> of <code class="idl"><a data-link-type="idl" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage③">LanguageModelMessage</a></code>s.</p>
+     <li data-md>
+      <p>Let <var>seenNonSystemRole</var> be false.</p>
+     <li data-md>
+      <p>Let <var>messages</var> be an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list③">list</a> of <code class="idl"><a data-link-type="idl" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage④">LanguageModelMessage</a></code>s.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate">For each</a> <var>message</var> of <var>input</var>:</p>
+      <ol>
+       <li data-md>
+        <p>If <var>message</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-content" id="ref-for-dom-languagemodelmessage-content①">content</a></code>"] is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string①">string</a>, then set <var>message</var> to <span style="white-space: pre-wrap">«[
+  "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-role" id="ref-for-dom-languagemodelmessage-role①">role</a></code>" → <var>message</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-role" id="ref-for-dom-languagemodelmessage-role②">role</a></code>"],
+  "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-content" id="ref-for-dom-languagemodelmessage-content②">content</a></code>" → «
+    «[
+      "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-type" id="ref-for-dom-languagemodelmessagecontent-type①">type</a></code>" → "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-text" id="ref-for-dom-languagemodelmessagetype-text②">text</a></code>",
+      "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-value" id="ref-for-dom-languagemodelmessagecontent-value①">value</a></code>" → <var>message</var>    
+    ]»
+  »
+]»</span> to <var>messages</var>.</p>
+       <li data-md>
+        <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate①">For each</a> <var>content</var> of <var>message</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-content" id="ref-for-dom-languagemodelmessage-content③">content</a></code>"]:</p>
+        <ol>
+         <li data-md>
+          <p>If <var>message</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-role" id="ref-for-dom-languagemodelmessage-role③">role</a></code>"] is "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagerole-system" id="ref-for-dom-languagemodelmessagerole-system">system</a></code>", then:</p>
+          <ol>
+           <li data-md>
+            <p>If <var>isInitial</var> is false, then throw a "<code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#notsupportederror" id="ref-for-notsupportederror">NotSupportedError</a></code>" <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#idl-DOMException" id="ref-for-idl-DOMException">DOMException</a></code>.</p>
+           <li data-md>
+            <p>If <var>seenNonSystemRole</var> is true, then throw a "<code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#syntaxerror" id="ref-for-syntaxerror">SyntaxError</a></code>" <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#idl-DOMException" id="ref-for-idl-DOMException①">DOMException</a></code>.</p>
+          </ol>
+         <li data-md>
+          <p>If <var>message</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-role" id="ref-for-dom-languagemodelmessage-role④">role</a></code>"] is not "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagerole-system" id="ref-for-dom-languagemodelmessagerole-system①">system</a></code>", then set <var>seenNonSystemRole</var> to true.</p>
+         <li data-md>
+          <p>If <var>message</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessage-role" id="ref-for-dom-languagemodelmessage-role⑤">role</a></code>"] is "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagerole-assistant" id="ref-for-dom-languagemodelmessagerole-assistant">assistant</a></code>" and <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-type" id="ref-for-dom-languagemodelmessagecontent-type②">type</a></code>"] is not "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-text" id="ref-for-dom-languagemodelmessagetype-text③">text</a></code>", then throw a "<code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#notsupportederror" id="ref-for-notsupportederror①">NotSupportedError</a></code>" <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#idl-DOMException" id="ref-for-idl-DOMException②">DOMException</a></code>.</p>
+         <li data-md>
+          <p>If <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-type" id="ref-for-dom-languagemodelmessagecontent-type③">type</a></code>"] is "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-text" id="ref-for-dom-languagemodelmessagetype-text④">text</a></code>" and <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-value" id="ref-for-dom-languagemodelmessagecontent-value②">value</a></code>"] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②">string</a>, then throw a <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#exceptiondef-typeerror" id="ref-for-exceptiondef-typeerror">TypeError</a></code>.</p>
+         <li data-md>
+          <p>If <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-type" id="ref-for-dom-languagemodelmessagecontent-type④">type</a></code>"] is "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-image" id="ref-for-dom-languagemodelmessagetype-image">image</a></code>", then:</p>
+          <ol>
+           <li data-md>
+            <p>If <var>expectedTypes</var> does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain①">contain</a> "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-image" id="ref-for-dom-languagemodelmessagetype-image①">image</a></code>", then throw a "<code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#notsupportederror" id="ref-for-notsupportederror②">NotSupportedError</a></code>" <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#idl-DOMException" id="ref-for-idl-DOMException③">DOMException</a></code>.</p>
+           <li data-md>
+            <p>If <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-value" id="ref-for-dom-languagemodelmessagecontent-value③">value</a></code>"] is not an <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource" id="ref-for-imagebitmapsource①">ImageBitmapSource</a></code> or <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#BufferSource" id="ref-for-BufferSource①">BufferSource</a></code>, then throw a <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#exceptiondef-typeerror" id="ref-for-exceptiondef-typeerror①">TypeError</a></code>.</p>
+          </ol>
+         <li data-md>
+          <p>If <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-type" id="ref-for-dom-languagemodelmessagecontent-type⑤">type</a></code>"] is "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-audio" id="ref-for-dom-languagemodelmessagetype-audio">audio</a></code>", then:</p>
+          <ol>
+           <li data-md>
+            <p>If <var>expectedTypes</var> does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain②">contain</a> "<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagetype-audio" id="ref-for-dom-languagemodelmessagetype-audio①">audio</a></code>", then throw a "<code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#notsupportederror" id="ref-for-notsupportederror③">NotSupportedError</a></code>" <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#idl-DOMException" id="ref-for-idl-DOMException④">DOMException</a></code>.</p>
+           <li data-md>
+            <p>If <var>content</var>["<code class="idl"><a data-link-type="idl" href="#dom-languagemodelmessagecontent-value" id="ref-for-dom-languagemodelmessagecontent-value④">value</a></code>"] is not an <code class="idl"><a data-link-type="idl" href="https://webaudio.github.io/web-audio-api/#AudioBuffer" id="ref-for-AudioBuffer①">AudioBuffer</a></code>, <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#BufferSource" id="ref-for-BufferSource②">BufferSource</a></code>, or <code class="idl"><a data-link-type="idl" href="https://w3c.github.io/FileAPI/#dfn-Blob" id="ref-for-dfn-Blob">Blob</a></code>, then throw a <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#exceptiondef-typeerror" id="ref-for-exceptiondef-typeerror②">TypeError</a></code>.</p>
+          </ol>
+        </ol>
+       <li data-md>
+        <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-append" id="ref-for-list-append">Append</a> <var>message</var> to <var>messages</var>.</p>
+      </ol>
+     <li data-md>
+      <p>If <var>messages</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-is-empty" id="ref-for-list-is-empty">is empty</a>, then throw a "<code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#syntaxerror" id="ref-for-syntaxerror①">SyntaxError</a></code>" <code class="idl"><a data-link-type="idl" href="https://webidl.spec.whatwg.org/#idl-DOMException" id="ref-for-idl-DOMException⑤">DOMException</a></code>.</p>
+     <li data-md>
+      <p>Return <var>messages</var>.</p>
+    </ol>
+   </div>
+   <h3 class="heading settled" data-level="3.2" id="permissions-policy"><span class="secno">3.2. </span><span class="content">Permissions policy integration</span><a class="self-link" href="#permissions-policy"></a></h3>
    <p>Access to the prompt API is gated behind the <a data-link-type="dfn" href="https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature" id="ref-for-policy-controlled-feature">policy-controlled feature</a> "<dfn class="dfn-paneled idl-code" data-dfn-type="permission" data-export id="permissiondef-language-model"><code>language-model</code></dfn>", which has a <a data-link-type="dfn" href="https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature-default-allowlist" id="ref-for-policy-controlled-feature-default-allowlist">default allowlist</a> of <code><a data-link-type="dfn" href="https://w3c.github.io/webappsec-permissions-policy/#default-allowlist-self" id="ref-for-default-allowlist-self">'self'</a></code>.</p>
    <h2 class="heading settled" data-level="4" id="privacy"><span class="secno">4. </span><span class="content">Privacy considerations</span><a class="self-link" href="#privacy"></a></h2>
    <p>Please see <a href="https://webmachinelearning.github.io/writing-assistance-apis/#privacy"><cite>Writing Assistance APIs</cite> § 6 Privacy considerations</a> for a discussion of privacy considerations for the prompt API. That text was written to apply to all APIs sharing the same infrastructure, as noted in <a href="#dependencies">§ 2 Dependencies</a>.</p>
@@ -905,7 +1043,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#dom-languagemodelcreateoptions-initialprompts">initialPrompts</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-inputquota">inputQuota</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-inputusage">inputUsage</a><span>, in § 3</span>
-   <li><a href="#permissiondef-language-model">language-model</a><span>, in § 3.1</span>
+   <li><a href="#permissiondef-language-model">language-model</a><span>, in § 3.2</span>
    <li><a href="#languagemodel">LanguageModel</a><span>, in § 3</span>
    <li><a href="#dictdef-languagemodelappendoptions">LanguageModelAppendOptions</a><span>, in § 3</span>
    <li><a href="#dictdef-languagemodelcloneoptions">LanguageModelCloneOptions</a><span>, in § 3</span>
@@ -963,6 +1101,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <li><a href="#dom-languagemodelmessagecontent-type">dict-member for LanguageModelMessageContent</a><span>, in § 3</span>
     </ul>
    <li><a href="#dom-languagemodelmessagerole-user">"user"</a><span>, in § 3</span>
+   <li><a href="#validate-and-canonicalize-a-prompt">validate and canonicalize a prompt</a><span>, in § 3.1</span>
    <li><a href="#dom-languagemodelmessagecontent-value">value</a><span>, in § 3</span>
   </ul>
   <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
@@ -974,10 +1113,26 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <li><span class="dfn-paneled" id="2bc0cdf4">EventTarget</span>
     </ul>
    <li>
+    <a data-link-type="biblio">[FileAPI]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="b7d73f5b">Blob</span>
+    </ul>
+   <li>
     <a data-link-type="biblio">[HTML]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="f0951476">EventHandler</span>
      <li><span class="dfn-paneled" id="aeb8d5fd">ImageBitmapSource</span>
+    </ul>
+   <li>
+    <a data-link-type="biblio">[INFRA]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="53275e46">append</span>
+     <li><span class="dfn-paneled" id="77b4c09a">assert</span>
+     <li><span class="dfn-paneled" id="ae8def21">contain</span>
+     <li><span class="dfn-paneled" id="16d07e10">for each</span>
+     <li><span class="dfn-paneled" id="6b815fdd">is empty</span>
+     <li><span class="dfn-paneled" id="649608b9">list</span>
+     <li><span class="dfn-paneled" id="0698d556">string</span>
     </ul>
    <li>
     <a data-link-type="biblio">[PERMISSIONS-POLICY-1]</a> defines the following terms:
@@ -1000,10 +1155,14 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
     <a data-link-type="biblio">[WEBIDL]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="3aff2fb3">BufferSource</span>
+     <li><span class="dfn-paneled" id="dca2de17">DOMException</span>
      <li><span class="dfn-paneled" id="8855a9aa">DOMString</span>
      <li><span class="dfn-paneled" id="889e932f">Exposed</span>
+     <li><span class="dfn-paneled" id="3182eb71">NotSupportedError</span>
      <li><span class="dfn-paneled" id="bdbd19d1">Promise</span>
      <li><span class="dfn-paneled" id="b75bb3bd">SecureContext</span>
+     <li><span class="dfn-paneled" id="be2d2b4c">SyntaxError</span>
+     <li><span class="dfn-paneled" id="82ca3efc">TypeError</span>
      <li><span class="dfn-paneled" id="8c800cdf">double</span>
      <li><span class="dfn-paneled" id="eec1be2d">float</span>
      <li><span class="dfn-paneled" id="efd1ec5d">object</span>
@@ -1026,6 +1185,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <dd>Anne van Kesteren. <a href="https://dom.spec.whatwg.org/"><cite>DOM Standard</cite></a>. Living Standard. URL: <a href="https://dom.spec.whatwg.org/">https://dom.spec.whatwg.org/</a>
    <dt id="biblio-ecma-402">[ECMA-402]
    <dd><a href="https://tc39.es/ecma402/"><cite>ECMAScript Internationalization API Specification</cite></a>. URL: <a href="https://tc39.es/ecma402/">https://tc39.es/ecma402/</a>
+   <dt id="biblio-fileapi">[FileAPI]
+   <dd>Marijn Kruisselbrink. <a href="https://w3c.github.io/FileAPI/"><cite>File API</cite></a>. URL: <a href="https://w3c.github.io/FileAPI/">https://w3c.github.io/FileAPI/</a>
    <dt id="biblio-html">[HTML]
    <dd>Anne van Kesteren; et al. <a href="https://html.spec.whatwg.org/multipage/"><cite>HTML Standard</cite></a>. Living Standard. URL: <a href="https://html.spec.whatwg.org/multipage/">https://html.spec.whatwg.org/multipage/</a>
    <dt id="biblio-infra">[INFRA]
@@ -1359,30 +1520,42 @@ function parseHTML(markup) {
 "use strict";
 {
 let dfnPanelData = {
+"0698d556": {"dfnID":"0698d556","dfnText":"string","external":true,"refSections":[{"refs":[{"id":"ref-for-string"},{"id":"ref-for-string\u2460"},{"id":"ref-for-string\u2461"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#string"},
 "11e0b87f": {"dfnID":"11e0b87f","dfnText":"unrestricted double","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-unrestricted-double"},{"id":"ref-for-idl-unrestricted-double\u2460"},{"id":"ref-for-idl-unrestricted-double\u2461"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-unrestricted-double"},
 "1547df8e": {"dfnID":"1547df8e","dfnText":"Availability","external":true,"refSections":[{"refs":[{"id":"ref-for-enumdef-availability"}],"title":"3. The API"}],"url":"https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability"},
-"1570624a": {"dfnID":"1570624a","dfnText":"default allowlist","external":true,"refSections":[{"refs":[{"id":"ref-for-policy-controlled-feature-default-allowlist"}],"title":"3.1. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature-default-allowlist"},
+"1570624a": {"dfnID":"1570624a","dfnText":"default allowlist","external":true,"refSections":[{"refs":[{"id":"ref-for-policy-controlled-feature-default-allowlist"}],"title":"3.2. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature-default-allowlist"},
+"16d07e10": {"dfnID":"16d07e10","dfnText":"for each","external":true,"refSections":[{"refs":[{"id":"ref-for-list-iterate"},{"id":"ref-for-list-iterate\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list-iterate"},
 "2bc0cdf4": {"dfnID":"2bc0cdf4","dfnText":"EventTarget","external":true,"refSections":[{"refs":[{"id":"ref-for-eventtarget"}],"title":"3. The API"}],"url":"https://dom.spec.whatwg.org/#eventtarget"},
-"333b39ba": {"dfnID":"333b39ba","dfnText":"'self'","external":true,"refSections":[{"refs":[{"id":"ref-for-default-allowlist-self"}],"title":"3.1. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#default-allowlist-self"},
-"3aff2fb3": {"dfnID":"3aff2fb3","dfnText":"BufferSource","external":true,"refSections":[{"refs":[{"id":"ref-for-BufferSource"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#BufferSource"},
+"3182eb71": {"dfnID":"3182eb71","dfnText":"NotSupportedError","external":true,"refSections":[{"refs":[{"id":"ref-for-notsupportederror"},{"id":"ref-for-notsupportederror\u2460"},{"id":"ref-for-notsupportederror\u2461"},{"id":"ref-for-notsupportederror\u2462"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#notsupportederror"},
+"333b39ba": {"dfnID":"333b39ba","dfnText":"'self'","external":true,"refSections":[{"refs":[{"id":"ref-for-default-allowlist-self"}],"title":"3.2. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#default-allowlist-self"},
+"3aff2fb3": {"dfnID":"3aff2fb3","dfnText":"BufferSource","external":true,"refSections":[{"refs":[{"id":"ref-for-BufferSource"}],"title":"3. The API"},{"refs":[{"id":"ref-for-BufferSource\u2460"},{"id":"ref-for-BufferSource\u2461"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#BufferSource"},
+"53275e46": {"dfnID":"53275e46","dfnText":"append","external":true,"refSections":[{"refs":[{"id":"ref-for-list-append"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list-append"},
 "59ed4e57": {"dfnID":"59ed4e57","dfnText":"ReadableStream","external":true,"refSections":[{"refs":[{"id":"ref-for-readablestream"}],"title":"3. The API"}],"url":"https://streams.spec.whatwg.org/#readablestream"},
 "5f90bbfb": {"dfnID":"5f90bbfb","dfnText":"undefined","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-undefined"},{"id":"ref-for-idl-undefined\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-undefined"},
+"649608b9": {"dfnID":"649608b9","dfnText":"list","external":true,"refSections":[{"refs":[{"id":"ref-for-list"},{"id":"ref-for-list\u2460"},{"id":"ref-for-list\u2461"},{"id":"ref-for-list\u2462"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list"},
+"6b815fdd": {"dfnID":"6b815fdd","dfnText":"is empty","external":true,"refSections":[{"refs":[{"id":"ref-for-list-is-empty"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list-is-empty"},
+"77b4c09a": {"dfnID":"77b4c09a","dfnText":"assert","external":true,"refSections":[{"refs":[{"id":"ref-for-assert"},{"id":"ref-for-assert\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#assert"},
+"82ca3efc": {"dfnID":"82ca3efc","dfnText":"TypeError","external":true,"refSections":[{"refs":[{"id":"ref-for-exceptiondef-typeerror"},{"id":"ref-for-exceptiondef-typeerror\u2460"},{"id":"ref-for-exceptiondef-typeerror\u2461"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#exceptiondef-typeerror"},
 "86e73a86": {"dfnID":"86e73a86","dfnText":"CreateMonitorCallback","external":true,"refSections":[{"refs":[{"id":"ref-for-callbackdef-createmonitorcallback"}],"title":"3. The API"}],"url":"https://webmachinelearning.github.io/writing-assistance-apis/#callbackdef-createmonitorcallback"},
 "8855a9aa": {"dfnID":"8855a9aa","dfnText":"DOMString","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-DOMString"},{"id":"ref-for-idl-DOMString\u2460"},{"id":"ref-for-idl-DOMString\u2461"},{"id":"ref-for-idl-DOMString\u2462"},{"id":"ref-for-idl-DOMString\u2463"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-DOMString"},
 "889e932f": {"dfnID":"889e932f","dfnText":"Exposed","external":true,"refSections":[{"refs":[{"id":"ref-for-Exposed"},{"id":"ref-for-Exposed\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#Exposed"},
 "8c800cdf": {"dfnID":"8c800cdf","dfnText":"double","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-double"},{"id":"ref-for-idl-double\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-double"},
 "9cce47fd": {"dfnID":"9cce47fd","dfnText":"sequence","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-sequence"},{"id":"ref-for-idl-sequence\u2460"},{"id":"ref-for-idl-sequence\u2461"},{"id":"ref-for-idl-sequence\u2462"},{"id":"ref-for-idl-sequence\u2463"},{"id":"ref-for-idl-sequence\u2464"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-sequence"},
-"aeb8d5fd": {"dfnID":"aeb8d5fd","dfnText":"ImageBitmapSource","external":true,"refSections":[{"refs":[{"id":"ref-for-imagebitmapsource"}],"title":"3. The API"}],"url":"https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource"},
+"ae8def21": {"dfnID":"ae8def21","dfnText":"contain","external":true,"refSections":[{"refs":[{"id":"ref-for-list-contain"},{"id":"ref-for-list-contain\u2460"},{"id":"ref-for-list-contain\u2461"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list-contain"},
+"aeb8d5fd": {"dfnID":"aeb8d5fd","dfnText":"ImageBitmapSource","external":true,"refSections":[{"refs":[{"id":"ref-for-imagebitmapsource"}],"title":"3. The API"},{"refs":[{"id":"ref-for-imagebitmapsource\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource"},
 "b75bb3bd": {"dfnID":"b75bb3bd","dfnText":"SecureContext","external":true,"refSections":[{"refs":[{"id":"ref-for-SecureContext"},{"id":"ref-for-SecureContext\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#SecureContext"},
+"b7d73f5b": {"dfnID":"b7d73f5b","dfnText":"Blob","external":true,"refSections":[{"refs":[{"id":"ref-for-dfn-Blob"}],"title":"3.1. Prompt processing"}],"url":"https://w3c.github.io/FileAPI/#dfn-Blob"},
 "bdbd19d1": {"dfnID":"bdbd19d1","dfnText":"Promise","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-promise"},{"id":"ref-for-idl-promise\u2460"},{"id":"ref-for-idl-promise\u2461"},{"id":"ref-for-idl-promise\u2462"},{"id":"ref-for-idl-promise\u2463"},{"id":"ref-for-idl-promise\u2464"},{"id":"ref-for-idl-promise\u2465"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-promise"},
-"cc890cc1": {"dfnID":"cc890cc1","dfnText":"policy-controlled feature","external":true,"refSections":[{"refs":[{"id":"ref-for-policy-controlled-feature"}],"title":"3.1. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature"},
+"be2d2b4c": {"dfnID":"be2d2b4c","dfnText":"SyntaxError","external":true,"refSections":[{"refs":[{"id":"ref-for-syntaxerror"},{"id":"ref-for-syntaxerror\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#syntaxerror"},
+"cc890cc1": {"dfnID":"cc890cc1","dfnText":"policy-controlled feature","external":true,"refSections":[{"refs":[{"id":"ref-for-policy-controlled-feature"}],"title":"3.2. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature"},
 "cca3cdb2": {"dfnID":"cca3cdb2","dfnText":"AbortSignal","external":true,"refSections":[{"refs":[{"id":"ref-for-abortsignal"},{"id":"ref-for-abortsignal\u2460"},{"id":"ref-for-abortsignal\u2461"},{"id":"ref-for-abortsignal\u2462"}],"title":"3. The API"}],"url":"https://dom.spec.whatwg.org/#abortsignal"},
+"dca2de17": {"dfnID":"dca2de17","dfnText":"DOMException","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-DOMException"},{"id":"ref-for-idl-DOMException\u2460"},{"id":"ref-for-idl-DOMException\u2461"},{"id":"ref-for-idl-DOMException\u2462"},{"id":"ref-for-idl-DOMException\u2463"},{"id":"ref-for-idl-DOMException\u2464"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#idl-DOMException"},
 "dictdef-languagemodelappendoptions": {"dfnID":"dictdef-languagemodelappendoptions","dfnText":"LanguageModelAppendOptions","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelappendoptions"}],"title":"3. The API"}],"url":"#dictdef-languagemodelappendoptions"},
 "dictdef-languagemodelcloneoptions": {"dfnID":"dictdef-languagemodelcloneoptions","dfnText":"LanguageModelCloneOptions","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelcloneoptions"}],"title":"3. The API"}],"url":"#dictdef-languagemodelcloneoptions"},
 "dictdef-languagemodelcreatecoreoptions": {"dfnID":"dictdef-languagemodelcreatecoreoptions","dfnText":"LanguageModelCreateCoreOptions","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelcreatecoreoptions"},{"id":"ref-for-dictdef-languagemodelcreatecoreoptions\u2460"}],"title":"3. The API"}],"url":"#dictdef-languagemodelcreatecoreoptions"},
 "dictdef-languagemodelcreateoptions": {"dfnID":"dictdef-languagemodelcreateoptions","dfnText":"LanguageModelCreateOptions","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelcreateoptions"}],"title":"3. The API"}],"url":"#dictdef-languagemodelcreateoptions"},
 "dictdef-languagemodelexpected": {"dfnID":"dictdef-languagemodelexpected","dfnText":"LanguageModelExpected","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelexpected"},{"id":"ref-for-dictdef-languagemodelexpected\u2460"}],"title":"3. The API"}],"url":"#dictdef-languagemodelexpected"},
-"dictdef-languagemodelmessage": {"dfnID":"dictdef-languagemodelmessage","dfnText":"LanguageModelMessage","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelmessage"},{"id":"ref-for-dictdef-languagemodelmessage\u2460"}],"title":"3. The API"}],"url":"#dictdef-languagemodelmessage"},
+"dictdef-languagemodelmessage": {"dfnID":"dictdef-languagemodelmessage","dfnText":"LanguageModelMessage","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelmessage"},{"id":"ref-for-dictdef-languagemodelmessage\u2460"}],"title":"3. The API"},{"refs":[{"id":"ref-for-dictdef-languagemodelmessage\u2461"},{"id":"ref-for-dictdef-languagemodelmessage\u2462"},{"id":"ref-for-dictdef-languagemodelmessage\u2463"}],"title":"3.1. Prompt processing"}],"url":"#dictdef-languagemodelmessage"},
 "dictdef-languagemodelmessagecontent": {"dfnID":"dictdef-languagemodelmessagecontent","dfnText":"LanguageModelMessageContent","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelmessagecontent"}],"title":"3. The API"}],"url":"#dictdef-languagemodelmessagecontent"},
 "dictdef-languagemodelpromptoptions": {"dfnID":"dictdef-languagemodelpromptoptions","dfnText":"LanguageModelPromptOptions","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelpromptoptions"},{"id":"ref-for-dictdef-languagemodelpromptoptions\u2460"},{"id":"ref-for-dictdef-languagemodelpromptoptions\u2461"}],"title":"3. The API"}],"url":"#dictdef-languagemodelpromptoptions"},
 "dom-languagemodel-append": {"dfnID":"dom-languagemodel-append","dfnText":"append","external":false,"refSections":[],"url":"#dom-languagemodel-append"},
@@ -1421,16 +1594,16 @@ let dfnPanelData = {
 "dom-languagemodelcreateoptions-signal": {"dfnID":"dom-languagemodelcreateoptions-signal","dfnText":"signal","external":false,"refSections":[],"url":"#dom-languagemodelcreateoptions-signal"},
 "dom-languagemodelexpected-languages": {"dfnID":"dom-languagemodelexpected-languages","dfnText":"languages","external":false,"refSections":[],"url":"#dom-languagemodelexpected-languages"},
 "dom-languagemodelexpected-type": {"dfnID":"dom-languagemodelexpected-type","dfnText":"type","external":false,"refSections":[],"url":"#dom-languagemodelexpected-type"},
-"dom-languagemodelmessage-content": {"dfnID":"dom-languagemodelmessage-content","dfnText":"content","external":false,"refSections":[],"url":"#dom-languagemodelmessage-content"},
-"dom-languagemodelmessage-role": {"dfnID":"dom-languagemodelmessage-role","dfnText":"role","external":false,"refSections":[],"url":"#dom-languagemodelmessage-role"},
-"dom-languagemodelmessagecontent-type": {"dfnID":"dom-languagemodelmessagecontent-type","dfnText":"type","external":false,"refSections":[],"url":"#dom-languagemodelmessagecontent-type"},
-"dom-languagemodelmessagecontent-value": {"dfnID":"dom-languagemodelmessagecontent-value","dfnText":"value","external":false,"refSections":[],"url":"#dom-languagemodelmessagecontent-value"},
-"dom-languagemodelmessagerole-assistant": {"dfnID":"dom-languagemodelmessagerole-assistant","dfnText":"\"assistant\"","external":false,"refSections":[],"url":"#dom-languagemodelmessagerole-assistant"},
-"dom-languagemodelmessagerole-system": {"dfnID":"dom-languagemodelmessagerole-system","dfnText":"\"system\"","external":false,"refSections":[],"url":"#dom-languagemodelmessagerole-system"},
-"dom-languagemodelmessagerole-user": {"dfnID":"dom-languagemodelmessagerole-user","dfnText":"\"user\"","external":false,"refSections":[],"url":"#dom-languagemodelmessagerole-user"},
-"dom-languagemodelmessagetype-audio": {"dfnID":"dom-languagemodelmessagetype-audio","dfnText":"\"audio\"","external":false,"refSections":[],"url":"#dom-languagemodelmessagetype-audio"},
-"dom-languagemodelmessagetype-image": {"dfnID":"dom-languagemodelmessagetype-image","dfnText":"\"image\"","external":false,"refSections":[],"url":"#dom-languagemodelmessagetype-image"},
-"dom-languagemodelmessagetype-text": {"dfnID":"dom-languagemodelmessagetype-text","dfnText":"\"text\"","external":false,"refSections":[],"url":"#dom-languagemodelmessagetype-text"},
+"dom-languagemodelmessage-content": {"dfnID":"dom-languagemodelmessage-content","dfnText":"content","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessage-content"},{"id":"ref-for-dom-languagemodelmessage-content\u2460"},{"id":"ref-for-dom-languagemodelmessage-content\u2461"},{"id":"ref-for-dom-languagemodelmessage-content\u2462"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessage-content"},
+"dom-languagemodelmessage-role": {"dfnID":"dom-languagemodelmessage-role","dfnText":"role","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessage-role"},{"id":"ref-for-dom-languagemodelmessage-role\u2460"},{"id":"ref-for-dom-languagemodelmessage-role\u2461"},{"id":"ref-for-dom-languagemodelmessage-role\u2462"},{"id":"ref-for-dom-languagemodelmessage-role\u2463"},{"id":"ref-for-dom-languagemodelmessage-role\u2464"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessage-role"},
+"dom-languagemodelmessagecontent-type": {"dfnID":"dom-languagemodelmessagecontent-type","dfnText":"type","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagecontent-type"},{"id":"ref-for-dom-languagemodelmessagecontent-type\u2460"},{"id":"ref-for-dom-languagemodelmessagecontent-type\u2461"},{"id":"ref-for-dom-languagemodelmessagecontent-type\u2462"},{"id":"ref-for-dom-languagemodelmessagecontent-type\u2463"},{"id":"ref-for-dom-languagemodelmessagecontent-type\u2464"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagecontent-type"},
+"dom-languagemodelmessagecontent-value": {"dfnID":"dom-languagemodelmessagecontent-value","dfnText":"value","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagecontent-value"},{"id":"ref-for-dom-languagemodelmessagecontent-value\u2460"},{"id":"ref-for-dom-languagemodelmessagecontent-value\u2461"},{"id":"ref-for-dom-languagemodelmessagecontent-value\u2462"},{"id":"ref-for-dom-languagemodelmessagecontent-value\u2463"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagecontent-value"},
+"dom-languagemodelmessagerole-assistant": {"dfnID":"dom-languagemodelmessagerole-assistant","dfnText":"\"assistant\"","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagerole-assistant"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagerole-assistant"},
+"dom-languagemodelmessagerole-system": {"dfnID":"dom-languagemodelmessagerole-system","dfnText":"\"system\"","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagerole-system"},{"id":"ref-for-dom-languagemodelmessagerole-system\u2460"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagerole-system"},
+"dom-languagemodelmessagerole-user": {"dfnID":"dom-languagemodelmessagerole-user","dfnText":"\"user\"","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagerole-user"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagerole-user"},
+"dom-languagemodelmessagetype-audio": {"dfnID":"dom-languagemodelmessagetype-audio","dfnText":"\"audio\"","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagetype-audio"},{"id":"ref-for-dom-languagemodelmessagetype-audio\u2460"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagetype-audio"},
+"dom-languagemodelmessagetype-image": {"dfnID":"dom-languagemodelmessagetype-image","dfnText":"\"image\"","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagetype-image"},{"id":"ref-for-dom-languagemodelmessagetype-image\u2460"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagetype-image"},
+"dom-languagemodelmessagetype-text": {"dfnID":"dom-languagemodelmessagetype-text","dfnText":"\"text\"","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelmessagetype-text"},{"id":"ref-for-dom-languagemodelmessagetype-text\u2460"},{"id":"ref-for-dom-languagemodelmessagetype-text\u2461"},{"id":"ref-for-dom-languagemodelmessagetype-text\u2462"},{"id":"ref-for-dom-languagemodelmessagetype-text\u2463"}],"title":"3.1. Prompt processing"}],"url":"#dom-languagemodelmessagetype-text"},
 "dom-languagemodelparams-defaulttemperature": {"dfnID":"dom-languagemodelparams-defaulttemperature","dfnText":"defaultTemperature","external":false,"refSections":[],"url":"#dom-languagemodelparams-defaulttemperature"},
 "dom-languagemodelparams-defaulttopk": {"dfnID":"dom-languagemodelparams-defaulttopk","dfnText":"defaultTopK","external":false,"refSections":[],"url":"#dom-languagemodelparams-defaulttopk"},
 "dom-languagemodelparams-maxtemperature": {"dfnID":"dom-languagemodelparams-maxtemperature","dfnText":"maxTemperature","external":false,"refSections":[],"url":"#dom-languagemodelparams-maxtemperature"},
@@ -1438,17 +1611,18 @@ let dfnPanelData = {
 "dom-languagemodelpromptoptions-responseconstraint": {"dfnID":"dom-languagemodelpromptoptions-responseconstraint","dfnText":"responseConstraint","external":false,"refSections":[],"url":"#dom-languagemodelpromptoptions-responseconstraint"},
 "dom-languagemodelpromptoptions-signal": {"dfnID":"dom-languagemodelpromptoptions-signal","dfnText":"signal","external":false,"refSections":[],"url":"#dom-languagemodelpromptoptions-signal"},
 "e97a9688": {"dfnID":"e97a9688","dfnText":"unsigned long","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-unsigned-long"},{"id":"ref-for-idl-unsigned-long\u2460"},{"id":"ref-for-idl-unsigned-long\u2461"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-unsigned-long"},
-"e9b6376e": {"dfnID":"e9b6376e","dfnText":"AudioBuffer","external":true,"refSections":[{"refs":[{"id":"ref-for-AudioBuffer"}],"title":"3. The API"}],"url":"https://webaudio.github.io/web-audio-api/#AudioBuffer"},
+"e9b6376e": {"dfnID":"e9b6376e","dfnText":"AudioBuffer","external":true,"refSections":[{"refs":[{"id":"ref-for-AudioBuffer"}],"title":"3. The API"},{"refs":[{"id":"ref-for-AudioBuffer\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://webaudio.github.io/web-audio-api/#AudioBuffer"},
 "eec1be2d": {"dfnID":"eec1be2d","dfnText":"float","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-float"},{"id":"ref-for-idl-float\u2460"},{"id":"ref-for-idl-float\u2461"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-float"},
 "efd1ec5d": {"dfnID":"efd1ec5d","dfnText":"object","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-object"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-object"},
 "enumdef-languagemodelmessagerole": {"dfnID":"enumdef-languagemodelmessagerole","dfnText":"LanguageModelMessageRole","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagerole"}],"title":"3. The API"}],"url":"#enumdef-languagemodelmessagerole"},
-"enumdef-languagemodelmessagetype": {"dfnID":"enumdef-languagemodelmessagetype","dfnText":"LanguageModelMessageType","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype"},{"id":"ref-for-enumdef-languagemodelmessagetype\u2460"}],"title":"3. The API"}],"url":"#enumdef-languagemodelmessagetype"},
+"enumdef-languagemodelmessagetype": {"dfnID":"enumdef-languagemodelmessagetype","dfnText":"LanguageModelMessageType","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype"},{"id":"ref-for-enumdef-languagemodelmessagetype\u2460"}],"title":"3. The API"},{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype\u2461"}],"title":"3.1. Prompt processing"}],"url":"#enumdef-languagemodelmessagetype"},
 "f0951476": {"dfnID":"f0951476","dfnText":"EventHandler","external":true,"refSections":[{"refs":[{"id":"ref-for-eventhandler"}],"title":"3. The API"}],"url":"https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler"},
 "languagemodel": {"dfnID":"languagemodel","dfnText":"LanguageModel","external":false,"refSections":[{"refs":[{"id":"ref-for-languagemodel"},{"id":"ref-for-languagemodel\u2460"}],"title":"3. The API"}],"url":"#languagemodel"},
 "languagemodelparams": {"dfnID":"languagemodelparams","dfnText":"LanguageModelParams","external":false,"refSections":[{"refs":[{"id":"ref-for-languagemodelparams"}],"title":"3. The API"}],"url":"#languagemodelparams"},
 "permissiondef-language-model": {"dfnID":"permissiondef-language-model","dfnText":"language-model","external":false,"refSections":[],"url":"#permissiondef-language-model"},
 "typedefdef-languagemodelmessagevalue": {"dfnID":"typedefdef-languagemodelmessagevalue","dfnText":"LanguageModelMessageValue","external":false,"refSections":[{"refs":[{"id":"ref-for-typedefdef-languagemodelmessagevalue"}],"title":"3. The API"}],"url":"#typedefdef-languagemodelmessagevalue"},
-"typedefdef-languagemodelprompt": {"dfnID":"typedefdef-languagemodelprompt","dfnText":"LanguageModelPrompt","external":false,"refSections":[{"refs":[{"id":"ref-for-typedefdef-languagemodelprompt"},{"id":"ref-for-typedefdef-languagemodelprompt\u2460"},{"id":"ref-for-typedefdef-languagemodelprompt\u2461"},{"id":"ref-for-typedefdef-languagemodelprompt\u2462"}],"title":"3. The API"}],"url":"#typedefdef-languagemodelprompt"},
+"typedefdef-languagemodelprompt": {"dfnID":"typedefdef-languagemodelprompt","dfnText":"LanguageModelPrompt","external":false,"refSections":[{"refs":[{"id":"ref-for-typedefdef-languagemodelprompt"},{"id":"ref-for-typedefdef-languagemodelprompt\u2460"},{"id":"ref-for-typedefdef-languagemodelprompt\u2461"},{"id":"ref-for-typedefdef-languagemodelprompt\u2462"}],"title":"3. The API"},{"refs":[{"id":"ref-for-typedefdef-languagemodelprompt\u2463"}],"title":"3.1. Prompt processing"}],"url":"#typedefdef-languagemodelprompt"},
+"validate-and-canonicalize-a-prompt": {"dfnID":"validate-and-canonicalize-a-prompt","dfnText":"validate and canonicalize a prompt","external":false,"refSections":[],"url":"#validate-and-canonicalize-a-prompt"},
 };
 
 document.addEventListener("DOMContentLoaded", ()=>{
@@ -1845,6 +2019,16 @@ let refsData = {
 "#dictdef-languagemodelmessage": {"displayText":"LanguageModelMessage","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessage","type":"dictionary","url":"#dictdef-languagemodelmessage"},
 "#dictdef-languagemodelmessagecontent": {"displayText":"LanguageModelMessageContent","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessageContent","type":"dictionary","url":"#dictdef-languagemodelmessagecontent"},
 "#dictdef-languagemodelpromptoptions": {"displayText":"LanguageModelPromptOptions","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelPromptOptions","type":"dictionary","url":"#dictdef-languagemodelpromptoptions"},
+"#dom-languagemodelmessage-content": {"displayText":"content","export":true,"for_":["LanguageModelMessage"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"content","type":"dict-member","url":"#dom-languagemodelmessage-content"},
+"#dom-languagemodelmessage-role": {"displayText":"role","export":true,"for_":["LanguageModelMessage"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"role","type":"dict-member","url":"#dom-languagemodelmessage-role"},
+"#dom-languagemodelmessagecontent-type": {"displayText":"type","export":true,"for_":["LanguageModelMessageContent"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"type","type":"dict-member","url":"#dom-languagemodelmessagecontent-type"},
+"#dom-languagemodelmessagecontent-value": {"displayText":"value","export":true,"for_":["LanguageModelMessageContent"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"value","type":"dict-member","url":"#dom-languagemodelmessagecontent-value"},
+"#dom-languagemodelmessagerole-assistant": {"displayText":"\"assistant\"","export":true,"for_":["LanguageModelMessageRole"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"\"assistant\"","type":"enum-value","url":"#dom-languagemodelmessagerole-assistant"},
+"#dom-languagemodelmessagerole-system": {"displayText":"\"system\"","export":true,"for_":["LanguageModelMessageRole"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"\"system\"","type":"enum-value","url":"#dom-languagemodelmessagerole-system"},
+"#dom-languagemodelmessagerole-user": {"displayText":"\"user\"","export":true,"for_":["LanguageModelMessageRole"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"\"user\"","type":"enum-value","url":"#dom-languagemodelmessagerole-user"},
+"#dom-languagemodelmessagetype-audio": {"displayText":"\"audio\"","export":true,"for_":["LanguageModelMessageType"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"\"audio\"","type":"enum-value","url":"#dom-languagemodelmessagetype-audio"},
+"#dom-languagemodelmessagetype-image": {"displayText":"\"image\"","export":true,"for_":["LanguageModelMessageType"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"\"image\"","type":"enum-value","url":"#dom-languagemodelmessagetype-image"},
+"#dom-languagemodelmessagetype-text": {"displayText":"\"text\"","export":true,"for_":["LanguageModelMessageType"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"\"text\"","type":"enum-value","url":"#dom-languagemodelmessagetype-text"},
 "#enumdef-languagemodelmessagerole": {"displayText":"LanguageModelMessageRole","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessageRole","type":"enum","url":"#enumdef-languagemodelmessagerole"},
 "#enumdef-languagemodelmessagetype": {"displayText":"LanguageModelMessageType","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessageType","type":"enum","url":"#enumdef-languagemodelmessagetype"},
 "#languagemodel": {"displayText":"LanguageModel","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModel","type":"interface","url":"#languagemodel"},
@@ -1855,7 +2039,15 @@ let refsData = {
 "https://dom.spec.whatwg.org/#eventtarget": {"displayText":"EventTarget","export":true,"for_":[],"level":"1","normative":true,"shortname":"dom","spec":"dom","status":"current","text":"EventTarget","type":"interface","url":"https://dom.spec.whatwg.org/#eventtarget"},
 "https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource": {"displayText":"ImageBitmapSource","export":true,"for_":[],"level":"1","normative":true,"shortname":"html","spec":"html","status":"current","text":"ImageBitmapSource","type":"typedef","url":"https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource"},
 "https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler": {"displayText":"EventHandler","export":true,"for_":[],"level":"1","normative":true,"shortname":"html","spec":"html","status":"current","text":"EventHandler","type":"typedef","url":"https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler"},
+"https://infra.spec.whatwg.org/#assert": {"displayText":"assert","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"assert","type":"dfn","url":"https://infra.spec.whatwg.org/#assert"},
+"https://infra.spec.whatwg.org/#list": {"displayText":"list","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"list","type":"dfn","url":"https://infra.spec.whatwg.org/#list"},
+"https://infra.spec.whatwg.org/#list-append": {"displayText":"append","export":true,"for_":["list"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"append","type":"dfn","url":"https://infra.spec.whatwg.org/#list-append"},
+"https://infra.spec.whatwg.org/#list-contain": {"displayText":"contain","export":true,"for_":["list","stack","queue","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"contain","type":"dfn","url":"https://infra.spec.whatwg.org/#list-contain"},
+"https://infra.spec.whatwg.org/#list-is-empty": {"displayText":"is empty","export":true,"for_":["list","stack","queue","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"is empty","type":"dfn","url":"https://infra.spec.whatwg.org/#list-is-empty"},
+"https://infra.spec.whatwg.org/#list-iterate": {"displayText":"for each","export":true,"for_":["list","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"for each","type":"dfn","url":"https://infra.spec.whatwg.org/#list-iterate"},
+"https://infra.spec.whatwg.org/#string": {"displayText":"string","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"string","type":"dfn","url":"https://infra.spec.whatwg.org/#string"},
 "https://streams.spec.whatwg.org/#readablestream": {"displayText":"ReadableStream","export":true,"for_":[],"level":"1","normative":true,"shortname":"streams","spec":"streams","status":"current","text":"ReadableStream","type":"interface","url":"https://streams.spec.whatwg.org/#readablestream"},
+"https://w3c.github.io/FileAPI/#dfn-Blob": {"displayText":"Blob","export":true,"for_":[],"level":"1","normative":true,"shortname":"fileapi","spec":"fileapi","status":"current","text":"Blob","type":"interface","url":"https://w3c.github.io/FileAPI/#dfn-Blob"},
 "https://w3c.github.io/webappsec-permissions-policy/#default-allowlist-self": {"displayText":"'self'","export":true,"for_":["default allowlist"],"level":"1","normative":true,"shortname":"permissions-policy","spec":"permissions-policy-1","status":"current","text":"'self'","type":"dfn","url":"https://w3c.github.io/webappsec-permissions-policy/#default-allowlist-self"},
 "https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature": {"displayText":"policy-controlled feature","export":true,"for_":[],"level":"1","normative":true,"shortname":"permissions-policy","spec":"permissions-policy-1","status":"current","text":"policy-controlled feature","type":"dfn","url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature"},
 "https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature-default-allowlist": {"displayText":"default allowlist","export":true,"for_":["policy-controlled feature"],"level":"1","normative":true,"shortname":"permissions-policy","spec":"permissions-policy-1","status":"current","text":"default allowlist","type":"dfn","url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature-default-allowlist"},
@@ -1863,6 +2055,8 @@ let refsData = {
 "https://webidl.spec.whatwg.org/#BufferSource": {"displayText":"BufferSource","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"BufferSource","type":"typedef","url":"https://webidl.spec.whatwg.org/#BufferSource"},
 "https://webidl.spec.whatwg.org/#Exposed": {"displayText":"Exposed","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"Exposed","type":"extended-attribute","url":"https://webidl.spec.whatwg.org/#Exposed"},
 "https://webidl.spec.whatwg.org/#SecureContext": {"displayText":"SecureContext","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"SecureContext","type":"extended-attribute","url":"https://webidl.spec.whatwg.org/#SecureContext"},
+"https://webidl.spec.whatwg.org/#exceptiondef-typeerror": {"displayText":"TypeError","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"TypeError","type":"exception","url":"https://webidl.spec.whatwg.org/#exceptiondef-typeerror"},
+"https://webidl.spec.whatwg.org/#idl-DOMException": {"displayText":"DOMException","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"DOMException","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-DOMException"},
 "https://webidl.spec.whatwg.org/#idl-DOMString": {"displayText":"DOMString","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"DOMString","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-DOMString"},
 "https://webidl.spec.whatwg.org/#idl-double": {"displayText":"double","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"double","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-double"},
 "https://webidl.spec.whatwg.org/#idl-float": {"displayText":"float","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"float","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-float"},
@@ -1872,6 +2066,8 @@ let refsData = {
 "https://webidl.spec.whatwg.org/#idl-undefined": {"displayText":"undefined","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"undefined","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-undefined"},
 "https://webidl.spec.whatwg.org/#idl-unrestricted-double": {"displayText":"unrestricted double","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"unrestricted double","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-unrestricted-double"},
 "https://webidl.spec.whatwg.org/#idl-unsigned-long": {"displayText":"unsigned long","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"unsigned long","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-unsigned-long"},
+"https://webidl.spec.whatwg.org/#notsupportederror": {"displayText":"NotSupportedError","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"NotSupportedError","type":"exception","url":"https://webidl.spec.whatwg.org/#notsupportederror"},
+"https://webidl.spec.whatwg.org/#syntaxerror": {"displayText":"SyntaxError","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"SyntaxError","type":"exception","url":"https://webidl.spec.whatwg.org/#syntaxerror"},
 "https://webmachinelearning.github.io/writing-assistance-apis/#callbackdef-createmonitorcallback": {"displayText":"CreateMonitorCallback","export":true,"for_":[],"level":"1","normative":true,"shortname":"writing-assistance-apis","spec":"writing-assistance-apis","status":"current","text":"CreateMonitorCallback","type":"callback","url":"https://webmachinelearning.github.io/writing-assistance-apis/#callbackdef-createmonitorcallback"},
 "https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability": {"displayText":"Availability","export":true,"for_":[],"level":"1","normative":true,"shortname":"writing-assistance-apis","spec":"writing-assistance-apis","status":"current","text":"Availability","type":"enum","url":"https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability"},
 };
@@ -2075,5 +2271,92 @@ window.addEventListener("resize", () => {
     // Hide any open ref hint.
     hideAllRefHints();
 });
+}
+</script>
+<script>/* Boilerplate: script-var-click-highlighting */
+"use strict";
+{
+/*
+Color-choosing design:
+
+* Colors are ordered by goodness.
+* On clicking a var, give it the earliest color
+    with the lowest usage in the algorithm.
+* On re-clicking, re-use the var's most recent color
+    if that's not currently being used elsewhere.
+*/
+
+const COLOR_COUNT = 7;
+
+document.addEventListener("click", e=>{
+    if(e.target.nodeName == "VAR") {
+        highlightSameAlgoVars(e.target);
+    }
+});
+
+function highlightSameAlgoVars(v) {
+    // Find the algorithm container.
+    let algoContainer = findAlgoContainer(v);
+
+    // Not highlighting document-global vars,
+    // too likely to be unrelated.
+    if(algoContainer == null) return;
+
+    const varName = nameFromVar(v);
+    if(!v.hasAttribute("data-var-color")) {
+        const newColor = chooseHighlightColor(algoContainer, v);
+        for(const el of algoContainer.querySelectorAll("var")) {
+            if(nameFromVar(el) == varName) {
+                el.setAttribute("data-var-color", newColor);
+                el.setAttribute("data-var-last-color", newColor);
+            }
+        }
+    } else {
+        for(const el of algoContainer.querySelectorAll("var")) {
+            if(nameFromVar(el) == varName) {
+                el.removeAttribute("data-var-color");
+            }
+        }
+    }
+}
+function findAlgoContainer(el) {
+    while(el != document.body) {
+        if(el.hasAttribute("data-algorithm")) return el;
+        el = el.parentNode;
+    }
+    return null;
+}
+function nameFromVar(el) {
+    return el.textContent.replace(/(\s|\xa0)+/g, " ").trim();
+}
+function colorCountsFromContainer(container) {
+    const namesFromColor = Array.from({length:COLOR_COUNT}, x=>new Set());
+    for(let v of container.querySelectorAll("var[data-var-color]")) {
+        let color = +v.getAttribute("data-var-color");
+        namesFromColor[color].add(nameFromVar(v));
+    }
+
+    return namesFromColor.map(x=>x.size);
+}
+function leastUsedColor(colors) {
+    // Find the earliest color with the lowest count.
+    let minCount = Infinity;
+    let minColor = null;
+    for(var i = 0; i < colors.length; i++) {
+        if(colors[i] < minCount) {
+            minColor = i;
+            minCount = colors[i];
+        }
+    }
+    return minColor;
+}
+function chooseHighlightColor(container, v) {
+    const colorCounts = colorCountsFromContainer(container);
+    if(v.hasAttribute("data-var-last-color")) {
+        let color = +v.getAttribute("data-var-last-color");
+        if(colorCounts[color] == 0) return color;
+    }
+    return leastUsedColor(colorCounts);
+}
 }
 </script>
