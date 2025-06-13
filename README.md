@@ -314,6 +314,18 @@ The returned value will be a string that matches the input `RegExp`. If the user
 
 If a value that is neither a `RegExp` object or a valid JSON schema object is given, the method will error with a `TypeError`.
 
+By default, the implementation may include the schema or regular expression as part of the message sent to the underlying language model, which will use up some of the [input quota](#tokenization-context-window-length-limits-and-overflow). You can measure how much it will use up by passing the `responseConstraint` option to `session.measureInputUsage()`. If you want to avoid this behavior, you can use the `omitResponseConstraintInput` option. In such cases, it's strongly recommended to include some guidance in the prompt string itself:
+
+```js
+const result = await session.prompt(`
+  Summarize this feedback into a rating between 0-5, only outputting a JSON
+  object { rating }, with a single property whose value is a number:
+  The food was delicious, service was excellent, will recommend.
+`, { responseConstraint: schema, omitResponseConstraintInput: true });
+```
+
+If `omitResponseConstraintInput` is set to `true` without `responseConstraint` set, then the method will error with a `TypeError`.
+
 ### Constraining responses by providing a prefix
 
 As discussed in [Customizing the role per prompt](#customizing-the-role-per-prompt), it is possible to prompt the language model to add a new `"assistant"`-role response in addition to a previous one. Usually it will elaborate on its previous messages. For example:

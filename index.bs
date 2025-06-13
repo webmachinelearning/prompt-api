@@ -94,6 +94,7 @@ dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
 
 dictionary LanguageModelPromptOptions {
   object responseConstraint;
+  boolean omitResponseConstraintInput = false;
   AbortSignal signal;
 };
 
