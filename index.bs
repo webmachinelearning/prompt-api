@@ -160,7 +160,7 @@ typedef (
         "{{LanguageModelMessage/content}}" → «
           «[
             "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-            "{{LanguageModelMessageContent/value}}" → |input|&nbsp;&nbsp;&nbsp;&nbsp;<!-- https://github.com/speced/bikeshed/issues/3118 -->
+            "{{LanguageModelMessageContent/value}}" → |input|
           ]»
         »,
         "{{LanguageModelMessage/prefix}}" → false
@@ -180,7 +180,7 @@ typedef (
         "{{LanguageModelMessage/content}}" → «
           «[
             "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-            "{{LanguageModelMessageContent/value}}" → |message|&nbsp;&nbsp;&nbsp;&nbsp;<!-- https://github.com/speced/bikeshed/issues/3118 -->
+            "{{LanguageModelMessageContent/value}}" → |message|
           ]»
         »,
         "{{LanguageModelMessage/prefix}}" → |message|["{{LanguageModelMessage/prefix}}"]
