@@ -190,6 +190,8 @@ typedef (
 
       1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/assistant}}", then throw a "{{SyntaxError}}" {{DOMException}}.
 
+          <p class="note">Per the below validation steps, this will also guarantee that |message|["{{LanguageModelMessage/content}}"] only contains text content.
+
       1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
@@ -217,6 +219,32 @@ typedef (
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
         1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+
+    1. Let |contentWithContiguousTextCollapsed| be an empty [=list=] of {{LanguageModelMessageContent}}s.
+
+    1. Let |lastTextContent| be null.
+
+    1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}":
+
+        1. If |lastTextContent| is null:
+
+          1. [=list/Append=] |content| to |contentWithContiguousTextCollapsed|.
+
+          1. Set |lastTextContent| to |content|.
+
+        1. Otherwise, set |lastTextContent|["{{LanguageModelMessageContent/value}}"] to the concatenation of |lastTextContent|["{{LanguageModelMessageContent/value}}"] and |content|["{{LanguageModelMessageContent/value}}"].
+
+          <p class="note">No space or other character is added. Thus, « «[ "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}", "`foo`" ]», «[ "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}", "`bar`" ]» » is canonicalized to « «[ "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}", "`foobar`" ]».</p>
+
+      1. Otherwise:
+
+        1. [=list/Append=] |content| to |contentWithContiguousTextCollapsed|.
+
+        1. Set |lastTextContent| to null.
+
+      1. Set |message|["{{LanguageModelMessage/content}}"] to |contentWithContiguousTextCollapsed|.
 
     1. [=list/Append=] |message| to |messages|.
 
