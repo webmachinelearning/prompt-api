@@ -137,18 +137,18 @@ const result = await multiUserSession.prompt([
 
 Because of their special behavior of being preserved on context window overflow, system prompts cannot be provided this way.
 
-### Function Calling
+### Tool Use
 
-The Prompt API supports structured function calling using the `tools` option, which allows you to define functions that the language model can call in a language model agnostic way. Each function is described using the `LanguageModelTool` dictionary, which includes an `execute` field specifying the JavaScript function to be called. When the language model requests a function call, the user agent will invoke the specified `execute` function and send the result back to the model.
+The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by a `LanguageModelTool` object, which includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
 
-Here's an example of how to use function calling with the `execute` field:
+Here’s an example of how to use the `tools` option:
 
 ```js
 const session = await LanguageModel.create({
   initialPrompts: [
     {
       role: "system",
-      content: `You are a helpful assistant. You can call functions to help the user.`
+      content: `You are a helpful assistant. You can use tools to help the user.`
     }
   ],
   tools: [
@@ -167,7 +167,7 @@ const session = await LanguageModel.create({
       },
       async execute({ location }) {
         const res = await fetch("https://weatherapi.example/?location=" + location);
-        // Return the weather object as a string
+        // Returns the result as a JSON string.
         return JSON.stringify(await res.json());
       },
     }
@@ -177,7 +177,7 @@ const session = await LanguageModel.create({
 const result = await session.prompt("What is the weather in Seattle?");
 ```
 
-In this example, the `tools` array defines a `getWeather` function, specifying its name, description, JSON schema for the input parameters, and the `execute` function. When the language model determines that a function call is needed, the user agent will call the `getWeather` function with the provided arguments and return the result to the model, which can then use it in its response.
+In this example, the `tools` array defines a `getWeather` tool, specifying its name, description, input schema, and `execute` implementation. When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
 
 ### Multimodal inputs
 

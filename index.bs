@@ -75,14 +75,17 @@ interface LanguageModelParams {
   readonly attribute float maxTemperature;
 };
 
-// A description of a funnction call that a language model can invoke.
+
+callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
+
+// A description of a tool call that a language model can invoke.
 dictionary LanguageModelTool {
   required DOMString name;
   required DOMString description;
   // JSON schema for the input parameters.
   required object inputSchema;
   // The function to be invoked by user agent on behalf of language model.
-  required Function execute;
+  required LanguageModelToolFunction execute;
 };
 
 dictionary LanguageModelCreateCoreOptions {
