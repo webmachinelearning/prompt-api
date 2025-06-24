@@ -137,9 +137,9 @@ const result = await multiUserSession.prompt([
 
 Because of their special behavior of being preserved on context window overflow, system prompts cannot be provided this way.
 
-### Tool Use
+### Tool use
 
-The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by a `LanguageModelTool` object, which includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
+The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by an object that includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
 
 Here’s an example of how to use the `tools` option:
 
