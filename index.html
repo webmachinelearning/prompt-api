@@ -8,7 +8,7 @@
   <meta content="Bikeshed version 275834c42, updated Wed Jun 11 14:18:15 2025 -0700" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="ab9f257440ea6353aaf631d074ad1b9900992c6c" name="revision">
+  <meta content="af717e820f5bbac8d68a93d1c0445f7d05331fa1" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -743,7 +743,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
 </p>
    <h1 class="p-name no-ref" id="title">Prompt API</h1>
    <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
-    <time class="dt-updated" datetime="2025-06-20">20 June 2025</time></p>
+    <time class="dt-updated" datetime="2025-06-25">25 June 2025</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -862,6 +862,19 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float" id="ref-for-idl-float②"><c- b>float</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelParams" data-dfn-type="attribute" data-export data-readonly data-type="float" id="dom-languagemodelparams-maxtemperature"><code><c- g>maxTemperature</c-></code></dfn>;
 };
 
+
+<c- b>callback</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="callback" data-export id="callbackdef-languagemodeltoolfunction"><code><c- g>LanguageModelToolFunction</c-></code></dfn> = <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise⑦"><c- b>Promise</c-></a>&lt;<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString①"><c- b>DOMString</c-></a>> (<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-any" id="ref-for-idl-any"><c- b>any</c-></a>... <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelToolFunction" data-dfn-type="argument" data-export id="dom-languagemodeltoolfunction-arguments"><code><c- g>arguments</c-></code></dfn>);
+
+// A description of a tool call that a language model can invoke.
+<c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodeltool"><code><c- g>LanguageModelTool</c-></code></dfn> {
+  <c- b>required</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString②"><c- b>DOMString</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelTool" data-dfn-type="dict-member" data-export data-type="DOMString" id="dom-languagemodeltool-name"><code><c- g>name</c-></code></dfn>;
+  <c- b>required</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString③"><c- b>DOMString</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelTool" data-dfn-type="dict-member" data-export data-type="DOMString" id="dom-languagemodeltool-description"><code><c- g>description</c-></code></dfn>;
+  // JSON schema for the input parameters.
+  <c- b>required</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-object" id="ref-for-idl-object"><c- b>object</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelTool" data-dfn-type="dict-member" data-export data-type="object" id="dom-languagemodeltool-inputschema"><code><c- g>inputSchema</c-></code></dfn>;
+  // The function to be invoked by user agent on behalf of language model.
+  <c- b>required</c-> <a data-link-type="idl-name" href="#callbackdef-languagemodeltoolfunction" id="ref-for-callbackdef-languagemodeltoolfunction"><c- n>LanguageModelToolFunction</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelTool" data-dfn-type="dict-member" data-export data-type="LanguageModelToolFunction" id="dom-languagemodeltool-execute"><code><c- g>execute</c-></code></dfn>;
+};
+
 <c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodelcreatecoreoptions"><code><c- g>LanguageModelCreateCoreOptions</c-></code></dfn> {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
@@ -870,17 +883,18 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected" id="ref-for-dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelExpected>" id="dom-languagemodelcreatecoreoptions-expectedinputs"><code><c- g>expectedInputs</c-></code></dfn>;
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence①"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected" id="ref-for-dictdef-languagemodelexpected①"><c- n>LanguageModelExpected</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelExpected>" id="dom-languagemodelcreatecoreoptions-expectedoutputs"><code><c- g>expectedOutputs</c-></code></dfn>;
+  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence②"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodeltool" id="ref-for-dictdef-languagemodeltool"><c- n>LanguageModelTool</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelTool>" id="dom-languagemodelcreatecoreoptions-tools"><code><c- g>tools</c-></code></dfn>;
 };
 
 <c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodelcreateoptions"><code><c- g>LanguageModelCreateOptions</c-></code></dfn> : <a data-link-type="idl-name" href="#dictdef-languagemodelcreatecoreoptions" id="ref-for-dictdef-languagemodelcreatecoreoptions①"><c- n>LanguageModelCreateCoreOptions</c-></a> {
   <a data-link-type="idl-name" href="https://dom.spec.whatwg.org/#abortsignal" id="ref-for-abortsignal"><c- n>AbortSignal</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateOptions" data-dfn-type="dict-member" data-export data-type="AbortSignal" id="dom-languagemodelcreateoptions-signal"><code><c- g>signal</c-></code></dfn>;
   <a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#callbackdef-createmonitorcallback" id="ref-for-callbackdef-createmonitorcallback"><c- n>CreateMonitorCallback</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateOptions" data-dfn-type="dict-member" data-export data-type="CreateMonitorCallback" id="dom-languagemodelcreateoptions-monitor"><code><c- g>monitor</c-></code></dfn>;
 
-  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence②"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage"><c- n>LanguageModelMessage</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelMessage>" id="dom-languagemodelcreateoptions-initialprompts"><code><c- g>initialPrompts</c-></code></dfn>;
+  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence③"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage"><c- n>LanguageModelMessage</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelMessage>" id="dom-languagemodelcreateoptions-initialprompts"><code><c- g>initialPrompts</c-></code></dfn>;
 };
 
 <c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodelpromptoptions"><code><c- g>LanguageModelPromptOptions</c-></code></dfn> {
-  <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-object" id="ref-for-idl-object"><c- b>object</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelPromptOptions" data-dfn-type="dict-member" data-export data-type="object" id="dom-languagemodelpromptoptions-responseconstraint"><code><c- g>responseConstraint</c-></code></dfn>;
+  <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-object" id="ref-for-idl-object①"><c- b>object</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelPromptOptions" data-dfn-type="dict-member" data-export data-type="object" id="dom-languagemodelpromptoptions-responseconstraint"><code><c- g>responseConstraint</c-></code></dfn>;
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-boolean" id="ref-for-idl-boolean"><c- b>boolean</c-></a> <dfn class="dfn-paneled idl-code" data-default="false" data-dfn-for="LanguageModelPromptOptions" data-dfn-type="dict-member" data-export data-type="boolean" id="dom-languagemodelpromptoptions-omitresponseconstraintinput"><code><c- g>omitResponseConstraintInput</c-></code></dfn> = <c- b>false</c->;
   <a data-link-type="idl-name" href="https://dom.spec.whatwg.org/#abortsignal" id="ref-for-abortsignal①"><c- n>AbortSignal</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelPromptOptions" data-dfn-type="dict-member" data-export data-type="AbortSignal" id="dom-languagemodelpromptoptions-signal"><code><c- g>signal</c-></code></dfn>;
 };
@@ -895,22 +909,22 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 
 <c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodelexpected"><code><c- g>LanguageModelExpected</c-></code></dfn> {
   <c- b>required</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelmessagetype" id="ref-for-enumdef-languagemodelmessagetype"><c- n>LanguageModelMessageType</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelExpected" data-dfn-type="dict-member" data-export data-type="LanguageModelMessageType" id="dom-languagemodelexpected-type"><code><c- g>type</c-></code></dfn>;
-  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence③"><c- b>sequence</c-></a>&lt;<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString①"><c- b>DOMString</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelExpected" data-dfn-type="dict-member" data-export data-type="sequence<DOMString>" id="dom-languagemodelexpected-languages"><code><c- g>languages</c-></code></dfn>;
+  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence④"><c- b>sequence</c-></a>&lt;<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString④"><c- b>DOMString</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelExpected" data-dfn-type="dict-member" data-export data-type="sequence<DOMString>" id="dom-languagemodelexpected-languages"><code><c- g>languages</c-></code></dfn>;
 };
 
 // The argument to the prompt() method and others like it
 
 <c- b>typedef</c-> (
-  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence④"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage①"><c- n>LanguageModelMessage</c-></a>>
+  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence⑤"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelmessage" id="ref-for-dictdef-languagemodelmessage①"><c- n>LanguageModelMessage</c-></a>>
   // Shorthand for `[{ role: "user", content: [{ type: "text", value: providedValue }] }]`
-  <c- b>or</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString②"><c- b>DOMString</c-></a>
+  <c- b>or</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString⑤"><c- b>DOMString</c-></a>
 ) <dfn class="dfn-paneled idl-code" data-dfn-type="typedef" data-export id="typedefdef-languagemodelprompt"><code><c- g>LanguageModelPrompt</c-></code></dfn>;
 
 <c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodelmessage"><code><c- g>LanguageModelMessage</c-></code></dfn> {
   <c- b>required</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelmessagerole" id="ref-for-enumdef-languagemodelmessagerole"><c- n>LanguageModelMessageRole</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessage" data-dfn-type="dict-member" data-export data-type="LanguageModelMessageRole" id="dom-languagemodelmessage-role"><code><c- g>role</c-></code></dfn>;
 
   // The DOMString branch is shorthand for `[{ type: "text", value: providedValue }]`
-  <c- b>required</c-> (<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString③"><c- b>DOMString</c-></a> <c- b>or</c-> <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence⑤"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelmessagecontent" id="ref-for-dictdef-languagemodelmessagecontent"><c- n>LanguageModelMessageContent</c-></a>>) <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessage" data-dfn-type="dict-member" data-export data-type="(DOMString or sequence<LanguageModelMessageContent>)" id="dom-languagemodelmessage-content"><code><c- g>content</c-></code></dfn>;
+  <c- b>required</c-> (<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString⑥"><c- b>DOMString</c-></a> <c- b>or</c-> <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence⑥"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelmessagecontent" id="ref-for-dictdef-languagemodelmessagecontent"><c- n>LanguageModelMessageContent</c-></a>>) <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessage" data-dfn-type="dict-member" data-export data-type="(DOMString or sequence<LanguageModelMessageContent>)" id="dom-languagemodelmessage-content"><code><c- g>content</c-></code></dfn>;
 
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-boolean" id="ref-for-idl-boolean①"><c- b>boolean</c-></a> <dfn class="dfn-paneled idl-code" data-default="false" data-dfn-for="LanguageModelMessage" data-dfn-type="dict-member" data-export data-type="boolean" id="dom-languagemodelmessage-prefix"><code><c- g>prefix</c-></code></dfn> = <c- b>false</c->;
 };
@@ -928,7 +942,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <a data-link-type="idl-name" href="https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource" id="ref-for-imagebitmapsource"><c- n>ImageBitmapSource</c-></a>
   <c- b>or</c-> <a data-link-type="idl-name" href="https://webaudio.github.io/web-audio-api/#AudioBuffer" id="ref-for-AudioBuffer"><c- n>AudioBuffer</c-></a>
   <c- b>or</c-> <a data-link-type="idl-name" href="https://webidl.spec.whatwg.org/#BufferSource" id="ref-for-BufferSource"><c- n>BufferSource</c-></a>
-  <c- b>or</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString④"><c- b>DOMString</c-></a>
+  <c- b>or</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString" id="ref-for-idl-DOMString⑦"><c- b>DOMString</c-></a>
 ) <dfn class="dfn-paneled idl-code" data-dfn-type="typedef" data-export id="typedefdef-languagemodelmessagevalue"><code><c- g>LanguageModelMessageValue</c-></code></dfn>;
 </pre>
    <h3 class="heading settled" data-level="3.1" id="prompt-processing"><span class="secno">3.1. </span><span class="content">Prompt processing</span><a class="self-link" href="#prompt-processing"></a></h3>
@@ -1085,12 +1099,15 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#dom-languagemodel-create">create(options)</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelparams-defaulttemperature">defaultTemperature</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelparams-defaulttopk">defaultTopK</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodeltool-description">description</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-destroy">destroy()</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodeltool-execute">execute</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelcreatecoreoptions-expectedinputs">expectedInputs</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelcreatecoreoptions-expectedoutputs">expectedOutputs</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelmessagetype-image">"image"</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelcreateoptions-initialprompts">initialPrompts</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-inputquota">inputQuota</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodeltool-inputschema">inputSchema</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-inputusage">inputUsage</a><span>, in § 3</span>
    <li><a href="#permissiondef-language-model">language-model</a><span>, in § 3.2</span>
    <li><a href="#languagemodel">LanguageModel</a><span>, in § 3</span>
@@ -1107,12 +1124,15 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#languagemodelparams">LanguageModelParams</a><span>, in § 3</span>
    <li><a href="#typedefdef-languagemodelprompt">LanguageModelPrompt</a><span>, in § 3</span>
    <li><a href="#dictdef-languagemodelpromptoptions">LanguageModelPromptOptions</a><span>, in § 3</span>
+   <li><a href="#dictdef-languagemodeltool">LanguageModelTool</a><span>, in § 3</span>
+   <li><a href="#callbackdef-languagemodeltoolfunction">LanguageModelToolFunction</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelexpected-languages">languages</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelparams-maxtemperature">maxTemperature</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelparams-maxtopk">maxTopK</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-measureinputusage">measureInputUsage(input)</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-measureinputusage">measureInputUsage(input, options)</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelcreateoptions-monitor">monitor</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodeltool-name">name</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelpromptoptions-omitresponseconstraintinput">omitResponseConstraintInput</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-onquotaoverflow">onquotaoverflow</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-params">params()</a><span>, in § 3</span>
@@ -1139,6 +1159,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <li><a href="#dom-languagemodelcreatecoreoptions-temperature">dict-member for LanguageModelCreateCoreOptions</a><span>, in § 3</span>
     </ul>
    <li><a href="#dom-languagemodelmessagetype-text">"text"</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodelcreatecoreoptions-tools">tools</a><span>, in § 3</span>
    <li>
     topK
     <ul>
@@ -1214,6 +1235,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <li><span class="dfn-paneled" id="b75bb3bd">SecureContext</span>
      <li><span class="dfn-paneled" id="be2d2b4c">SyntaxError</span>
      <li><span class="dfn-paneled" id="82ca3efc">TypeError</span>
+     <li><span class="dfn-paneled" id="6c6b1005">any</span>
      <li><span class="dfn-paneled" id="5372cca8">boolean</span>
      <li><span class="dfn-paneled" id="8c800cdf">double</span>
      <li><span class="dfn-paneled" id="eec1be2d">float</span>
@@ -1305,6 +1327,19 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float"><c- b>float</c-></a> <a data-readonly data-type="float" href="#dom-languagemodelparams-maxtemperature"><code><c- g>maxTemperature</c-></code></a>;
 };
 
+
+<c- b>callback</c-> <a href="#callbackdef-languagemodeltoolfunction"><code><c- g>LanguageModelToolFunction</c-></code></a> = <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString"><c- b>DOMString</c-></a>> (<a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-any"><c- b>any</c-></a>... <a href="#dom-languagemodeltoolfunction-arguments"><code><c- g>arguments</c-></code></a>);
+
+// A description of a tool call that a language model can invoke.
+<c- b>dictionary</c-> <a href="#dictdef-languagemodeltool"><code><c- g>LanguageModelTool</c-></code></a> {
+  <c- b>required</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString"><c- b>DOMString</c-></a> <a data-type="DOMString" href="#dom-languagemodeltool-name"><code><c- g>name</c-></code></a>;
+  <c- b>required</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-DOMString"><c- b>DOMString</c-></a> <a data-type="DOMString" href="#dom-languagemodeltool-description"><code><c- g>description</c-></code></a>;
+  // JSON schema for the input parameters.
+  <c- b>required</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-object"><c- b>object</c-></a> <a data-type="object" href="#dom-languagemodeltool-inputschema"><code><c- g>inputSchema</c-></code></a>;
+  // The function to be invoked by user agent on behalf of language model.
+  <c- b>required</c-> <a data-link-type="idl-name" href="#callbackdef-languagemodeltoolfunction"><c- n>LanguageModelToolFunction</c-></a> <a data-type="LanguageModelToolFunction" href="#dom-languagemodeltool-execute"><code><c- g>execute</c-></code></a>;
+};
+
 <c- b>dictionary</c-> <a href="#dictdef-languagemodelcreatecoreoptions"><code><c- g>LanguageModelCreateCoreOptions</c-></code></a> {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
@@ -1313,6 +1348,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <a data-type="sequence<LanguageModelExpected>" href="#dom-languagemodelcreatecoreoptions-expectedinputs"><code><c- g>expectedInputs</c-></code></a>;
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <a data-type="sequence<LanguageModelExpected>" href="#dom-languagemodelcreatecoreoptions-expectedoutputs"><code><c- g>expectedOutputs</c-></code></a>;
+  <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodeltool"><c- n>LanguageModelTool</c-></a>> <a data-type="sequence<LanguageModelTool>" href="#dom-languagemodelcreatecoreoptions-tools"><code><c- g>tools</c-></code></a>;
 };
 
 <c- b>dictionary</c-> <a href="#dictdef-languagemodelcreateoptions"><code><c- g>LanguageModelCreateOptions</c-></code></a> : <a data-link-type="idl-name" href="#dictdef-languagemodelcreatecoreoptions"><c- n>LanguageModelCreateCoreOptions</c-></a> {
@@ -1590,19 +1626,21 @@ let dfnPanelData = {
 "5f90bbfb": {"dfnID":"5f90bbfb","dfnText":"undefined","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-undefined"},{"id":"ref-for-idl-undefined\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-undefined"},
 "649608b9": {"dfnID":"649608b9","dfnText":"list","external":true,"refSections":[{"refs":[{"id":"ref-for-list"},{"id":"ref-for-list\u2460"},{"id":"ref-for-list\u2461"},{"id":"ref-for-list\u2462"},{"id":"ref-for-list\u2463"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list"},
 "6b815fdd": {"dfnID":"6b815fdd","dfnText":"is empty","external":true,"refSections":[{"refs":[{"id":"ref-for-list-is-empty"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list-is-empty"},
+"6c6b1005": {"dfnID":"6c6b1005","dfnText":"any","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-any"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-any"},
 "77b4c09a": {"dfnID":"77b4c09a","dfnText":"assert","external":true,"refSections":[{"refs":[{"id":"ref-for-assert"},{"id":"ref-for-assert\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#assert"},
 "82ca3efc": {"dfnID":"82ca3efc","dfnText":"TypeError","external":true,"refSections":[{"refs":[{"id":"ref-for-exceptiondef-typeerror"},{"id":"ref-for-exceptiondef-typeerror\u2460"},{"id":"ref-for-exceptiondef-typeerror\u2461"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#exceptiondef-typeerror"},
 "86e73a86": {"dfnID":"86e73a86","dfnText":"CreateMonitorCallback","external":true,"refSections":[{"refs":[{"id":"ref-for-callbackdef-createmonitorcallback"}],"title":"3. The API"}],"url":"https://webmachinelearning.github.io/writing-assistance-apis/#callbackdef-createmonitorcallback"},
-"8855a9aa": {"dfnID":"8855a9aa","dfnText":"DOMString","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-DOMString"},{"id":"ref-for-idl-DOMString\u2460"},{"id":"ref-for-idl-DOMString\u2461"},{"id":"ref-for-idl-DOMString\u2462"},{"id":"ref-for-idl-DOMString\u2463"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-DOMString"},
+"8855a9aa": {"dfnID":"8855a9aa","dfnText":"DOMString","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-DOMString"},{"id":"ref-for-idl-DOMString\u2460"},{"id":"ref-for-idl-DOMString\u2461"},{"id":"ref-for-idl-DOMString\u2462"},{"id":"ref-for-idl-DOMString\u2463"},{"id":"ref-for-idl-DOMString\u2464"},{"id":"ref-for-idl-DOMString\u2465"},{"id":"ref-for-idl-DOMString\u2466"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-DOMString"},
 "889e932f": {"dfnID":"889e932f","dfnText":"Exposed","external":true,"refSections":[{"refs":[{"id":"ref-for-Exposed"},{"id":"ref-for-Exposed\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#Exposed"},
 "8c800cdf": {"dfnID":"8c800cdf","dfnText":"double","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-double"},{"id":"ref-for-idl-double\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-double"},
-"9cce47fd": {"dfnID":"9cce47fd","dfnText":"sequence","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-sequence"},{"id":"ref-for-idl-sequence\u2460"},{"id":"ref-for-idl-sequence\u2461"},{"id":"ref-for-idl-sequence\u2462"},{"id":"ref-for-idl-sequence\u2463"},{"id":"ref-for-idl-sequence\u2464"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-sequence"},
+"9cce47fd": {"dfnID":"9cce47fd","dfnText":"sequence","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-sequence"},{"id":"ref-for-idl-sequence\u2460"},{"id":"ref-for-idl-sequence\u2461"},{"id":"ref-for-idl-sequence\u2462"},{"id":"ref-for-idl-sequence\u2463"},{"id":"ref-for-idl-sequence\u2464"},{"id":"ref-for-idl-sequence\u2465"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-sequence"},
 "ae8def21": {"dfnID":"ae8def21","dfnText":"contain","external":true,"refSections":[{"refs":[{"id":"ref-for-list-contain"},{"id":"ref-for-list-contain\u2460"},{"id":"ref-for-list-contain\u2461"}],"title":"3.1. Prompt processing"}],"url":"https://infra.spec.whatwg.org/#list-contain"},
 "aeb8d5fd": {"dfnID":"aeb8d5fd","dfnText":"ImageBitmapSource","external":true,"refSections":[{"refs":[{"id":"ref-for-imagebitmapsource"}],"title":"3. The API"},{"refs":[{"id":"ref-for-imagebitmapsource\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#imagebitmapsource"},
 "b75bb3bd": {"dfnID":"b75bb3bd","dfnText":"SecureContext","external":true,"refSections":[{"refs":[{"id":"ref-for-SecureContext"},{"id":"ref-for-SecureContext\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#SecureContext"},
 "b7d73f5b": {"dfnID":"b7d73f5b","dfnText":"Blob","external":true,"refSections":[{"refs":[{"id":"ref-for-dfn-Blob"}],"title":"3.1. Prompt processing"}],"url":"https://w3c.github.io/FileAPI/#dfn-Blob"},
-"bdbd19d1": {"dfnID":"bdbd19d1","dfnText":"Promise","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-promise"},{"id":"ref-for-idl-promise\u2460"},{"id":"ref-for-idl-promise\u2461"},{"id":"ref-for-idl-promise\u2462"},{"id":"ref-for-idl-promise\u2463"},{"id":"ref-for-idl-promise\u2464"},{"id":"ref-for-idl-promise\u2465"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-promise"},
+"bdbd19d1": {"dfnID":"bdbd19d1","dfnText":"Promise","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-promise"},{"id":"ref-for-idl-promise\u2460"},{"id":"ref-for-idl-promise\u2461"},{"id":"ref-for-idl-promise\u2462"},{"id":"ref-for-idl-promise\u2463"},{"id":"ref-for-idl-promise\u2464"},{"id":"ref-for-idl-promise\u2465"},{"id":"ref-for-idl-promise\u2466"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-promise"},
 "be2d2b4c": {"dfnID":"be2d2b4c","dfnText":"SyntaxError","external":true,"refSections":[{"refs":[{"id":"ref-for-syntaxerror"},{"id":"ref-for-syntaxerror\u2460"},{"id":"ref-for-syntaxerror\u2461"},{"id":"ref-for-syntaxerror\u2462"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#syntaxerror"},
+"callbackdef-languagemodeltoolfunction": {"dfnID":"callbackdef-languagemodeltoolfunction","dfnText":"LanguageModelToolFunction","external":false,"refSections":[{"refs":[{"id":"ref-for-callbackdef-languagemodeltoolfunction"}],"title":"3. The API"}],"url":"#callbackdef-languagemodeltoolfunction"},
 "cc890cc1": {"dfnID":"cc890cc1","dfnText":"policy-controlled feature","external":true,"refSections":[{"refs":[{"id":"ref-for-policy-controlled-feature"}],"title":"3.2. Permissions policy integration"}],"url":"https://w3c.github.io/webappsec-permissions-policy/#policy-controlled-feature"},
 "cca3cdb2": {"dfnID":"cca3cdb2","dfnText":"AbortSignal","external":true,"refSections":[{"refs":[{"id":"ref-for-abortsignal"},{"id":"ref-for-abortsignal\u2460"},{"id":"ref-for-abortsignal\u2461"},{"id":"ref-for-abortsignal\u2462"}],"title":"3. The API"}],"url":"https://dom.spec.whatwg.org/#abortsignal"},
 "dca2de17": {"dfnID":"dca2de17","dfnText":"DOMException","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-DOMException"},{"id":"ref-for-idl-DOMException\u2460"},{"id":"ref-for-idl-DOMException\u2461"},{"id":"ref-for-idl-DOMException\u2462"},{"id":"ref-for-idl-DOMException\u2463"},{"id":"ref-for-idl-DOMException\u2464"},{"id":"ref-for-idl-DOMException\u2465"},{"id":"ref-for-idl-DOMException\u2466"}],"title":"3.1. Prompt processing"}],"url":"https://webidl.spec.whatwg.org/#idl-DOMException"},
@@ -1614,6 +1652,7 @@ let dfnPanelData = {
 "dictdef-languagemodelmessage": {"dfnID":"dictdef-languagemodelmessage","dfnText":"LanguageModelMessage","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelmessage"},{"id":"ref-for-dictdef-languagemodelmessage\u2460"}],"title":"3. The API"},{"refs":[{"id":"ref-for-dictdef-languagemodelmessage\u2461"},{"id":"ref-for-dictdef-languagemodelmessage\u2462"},{"id":"ref-for-dictdef-languagemodelmessage\u2463"}],"title":"3.1. Prompt processing"}],"url":"#dictdef-languagemodelmessage"},
 "dictdef-languagemodelmessagecontent": {"dfnID":"dictdef-languagemodelmessagecontent","dfnText":"LanguageModelMessageContent","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelmessagecontent"}],"title":"3. The API"},{"refs":[{"id":"ref-for-dictdef-languagemodelmessagecontent\u2460"}],"title":"3.1. Prompt processing"}],"url":"#dictdef-languagemodelmessagecontent"},
 "dictdef-languagemodelpromptoptions": {"dfnID":"dictdef-languagemodelpromptoptions","dfnText":"LanguageModelPromptOptions","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodelpromptoptions"},{"id":"ref-for-dictdef-languagemodelpromptoptions\u2460"},{"id":"ref-for-dictdef-languagemodelpromptoptions\u2461"}],"title":"3. The API"}],"url":"#dictdef-languagemodelpromptoptions"},
+"dictdef-languagemodeltool": {"dfnID":"dictdef-languagemodeltool","dfnText":"LanguageModelTool","external":false,"refSections":[{"refs":[{"id":"ref-for-dictdef-languagemodeltool"}],"title":"3. The API"}],"url":"#dictdef-languagemodeltool"},
 "dom-languagemodel-append": {"dfnID":"dom-languagemodel-append","dfnText":"append","external":false,"refSections":[],"url":"#dom-languagemodel-append"},
 "dom-languagemodel-append-input-options-input": {"dfnID":"dom-languagemodel-append-input-options-input","dfnText":"input","external":false,"refSections":[],"url":"#dom-languagemodel-append-input-options-input"},
 "dom-languagemodel-append-input-options-options": {"dfnID":"dom-languagemodel-append-input-options-options","dfnText":"options","external":false,"refSections":[],"url":"#dom-languagemodel-append-input-options-options"},
@@ -1644,6 +1683,7 @@ let dfnPanelData = {
 "dom-languagemodelcreatecoreoptions-expectedinputs": {"dfnID":"dom-languagemodelcreatecoreoptions-expectedinputs","dfnText":"expectedInputs","external":false,"refSections":[],"url":"#dom-languagemodelcreatecoreoptions-expectedinputs"},
 "dom-languagemodelcreatecoreoptions-expectedoutputs": {"dfnID":"dom-languagemodelcreatecoreoptions-expectedoutputs","dfnText":"expectedOutputs","external":false,"refSections":[],"url":"#dom-languagemodelcreatecoreoptions-expectedoutputs"},
 "dom-languagemodelcreatecoreoptions-temperature": {"dfnID":"dom-languagemodelcreatecoreoptions-temperature","dfnText":"temperature","external":false,"refSections":[],"url":"#dom-languagemodelcreatecoreoptions-temperature"},
+"dom-languagemodelcreatecoreoptions-tools": {"dfnID":"dom-languagemodelcreatecoreoptions-tools","dfnText":"tools","external":false,"refSections":[],"url":"#dom-languagemodelcreatecoreoptions-tools"},
 "dom-languagemodelcreatecoreoptions-topk": {"dfnID":"dom-languagemodelcreatecoreoptions-topk","dfnText":"topK","external":false,"refSections":[],"url":"#dom-languagemodelcreatecoreoptions-topk"},
 "dom-languagemodelcreateoptions-initialprompts": {"dfnID":"dom-languagemodelcreateoptions-initialprompts","dfnText":"initialPrompts","external":false,"refSections":[],"url":"#dom-languagemodelcreateoptions-initialprompts"},
 "dom-languagemodelcreateoptions-monitor": {"dfnID":"dom-languagemodelcreateoptions-monitor","dfnText":"monitor","external":false,"refSections":[],"url":"#dom-languagemodelcreateoptions-monitor"},
@@ -1668,10 +1708,15 @@ let dfnPanelData = {
 "dom-languagemodelpromptoptions-omitresponseconstraintinput": {"dfnID":"dom-languagemodelpromptoptions-omitresponseconstraintinput","dfnText":"omitResponseConstraintInput","external":false,"refSections":[],"url":"#dom-languagemodelpromptoptions-omitresponseconstraintinput"},
 "dom-languagemodelpromptoptions-responseconstraint": {"dfnID":"dom-languagemodelpromptoptions-responseconstraint","dfnText":"responseConstraint","external":false,"refSections":[],"url":"#dom-languagemodelpromptoptions-responseconstraint"},
 "dom-languagemodelpromptoptions-signal": {"dfnID":"dom-languagemodelpromptoptions-signal","dfnText":"signal","external":false,"refSections":[],"url":"#dom-languagemodelpromptoptions-signal"},
+"dom-languagemodeltool-description": {"dfnID":"dom-languagemodeltool-description","dfnText":"description","external":false,"refSections":[],"url":"#dom-languagemodeltool-description"},
+"dom-languagemodeltool-execute": {"dfnID":"dom-languagemodeltool-execute","dfnText":"execute","external":false,"refSections":[],"url":"#dom-languagemodeltool-execute"},
+"dom-languagemodeltool-inputschema": {"dfnID":"dom-languagemodeltool-inputschema","dfnText":"inputSchema","external":false,"refSections":[],"url":"#dom-languagemodeltool-inputschema"},
+"dom-languagemodeltool-name": {"dfnID":"dom-languagemodeltool-name","dfnText":"name","external":false,"refSections":[],"url":"#dom-languagemodeltool-name"},
+"dom-languagemodeltoolfunction-arguments": {"dfnID":"dom-languagemodeltoolfunction-arguments","dfnText":"arguments","external":false,"refSections":[],"url":"#dom-languagemodeltoolfunction-arguments"},
 "e97a9688": {"dfnID":"e97a9688","dfnText":"unsigned long","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-unsigned-long"},{"id":"ref-for-idl-unsigned-long\u2460"},{"id":"ref-for-idl-unsigned-long\u2461"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-unsigned-long"},
 "e9b6376e": {"dfnID":"e9b6376e","dfnText":"AudioBuffer","external":true,"refSections":[{"refs":[{"id":"ref-for-AudioBuffer"}],"title":"3. The API"},{"refs":[{"id":"ref-for-AudioBuffer\u2460"}],"title":"3.1. Prompt processing"}],"url":"https://webaudio.github.io/web-audio-api/#AudioBuffer"},
 "eec1be2d": {"dfnID":"eec1be2d","dfnText":"float","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-float"},{"id":"ref-for-idl-float\u2460"},{"id":"ref-for-idl-float\u2461"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-float"},
-"efd1ec5d": {"dfnID":"efd1ec5d","dfnText":"object","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-object"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-object"},
+"efd1ec5d": {"dfnID":"efd1ec5d","dfnText":"object","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-object"},{"id":"ref-for-idl-object\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-object"},
 "enumdef-languagemodelmessagerole": {"dfnID":"enumdef-languagemodelmessagerole","dfnText":"LanguageModelMessageRole","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagerole"}],"title":"3. The API"}],"url":"#enumdef-languagemodelmessagerole"},
 "enumdef-languagemodelmessagetype": {"dfnID":"enumdef-languagemodelmessagetype","dfnText":"LanguageModelMessageType","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype"},{"id":"ref-for-enumdef-languagemodelmessagetype\u2460"}],"title":"3. The API"},{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype\u2461"}],"title":"3.1. Prompt processing"}],"url":"#enumdef-languagemodelmessagetype"},
 "f0951476": {"dfnID":"f0951476","dfnText":"EventHandler","external":true,"refSections":[{"refs":[{"id":"ref-for-eventhandler"}],"title":"3. The API"}],"url":"https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler"},
@@ -2069,6 +2114,7 @@ function genLinkingSyntaxes(dfn) {
 "use strict";
 {
 let refsData = {
+"#callbackdef-languagemodeltoolfunction": {"displayText":"LanguageModelToolFunction","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelToolFunction","type":"callback","url":"#callbackdef-languagemodeltoolfunction"},
 "#dictdef-languagemodelappendoptions": {"displayText":"LanguageModelAppendOptions","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelAppendOptions","type":"dictionary","url":"#dictdef-languagemodelappendoptions"},
 "#dictdef-languagemodelcloneoptions": {"displayText":"LanguageModelCloneOptions","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelCloneOptions","type":"dictionary","url":"#dictdef-languagemodelcloneoptions"},
 "#dictdef-languagemodelcreatecoreoptions": {"displayText":"LanguageModelCreateCoreOptions","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelCreateCoreOptions","type":"dictionary","url":"#dictdef-languagemodelcreatecoreoptions"},
@@ -2077,6 +2123,7 @@ let refsData = {
 "#dictdef-languagemodelmessage": {"displayText":"LanguageModelMessage","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessage","type":"dictionary","url":"#dictdef-languagemodelmessage"},
 "#dictdef-languagemodelmessagecontent": {"displayText":"LanguageModelMessageContent","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessageContent","type":"dictionary","url":"#dictdef-languagemodelmessagecontent"},
 "#dictdef-languagemodelpromptoptions": {"displayText":"LanguageModelPromptOptions","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelPromptOptions","type":"dictionary","url":"#dictdef-languagemodelpromptoptions"},
+"#dictdef-languagemodeltool": {"displayText":"LanguageModelTool","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelTool","type":"dictionary","url":"#dictdef-languagemodeltool"},
 "#dom-languagemodelmessage-content": {"displayText":"content","export":true,"for_":["LanguageModelMessage"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"content","type":"dict-member","url":"#dom-languagemodelmessage-content"},
 "#dom-languagemodelmessage-prefix": {"displayText":"prefix","export":true,"for_":["LanguageModelMessage"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"prefix","type":"dict-member","url":"#dom-languagemodelmessage-prefix"},
 "#dom-languagemodelmessage-role": {"displayText":"role","export":true,"for_":["LanguageModelMessage"],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"role","type":"dict-member","url":"#dom-languagemodelmessage-role"},
@@ -2117,6 +2164,7 @@ let refsData = {
 "https://webidl.spec.whatwg.org/#exceptiondef-typeerror": {"displayText":"TypeError","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"TypeError","type":"exception","url":"https://webidl.spec.whatwg.org/#exceptiondef-typeerror"},
 "https://webidl.spec.whatwg.org/#idl-DOMException": {"displayText":"DOMException","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"DOMException","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-DOMException"},
 "https://webidl.spec.whatwg.org/#idl-DOMString": {"displayText":"DOMString","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"DOMString","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-DOMString"},
+"https://webidl.spec.whatwg.org/#idl-any": {"displayText":"any","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"any","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-any"},
 "https://webidl.spec.whatwg.org/#idl-boolean": {"displayText":"boolean","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"boolean","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-boolean"},
 "https://webidl.spec.whatwg.org/#idl-double": {"displayText":"double","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"double","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-double"},
 "https://webidl.spec.whatwg.org/#idl-float": {"displayText":"float","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"float","type":"interface","url":"https://webidl.spec.whatwg.org/#idl-float"},
