@@ -75,6 +75,19 @@ interface LanguageModelParams {
   readonly attribute float maxTemperature;
 };
 
+
+callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
+
+// A description of a tool call that a language model can invoke.
+dictionary LanguageModelTool {
+  required DOMString name;
+  required DOMString description;
+  // JSON schema for the input parameters.
+  required object inputSchema;
+  // The function to be invoked by user agent on behalf of language model.
+  required LanguageModelToolFunction execute;
+};
+
 dictionary LanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
@@ -83,6 +96,7 @@ dictionary LanguageModelCreateCoreOptions {
 
   sequence<LanguageModelExpected> expectedInputs;
   sequence<LanguageModelExpected> expectedOutputs;
+  sequence<LanguageModelTool> tools;
 };
 
 dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {

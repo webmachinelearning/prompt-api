@@ -137,45 +137,47 @@ const result = await multiUserSession.prompt([
 
 Because of their special behavior of being preserved on context window overflow, system prompts cannot be provided this way.
 
-### Emulating tool use or function-calling via assistant-role prompts
+### Tool use
 
-A special case of the above is using the assistant role to emulate tool use or function-calling, by marking a response as coming from the assistant side of the conversation:
+The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by an object that includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
+
+Here’s an example of how to use the `tools` option:
 
 ```js
 const session = await LanguageModel.create({
-  initialPrompts: [{
-    role: "system",
-    content: `
-      You are a helpful assistant. You have access to the following tools:
-      - calculator: A calculator. To use it, write "CALCULATOR: <expression>" where <expression> is a valid mathematical expression.
-    `
-  }]
+  initialPrompts: [
+    {
+      role: "system",
+      content: `You are a helpful assistant. You can use tools to help the user.`
+    }
+  ],
+  tools: [
+    {
+      name: "getWeather",
+      description: "Get the weather in a location.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          location: {
+            type: "string",
+            description: "The city to check for the weather condition.",
+          },
+        },
+        required: ["location"],
+      },
+      async execute({ location }) {
+        const res = await fetch("https://weatherapi.example/?location=" + location);
+        // Returns the result as a JSON string.
+        return JSON.stringify(await res.json());
+      },
+    }
+  ]
 });
 
-async function promptWithCalculator(prompt) {
-  const result = await session.prompt(prompt);
-
-  // Check if the assistant wants to use the calculator tool.
-  const match = /^CALCULATOR: (.*)$/.exec(result);
-  if (match) {
-    const expression = match[1];
-    const mathResult = evaluateMathExpression(expression);
-
-    // Add the result to the session so it's in context going forward.
-    await session.prompt([{ role: "assistant", content: mathResult }]);
-
-    // Return it as if that's what the assistant said to the user.
-    return mathResult;
-  }
-
-  // The assistant didn't want to use the calculator. Just return its response.
-  return result;
-}
-
-console.log(await promptWithCalculator("What is 2 + 2?"));
+const result = await session.prompt("What is the weather in Seattle?");
 ```
 
-We'll likely explore more specific APIs for tool- and function-calling in the future; follow along in [issue #7](https://github.com/webmachinelearning/prompt-api/issues/7).
+In this example, the `tools` array defines a `getWeather` tool, specifying its name, description, input schema, and `execute` implementation. When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
 
 ### Multimodal inputs
 
