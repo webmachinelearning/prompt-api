@@ -555,10 +555,18 @@ A given language model session will have a maximum number of tokens it can proce
 console.log(`${session.inputUsage} tokens used, out of ${session.inputQuota} tokens available.`);
 ```
 
-To know how many tokens a string will consume, without actually processing it, developers can use the `measureInputUsage()` method:
+To know how many tokens a prompt will consume, without actually processing it, developers can use the `measureInputUsage()` method. This method accepts the same input types as `prompt()`, including strings and multimodal input arrays:
 
 ```js
-const usage = await session.measureInputUsage(promptString);
+const stringUsage = await session.measureInputUsage(promptString);
+
+const audioUsage = await session.measureInputUsage([{
+  role: "user",
+  content: [
+    { type: "text", value: "My response to your critique:" },
+    { type: "audio", value: audioBlob }
+  ]
+}]);
 ```
 
 Some notes on this API:
