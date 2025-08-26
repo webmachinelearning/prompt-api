@@ -334,16 +334,14 @@ As discussed in [Customizing the role per prompt](#customizing-the-role-per-prom
 
 ```js
 const followup = await session.prompt([
-[
-    {
-      role: "user",
-      content: "I'm nervous about my presentation tomorrow"
-    },
-    {
-      role: "assistant"
-      content: "Presentations are tough!"
-    }
-  ]
+  {
+    role: "user",
+    content: "I'm nervous about my presentation tomorrow"
+  },
+  {
+    role: "assistant"
+    content: "Presentations are tough!"
+  }
 ]);
 
 // `followup` might be something like "Here are some tips for staying calm.", or
