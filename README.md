@@ -179,6 +179,18 @@ const result = await session.prompt("What is the weather in Seattle?");
 
 In this example, the `tools` array defines a `getWeather` tool, specifying its name, description, input schema, and `execute` implementation. When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
 
+#### Concurrent tool use
+
+Developers should be aware that the model might call their tool multiple times, concurrently. For example, code such as
+
+```js
+const result = await session.prompt("Which of these locations currently has the highest temperature? Seattle, Tokyo, Berlin");
+```
+
+might call the above `"getWeather"` tool's `execute()` function three times. The model would wait for all tool call results to return, using the equivalent of `Promise.all()` internally, before it composes its final response.
+
+Similarly, the model might call multiple different tools, if it believes they all are relevant when responding to the given prompt.
+
 ### Multimodal inputs
 
 All of the above examples have been of text prompts. Some language models also support other inputs. Our design initially includes the potential to support images and audio clips as inputs. This is done by using objects in the form `{ type: "image", content }` and `{ type: "audio", content }` instead of strings. The `content` values can be the following:
