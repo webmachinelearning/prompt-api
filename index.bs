@@ -82,6 +82,7 @@ callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
 dictionary LanguageModelTool {
   required DOMString name;
   required DOMString description;
+  LanguageModelExpected expectedOutputs;
   // JSON schema for the input parameters.
   required object inputSchema;
   // The function to be invoked by user agent on behalf of language model.
@@ -135,14 +136,17 @@ typedef (
 
 dictionary LanguageModelMessage {
   required LanguageModelMessageRole role;
-
-  // The DOMString branch is shorthand for `[{ type: "text", value: providedValue }]`
-  required (DOMString or sequence<LanguageModelMessageContent>) content;
-
+  required LanguageModelMessageContent content;
   boolean prefix = false;
 };
 
-dictionary LanguageModelMessageContent {
+typedef (
+  sequence<LanguageModelMessageContentChunk>
+  // Shorthand for `[{ type: "text", value: providedValue }]`
+  or DOMString
+) LanguageModelMessageContent;
+
+dictionary LanguageModelMessageContentChunk {
   required LanguageModelMessageType type;
   required LanguageModelMessageValue value;
 };
@@ -164,7 +168,8 @@ typedef (
 <p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
 
 <div algorithm>
-  To <dfn>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
+  <!-- TODO remove noexport once there are actual references to this algorithm in the spec. It is only being used now to silence a build warning. -->
+  To <dfn noexport>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
 
   1. [=Assert=]: |expectedTypes| [=list/contains=] "{{LanguageModelMessageType/text}}".
 
@@ -173,8 +178,8 @@ typedef (
         "{{LanguageModelMessage/role}}" → "{{LanguageModelMessageRole/user}}",
         "{{LanguageModelMessage/content}}" → «
           «[
-            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-            "{{LanguageModelMessageContent/value}}" → |input|
+            "{{LanguageModelMessageContentChunk/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContentChunk/value}}" → |input|
           ]»
         »,
         "{{LanguageModelMessage/prefix}}" → false
@@ -193,8 +198,8 @@ typedef (
         "{{LanguageModelMessage/role}}" → |message|["{{LanguageModelMessage/role}}"],
         "{{LanguageModelMessage/content}}" → «
           «[
-            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-            "{{LanguageModelMessageContent/value}}" → |message|
+            "{{LanguageModelMessageContentChunk/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContentChunk/value}}" → |message|
           ]»
         »,
         "{{LanguageModelMessage/prefix}}" → |message|["{{LanguageModelMessage/prefix}}"]
@@ -218,21 +223,21 @@ typedef (
 
       1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/system}}", then set |seenNonSystemRole| to true.
 
-      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContentChunk/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
+      1. If |content|["{{LanguageModelMessageContentChunk/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContentChunk/value}}"] is not a [=string=], then throw a {{TypeError}}.
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/image}}", then:
+      1. If |content|["{{LanguageModelMessageContentChunk/type}}"] is "{{LanguageModelMessageType/image}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/image}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
+        1. If |content|["{{LanguageModelMessageContentChunk/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/audio}}", then:
+      1. If |content|["{{LanguageModelMessageContentChunk/type}}"] is "{{LanguageModelMessageType/audio}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+        1. If |content|["{{LanguageModelMessageContentChunk/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
 
     1. Let |contentWithContiguousTextCollapsed| be an empty [=list=] of {{LanguageModelMessageContent}}s.
 
@@ -240,7 +245,7 @@ typedef (
 
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}":
+      1. If |content|["{{LanguageModelMessageContentChunk/type}}"] is "{{LanguageModelMessageType/text}}":
 
         1. If |lastTextContent| is null:
 
@@ -248,9 +253,9 @@ typedef (
 
           1. Set |lastTextContent| to |content|.
 
-        1. Otherwise, set |lastTextContent|["{{LanguageModelMessageContent/value}}"] to the concatenation of |lastTextContent|["{{LanguageModelMessageContent/value}}"] and |content|["{{LanguageModelMessageContent/value}}"].
+        1. Otherwise, set |lastTextContent|["{{LanguageModelMessageContentChunk/value}}"] to the concatenation of |lastTextContent|["{{LanguageModelMessageContentChunk/value}}"] and |content|["{{LanguageModelMessageContentChunk/value}}"].
 
-          <p class="note">No space or other character is added. Thus, « «[ "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}", "`foo`" ]», «[ "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}", "`bar`" ]» » is canonicalized to « «[ "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}", "`foobar`" ]».</p>
+          <p class="note">No space or other character is added. Thus, « «[ "{{LanguageModelMessageContentChunk/type}}" → "{{LanguageModelMessageType/text}}", "`foo`" ]», «[ "{{LanguageModelMessageContentChunk/type}}" → "{{LanguageModelMessageType/text}}", "`bar`" ]» » is canonicalized to « «[ "{{LanguageModelMessageContentChunk/type}}" → "{{LanguageModelMessageType/text}}", "`foobar`" ]».</p>
 
       1. Otherwise:
 
