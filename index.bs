@@ -82,6 +82,7 @@ callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
 dictionary LanguageModelTool {
   required DOMString name;
   required DOMString description;
+  LanguageModelExpected expectedOutputs;
   // JSON schema for the input parameters.
   required object inputSchema;
   // The function to be invoked by user agent on behalf of language model.
@@ -135,14 +136,17 @@ typedef (
 
 dictionary LanguageModelMessage {
   required LanguageModelMessageRole role;
-
-  // The DOMString branch is shorthand for `[{ type: "text", value: providedValue }]`
-  required (DOMString or sequence<LanguageModelMessageContent>) content;
-
+  required LanguageModelMessageContent content;
   boolean prefix = false;
 };
 
-dictionary LanguageModelMessageContent {
+typedef (
+  sequence<LanguageModelMessageContentChunk>
+  // Shorthand for `[{ type: "text", value: providedValue }]`
+  or DOMString
+) LanguageModelMessageContent;
+
+dictionary LanguageModelMessageContentChunk {
   required LanguageModelMessageType type;
   required LanguageModelMessageValue value;
 };
