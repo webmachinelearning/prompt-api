@@ -281,6 +281,8 @@ might call the above `"getWeather"` tool's `execute()` function three times. The
 
 Similarly, the model might call multiple different tools, if it believes they all are relevant when responding to the given prompt.
 
+If a developer's `execute()` function is not safe against being called multiple times concurrently, e.g., because it accesses some shared resource, then the developer is responsible for writing appropriate code to suspend execution until the resource is available. The following section contains an example of such code.
+
 #### Tool return values
 
 The above example shows tools returning a string. (In fact, stringified JSON.) Models which support [multimodal inputs](#multimodal-inputs) might also support interpreting image or audio results from tool calls.
@@ -330,9 +332,9 @@ const session = await LanguageModel.create({
 
 Note how the output types need to be specified in the tool definition, so that session creation can fail early if the model doesn't support processing multimodal tool outputs. If the return value contains non-text components without them being present in the tool specification, then the tool call will fail at prompting time, even if the model could support it.
 
-Similarly, expected output languages can be provided (via `expectedOutputs: { languages: ["ja" ] }`) or similar, to get an early failure if the model doesn't support processing tool outputs in those languages. However, unlike modalities, there is no prompt-time checking of the tool call result's languages.
+Similarly, expected output languages can be provided (via `expectedOutputs: { languages: ["ja"] }`) or similar, to get an early failure if the model doesn't support processing tool outputs in those languages. However, unlike modalities, there is no prompt-time checking of the tool call result's languages.
 
-The above example shows a single-item array, but just like with prompt inputs, it's allowed to include multiple tool outputs. The same rules are followed as for inputs, e.g., concatenation of adjacent text chunks is done with a single space character.
+The above example shows a single-item array, but just like with prompt inputs, it's allowed to include multiple tool outputs. The same rules are followed as for inputs, e.g., concatenation of adjacent text chunks is simple string concatenation with no space or other characters inserted.
 
 ### Structured output with JSON schema or RegExp constraints
 
