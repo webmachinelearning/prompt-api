@@ -303,7 +303,7 @@ const session = await LanguageModel.create({
         exclusiveMaximum: videoEl.duration
       },
       expectedOutputs: {
-        types: ["image"]
+        type: ["image"]
       },
       async execute(timestamp) {
         if (mutex) {
