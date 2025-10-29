@@ -6,7 +6,8 @@ Status: CG-DRAFT
 Group: webml
 Repository: webmachinelearning/prompt-api
 URL: https://webmachinelearning.github.io/prompt-api
-Editor: Domenic Denicola, Google https://google.com, d@domenic.me, https://domenic.me/
+Editor: Reilly Grant 83788, Google https://www.google.com, reillyg@google.com
+Former editor: Domenic Denicola 52873, Google https://www.google.com/, d@domenic.me, https://domenic.me/
 Abstract: The prompt API gives web pages the ability to directly prompt a language model
 Markup Shorthands: markdown yes, css no
 Complain About: accidental-2119 yes, missing-example-ids yes
