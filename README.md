@@ -137,60 +137,6 @@ const result = await multiUserSession.prompt([
 
 Because of their special behavior of being preserved on context window overflow, system prompts cannot be provided this way.
 
-### Tool use
-
-The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by an object that includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
-
-Here’s an example of how to use the `tools` option:
-
-```js
-const session = await LanguageModel.create({
-  initialPrompts: [
-    {
-      role: "system",
-      content: `You are a helpful assistant. You can use tools to help the user.`
-    }
-  ],
-  tools: [
-    {
-      name: "getWeather",
-      description: "Get the weather in a location.",
-      inputSchema: {
-        type: "object",
-        properties: {
-          location: {
-            type: "string",
-            description: "The city to check for the weather condition.",
-          },
-        },
-        required: ["location"],
-      },
-      async execute({ location }) {
-        const res = await fetch("https://weatherapi.example/?location=" + location);
-        // Returns the result as a JSON string.
-        return JSON.stringify(await res.json());
-      },
-    }
-  ]
-});
-
-const result = await session.prompt("What is the weather in Seattle?");
-```
-
-In this example, the `tools` array defines a `getWeather` tool, specifying its name, description, input schema, and `execute` implementation. When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
-
-#### Concurrent tool use
-
-Developers should be aware that the model might call their tool multiple times, concurrently. For example, code such as
-
-```js
-const result = await session.prompt("Which of these locations currently has the highest temperature? Seattle, Tokyo, Berlin");
-```
-
-might call the above `"getWeather"` tool's `execute()` function three times. The model would wait for all tool call results to return, using the equivalent of `Promise.all()` internally, before it composes its final response.
-
-Similarly, the model might call multiple different tools, if it believes they all are relevant when responding to the given prompt.
-
 ### Multimodal inputs
 
 All of the above examples have been of text prompts. Some language models also support other inputs. Our design initially includes the potential to support images and audio clips as inputs. This is done by using objects in the form `{ type: "image", content }` and `{ type: "audio", content }` instead of strings. The `content` values can be the following:
@@ -280,6 +226,115 @@ Details:
 * For now, using the `"assistant"` role with an image or audio prompt will reject with a `"NotSupportedError"` `DOMException`. (As we explore multimodal outputs, this restriction might be lifted in the future.)
 
 Future extensions may include more ambitious multimodal inputs, such as video clips, or realtime audio or video. (Realtime might require a different API design, more based around events or streams instead of messages.)
+
+### Tool use
+
+The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by an object that includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
+
+Here’s an example of how to use the `tools` option:
+
+```js
+const session = await LanguageModel.create({
+  initialPrompts: [
+    {
+      role: "system",
+      content: `You are a helpful assistant. You can use tools to help the user.`
+    }
+  ],
+  tools: [
+    {
+      name: "getWeather",
+      description: "Get the weather in a location.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          location: {
+            type: "string",
+            description: "The city to check for the weather condition.",
+          },
+        },
+        required: ["location"],
+      },
+      async execute({ location }) {
+        const res = await fetch("https://weatherapi.example/?location=" + location);
+        // Returns the result as a JSON string.
+        return JSON.stringify(await res.json());
+      },
+    }
+  ]
+});
+
+const result = await session.prompt("What is the weather in Seattle?");
+```
+
+In this example, the `tools` array defines a `getWeather` tool, specifying its name, description, input schema, and `execute` implementation. When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
+
+#### Concurrent tool use
+
+Developers should be aware that the model might call their tool multiple times, concurrently. For example, code such as
+
+```js
+const result = await session.prompt("Which of these locations currently has the highest temperature? Seattle, Tokyo, Berlin");
+```
+
+might call the above `"getWeather"` tool's `execute()` function three times. The model would wait for all tool call results to return, using the equivalent of `Promise.all()` internally, before it composes its final response.
+
+Similarly, the model might call multiple different tools, if it believes they all are relevant when responding to the given prompt.
+
+If a developer's `execute()` function is not safe against being called multiple times concurrently, e.g., because it accesses some shared resource, then the developer is responsible for writing appropriate code to suspend execution until the resource is available. The following section contains an example of such code.
+
+#### Tool return values
+
+The above example shows tools returning a string. (In fact, stringified JSON.) Models which support [multimodal inputs](#multimodal-inputs) might also support interpreting image or audio results from tool calls.
+
+Just like the `content` option to a `prompt()` call can accept either a string or an array of `{ type, value }` objects, web developer-provided tools can return either a string or such an array. Here's an example:
+
+```js
+let mutex, resolveMutex;
+
+const session = await LanguageModel.create({
+  tools: [
+    {
+      name: "grabKeyframe",
+      description: "Grab a keyframe from the video we're analyzing at the given time",
+      inputSchema: {
+        type: "number",
+        minimum: 0,
+        exclusiveMaximum: videoEl.duration
+      },
+      expectedOutputs: {
+        type: ["image"]
+      },
+      async execute(timestamp) {
+        if (mutex) {
+          // Since we're seeking a single video element, guard against concurrent calls.
+          await mutex;
+        }
+        try {
+          mutex = new Promise(r => resolveMutex = r);
+
+          if (Math.abs(videoEl.currentTime - timestamp) > 0.001) {
+            videoEl.currentTime = timestamp;
+            await new Promise(r => videoEl.addEventListener("seeked", r, { once: true }));
+          }
+          await new Promise(r => videoEl.requestVideoFrameCallback(r));
+
+          return [{ type: "image", value: videoEl }];
+        } finally {
+          resolveMutex();
+          mutex = null;
+        }
+      }
+    }
+  ]
+});
+```
+
+Note how the output types need to be specified in the tool definition, so that session creation can fail early if the model doesn't support processing multimodal tool outputs. If the return value contains non-text components without them being present in the tool specification, then the tool call will fail at prompting time, even if the model could support it.
+
+Similarly, expected output languages can be provided (via `expectedOutputs: { languages: ["ja"] }`) or similar, to get an early failure if the model doesn't support processing tool outputs in those languages. However, unlike modalities, there is no prompt-time checking of the tool call result's languages.
+
+The above example shows a single-item array, but just like with prompt inputs, it's allowed to include multiple tool outputs. The same rules are followed as for inputs, e.g., concatenation of adjacent text chunks is simple string concatenation with no space or other characters inserted.
 
 ### Structured output with JSON schema or RegExp constraints
 
