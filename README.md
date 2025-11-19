@@ -185,21 +185,30 @@ await session.append([
 ]);
 ```
 
-Note that "role" and "type" now supports "tool-call" and "tool-result". `content.result` is a list of a dictionary of `type` and `value`, where `type` can be `{"text", "image", "audio", "object" }` and `value` is `any`.
+Note that "role" and "type" now supports "tool-call" and "tool-result". 
+`content.result` is a list of a dictionary of `type` and `value`, where `type` can be `{"text", "image", "audio", "object" }` and `value` is `any`.
 
 #### Open Loop:
 
-Without automatic execution, the API will return a `ToolCall` object with `callId` (a unique identifier of this tool call), `name` (name of the tool), and `arguments` (a dictionary fitting the JSON input schema of the tool's declaration), and client is expected to handle the tool execution and append the tool result back to the session.
+Open loop is enabled by specifying `tool-call` in `expectedOutputs` when the session is created. 
+
+When a tool needs to be called, the API will return an object with `callId` (a unique identifier of this tool call), `name` (name of the tool), and `arguments` (inputs to the tool), and client is expected to handle the tool execution and append the tool result back to the session. The `argument` is a dictionary fitting the JSON input schema of the tool's declaration; if the input schema is not "object", the value will be wrapped in a key.
 
 Example:
 
 ```js
-const result = await session.prompt("What is the weather in Seattle?");
+sessionOptions = structuredClone(options);
+sessionOptions.expectedOutputs.push(["tool-call"]);
+session = await LanguageModel.create(sessionOptions);
+
+var result = await session.prompt("What is the weather in Seattle?");
 if (result.type=="tool-call") {
   if (result.name == "get_weather") {
     const tool_result = getWeather(result.arguments.location);
-    session.prompt([{role:"tool-result", content: {type: "tool-result", value: {callId: result.callID, name: result.name, result: [{type:"object", value: tool_result}]}}}])
+    result = session.prompt([{role:"tool-result", content: {type: "tool-result", value: {callId: result.callID, name: result.name, result: [{type:"object", value: tool_result}]}}}])
   }
+} else{
+  console.log(result)
 }
 ```
 
@@ -239,7 +248,7 @@ const session = await LanguageModel.create({
       },
     }
   ],
-toolUseConfig: {enabled: true, max_tool_calls: 5},
+toolUseConfig: {enabled: true},
 });
 
 const result = await session.prompt("What is the weather in Seattle?");
