@@ -5,10 +5,10 @@
   <title>Prompt API</title>
   <meta content="CG-DRAFT" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/cg-draft" rel="stylesheet">
-  <meta content="Bikeshed version 3f621ba99, updated Mon Jul 28 15:38:36 2025 -0700" name="generator">
+  <meta content="Bikeshed version 86e3be07a, updated Tue Nov 18 16:58:08 2025 +0000" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="61cf6891545be555909f0893ce4e3f78398a1d55" name="revision">
+  <meta content="50687ea3592d01a8bf77c67bbb43d05f052c7bc0" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -321,7 +321,7 @@ body {
 }
 .invalid.example:not(.no-marker)::before,
 .illegal.example:not(.no-marker)::before {
-    content: "Invalid Example" counter(example);
+    content: "Invalid Example " counter(example);
 }
 
 figcaption {
@@ -741,9 +741,9 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
     <img alt="Logo" height="100" src="https://webmachinelearning.github.io/webmachinelearning-logo.png" width="100">
 </a>
 </p>
-   <h1 class="p-name no-ref" id="title">Prompt API</h1>
+   <h1 class="no-ref p-name" id="title">Prompt API</h1>
    <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
-    <time class="dt-updated" datetime="2025-10-29">29 October 2025</time></p>
+    <time class="dt-updated" datetime="2025-11-24">24 November 2025</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -753,9 +753,9 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
       <dt>Issue Tracking:
       <dd><a href="https://github.com/webmachinelearning/prompt-api/issues/">GitHub</a>
       <dt class="editor">Editor:
-      <dd class="editor p-author h-card vcard" data-editor-id="83788"><a class="p-name fn u-email email" href="mailto:reillyg@google.com">Reilly Grant</a> (<a class="p-org org" href="https://www.google.com">Google</a>)
+      <dd class="editor h-card p-author vcard" data-editor-id="83788"><a class="email fn p-name u-email" href="mailto:reillyg@google.com">Reilly Grant</a> (<a class="org p-org" href="https://www.google.com">Google</a>)
       <dt class="editor">Former Editor:
-      <dd class="editor p-author h-card vcard" data-editor-id="52873"><a class="p-name fn u-url url" href="https://domenic.me/">Domenic Denicola</a> (<a class="p-org org" href="https://www.google.com/">Google</a>) <a class="u-email email" href="mailto:d@domenic.me">d@domenic.me</a>
+      <dd class="editor h-card p-author vcard" data-editor-id="52873"><a class="fn p-name u-url url" href="https://domenic.me/">Domenic Denicola</a> (<a class="org p-org" href="https://www.google.com/">Google</a>) <a class="email u-email" href="mailto:d@domenic.me">d@domenic.me</a>
      </dl>
     </div>
    </details>
@@ -766,10 +766,10 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <hr title="Separator for header">
   </div>
   <div class="p-summary" data-fill-with="abstract">
-   <h2 class="no-num no-toc no-ref heading settled" id="abstract"><span class="content">Abstract</span></h2>
+   <h2 class="heading no-num no-ref no-toc settled" id="abstract"><span class="content">Abstract</span></h2>
    <p>The prompt API gives web pages the ability to directly prompt a language model</p>
   </div>
-  <h2 class="no-num no-toc no-ref heading settled" id="sotd"><span class="content">Status of this document</span></h2>
+  <h2 class="heading no-num no-ref no-toc settled" id="sotd"><span class="content">Status of this document</span></h2>
   <div data-fill-with="status">
    <p>
   This specification was published by the <a href="https://www.w3.org/community/webmachinelearning/">Web Machine Learning Community Group</a>.
@@ -786,7 +786,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   </div>
   <div data-fill-with="at-risk"></div>
   <nav data-fill-with="table-of-contents" id="toc">
-   <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
+   <h2 class="no-num no-ref no-toc" id="contents">Table of Contents</h2>
    <ol class="toc" role="directory">
     <li><a href="#intro"><span class="secno">1</span> <span class="content">Introduction</span></a>
     <li><a href="#dependencies"><span class="secno">2</span> <span class="content">Dependencies</span></a>
@@ -821,7 +821,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <p>As with the rest of the web platform, human languages are identified in these APIs by BCP 47 language tags, such as "<code>ja</code>", "<code>en-US</code>", "<code>sr-Cyrl</code>", or "<code>de-CH-1901-x-phonebk-extended</code>". The specific algorithms used for validation, canonicalization, and language tag matching are those from the <cite>ECMAScript Internationalization API Specification</cite>, which in turn defers some of its processing to <cite>Unicode Locale Data Markup Language (LDML)</cite>. <a data-link-type="biblio" href="#biblio-bcp47" title="Tags for Identifying Languages">[BCP47]</a> <a data-link-type="biblio" href="#biblio-ecma-402" title="ECMAScript Internationalization API Specification">[ECMA-402]</a> <a data-link-type="biblio" href="#biblio-uts35" title="Unicode Locale Data Markup Language (LDML)">[UTS35]</a>.</p>
    <p>These APIs are part of a family of APIs expected to be powered by machine learning models, which share common API surface idioms and specification patterns. Currently, the specification text for these shared parts lives in <a href="https://webmachinelearning.github.io/writing-assistance-apis/#supporting"><cite>Writing Assistance APIs</cite> § 5 Shared infrastructure</a>, and the common privacy and security considerations are discussed in <a href="https://webmachinelearning.github.io/writing-assistance-apis/#privacy"><cite>Writing Assistance APIs</cite> § 6 Privacy considerations</a> and <a href="https://webmachinelearning.github.io/writing-assistance-apis/#security"><cite>Writing Assistance APIs</cite> § 7 Security considerations</a>. Implementing these APIs requires implementing that shared infrastructure, and conforming to those privacy and security considerations. But it does not require implementing or exposing the actual writing assistance APIs. <a data-link-type="biblio" href="#biblio-writing-assistance-apis" title="Writing Assistance APIs">[WRITING-ASSISTANCE-APIS]</a></p>
    <h2 class="heading settled" data-level="3" id="api"><span class="secno">3. </span><span class="content">The API</span><a class="self-link" href="#api"></a></h2>
-<pre class="idl highlight def">[<a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#Exposed" id="ref-for-Exposed"><c- g>Exposed</c-></a>=<c- n>Window</c->, <a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#SecureContext" id="ref-for-SecureContext"><c- g>SecureContext</c-></a>]
+<pre class="def highlight idl">[<a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#Exposed" id="ref-for-Exposed"><c- g>Exposed</c-></a>=<c- n>Window</c->, <a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#SecureContext" id="ref-for-SecureContext"><c- g>SecureContext</c-></a>]
 <c- b>interface</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="interface" data-export id="languagemodel"><code><c- g>LanguageModel</c-></code></dfn> : <a data-link-type="idl-name" href="https://dom.spec.whatwg.org/#eventtarget" id="ref-for-eventtarget"><c- n>EventTarget</c-></a> {
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel" id="ref-for-languagemodel"><c- n>LanguageModel</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="create(options)|create()" id="dom-languagemodel-create"><code><c- g>create</c-></code></dfn>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreateoptions" id="ref-for-dictdef-languagemodelcreateoptions"><c- n>LanguageModelCreateOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/create(options), LanguageModel/create()" data-dfn-type="argument" data-export id="dom-languagemodel-create-options-options"><code><c- g>options</c-></code></dfn> = {});
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise①"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability" id="ref-for-enumdef-availability"><c- n>Availability</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="availability(options)|availability()" id="dom-languagemodel-availability"><code><c- g>availability</c-></code></dfn>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreatecoreoptions" id="ref-for-dictdef-languagemodelcreatecoreoptions"><c- n>LanguageModelCreateCoreOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/availability(options), LanguageModel/availability()" data-dfn-type="argument" data-export id="dom-languagemodel-availability-options-options"><code><c- g>options</c-></code></dfn> = {});
@@ -1085,8 +1085,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <p>Please see <a href="https://webmachinelearning.github.io/writing-assistance-apis/#security"><cite>Writing Assistance APIs</cite> § 7 Security considerations</a> for a discussion of security considerations for the prompt API. That text was written to apply to all APIs sharing the same infrastructure, as noted in <a href="#dependencies">§ 2 Dependencies</a>.</p>
   </main>
   <script src="https://www.w3.org/scripts/TR/2021/fixup.js"></script>
-  <h2 class="no-num no-ref heading settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
-  <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
+  <h2 class="heading no-num no-ref settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
+  <h3 class="heading no-num no-ref settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
    <li><a href="#dom-languagemodel-append">append(input)</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-append">append(input, options)</a><span>, in § 3</span>
@@ -1178,7 +1178,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#validate-and-canonicalize-a-prompt">validate and canonicalize a prompt</a><span>, in § 3.1</span>
    <li><a href="#dom-languagemodelmessagecontent-value">value</a><span>, in § 3</span>
   </ul>
-  <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
+  <h3 class="heading no-num no-ref settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
   <ul class="index">
    <li>
     <a data-link-type="biblio">[DOM]</a> defines the following terms:
@@ -1254,8 +1254,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <li><span class="dfn-paneled" id="86e73a86">CreateMonitorCallback</span>
     </ul>
   </ul>
-  <h2 class="no-num no-ref heading settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
-  <h3 class="no-num no-ref heading settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
+  <h2 class="heading no-num no-ref settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
+  <h3 class="heading no-num no-ref settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
   <dl>
    <dt id="biblio-dom">[DOM]
    <dd>Anne van Kesteren. <a href="https://dom.spec.whatwg.org/"><cite>DOM Standard</cite></a>. Living Standard. URL: <a href="https://dom.spec.whatwg.org/">https://dom.spec.whatwg.org/</a>
@@ -1278,15 +1278,15 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <dt id="biblio-writing-assistance-apis">[WRITING-ASSISTANCE-APIS]
    <dd><a href="https://webmachinelearning.github.io/writing-assistance-apis/"><cite>Writing Assistance APIs</cite></a>. Draft Community Group Report. URL: <a href="https://webmachinelearning.github.io/writing-assistance-apis/">https://webmachinelearning.github.io/writing-assistance-apis/</a>
   </dl>
-  <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
+  <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
    <dt id="biblio-bcp47">[BCP47]
    <dd>A. Phillips, Ed.; M. Davis, Ed.. <a href="https://www.rfc-editor.org/rfc/rfc5646"><cite>Tags for Identifying Languages</cite></a>. September 2009. Best Current Practice. URL: <a href="https://www.rfc-editor.org/rfc/rfc5646">https://www.rfc-editor.org/rfc/rfc5646</a>
    <dt id="biblio-uts35">[UTS35]
    <dd>Mark Davis; et al. <a href="https://www.unicode.org/reports/tr35/tr35-61/tr35.html"><cite>Unicode Locale Data Markup Language (LDML)</cite></a>. 23 October 2020. Unicode Technical Standard #35. URL: <a href="https://www.unicode.org/reports/tr35/tr35-61/tr35.html">https://www.unicode.org/reports/tr35/tr35-61/tr35.html</a>
   </dl>
-  <h2 class="no-num no-ref heading settled" id="idl-index"><span class="content">IDL Index</span><a class="self-link" href="#idl-index"></a></h2>
-<pre class="idl highlight def">[<a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#Exposed"><c- g>Exposed</c-></a>=<c- n>Window</c->, <a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#SecureContext"><c- g>SecureContext</c-></a>]
+  <h2 class="heading no-num no-ref settled" id="idl-index"><span class="content">IDL Index</span><a class="self-link" href="#idl-index"></a></h2>
+<pre class="def highlight idl">[<a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#Exposed"><c- g>Exposed</c-></a>=<c- n>Window</c->, <a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#SecureContext"><c- g>SecureContext</c-></a>]
 <c- b>interface</c-> <a href="#languagemodel"><code><c- g>LanguageModel</c-></code></a> : <a data-link-type="idl-name" href="https://dom.spec.whatwg.org/#eventtarget"><c- n>EventTarget</c-></a> {
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel"><c- n>LanguageModel</c-></a>> <a href="#dom-languagemodel-create"><code><c- g>create</c-></code></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreateoptions"><c- n>LanguageModelCreateOptions</c-></a> <a href="#dom-languagemodel-create-options-options"><code><c- g>options</c-></code></a> = {});
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability"><c- n>Availability</c-></a>> <a href="#dom-languagemodel-availability"><code><c- g>availability</c-></code></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreatecoreoptions"><c- n>LanguageModelCreateCoreOptions</c-></a> <a href="#dom-languagemodel-availability-options-options"><code><c- g>options</c-></code></a> = {});
