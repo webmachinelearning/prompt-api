@@ -150,8 +150,8 @@ const session = await LanguageModel.create({
   initialPrompts: [
     {
       role: "system",
-      content: `You are a helpful assistant. You can use tools to help the user.`
-    }
+      content: `You are a helpful assistant. You can use tools to help the user.`,
+    },
   ],
   tools: [
     {
@@ -167,8 +167,8 @@ const session = await LanguageModel.create({
         },
         required: ["location"],
       },
-    }
-  ]
+    },
+  ],
 });
 ```
 
