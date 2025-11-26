@@ -256,6 +256,30 @@ const result = await session.prompt("What is the weather in Seattle?");
 
 When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
 
+#### Do I need auto execution?
+
+In general, automatic execution is suitable for use cases where the model quality is good enough via prompt tuning. That can either mean you are tolerable for certain mistakes that the model makes when making tool calls, or the task is simple enough for the model to handle (e.g, just a few distinct tools, short and clean tool output, short context window, etc)
+
+On the other hand, open loop allows more flexibility for intercepting at various points in the planner loop (the reason->action->observation loop) where you can inject your business logic programmatically.
+
+Here are a few patterns where open loop would be useful:
+
+1) context management
+
+If your session might go through a long chain of contents, and the previous tool results are no longer important or relevant for your use case, open loop gives the flexibility of editing and recreating the session in the middle of a tool call. You can manually compress and modify the history, and recreate a new session with less content.
+
+For example, for a shopping agent, your tool keeps track of a live shopping cart, but only the latest cart status is important. When there have been multiple rounds of cart updates, you might need to compress the tool call history to avoid exceeding context window, improve latency and quality. 
+  
+2) Conditional loop breaking
+
+If your business logic requires some determinism in some critical states, open loop allows the flexibility to early exit the planner loop and output a pre-determined action. 
+
+For example, for a shopping agent, you might be required to get an explicit confirmation before placing the order. Whenever the tool `"place_order"` is called in the first time, you want to exit the planner loop immediately, and display a verbatim message to the user 
+  
+3) Conditional constraints
+ 
+
+
 #### Concurrent tool use
 
 Developers should be aware that the model might call their tool multiple times, concurrently. For example, code such as
