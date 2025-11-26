@@ -141,7 +141,7 @@ Because of their special behavior of being preserved on context window overflow,
 
 The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by an object that includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
 
-There are 2 tool use modes: with automatic execution (closed loop) and without automatic execution (open loop)
+There are two tool use modes: with automatic execution (closed loop) and without automatic execution (open loop).
 
 Regardless of with or without automatic execution, the session creation and appending signature are the same. Here’s an example:
 
