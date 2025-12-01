@@ -277,7 +277,10 @@ If your business logic requires some determinism in some critical states, open l
 For example, for a shopping agent, you might be required to get an explicit confirmation before placing the order. Whenever the tool `"place_order"` is called in the first time, you want to exit the planner loop immediately, and display a verbatim message to the user 
   
 3) Conditional constraints
- 
+
+In automatic execution, the planner loop decodes various and mutliple times. If you need to supply constraints dynamically, you'd use the open loop API and control the planner loop yourself. Because the planner loop runs the entire loop behind the scene, the closed loop API doesn't have a natural way to supply a different constraint for each LLM step. 
+
+For example, you might want the model to always generate tool `FOO` after tool `BAR` is called; or you might want the model to always generate text only with some prefix after tool `FOO` is called.
 
 
 #### Concurrent tool use
