@@ -448,7 +448,7 @@ const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
-// Deprecated: This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
+// This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
 // are now only available within Chrome Extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
