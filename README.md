@@ -442,13 +442,14 @@ The `LanguageModel.params()` API, only available in extensions, can be used to q
 _The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
 ```js
-// The topK and temperature members of the options object are deprecated. They will only be considered when LanguageModel.create() is called
-// from within a Chrome Extension. In web page contexts, they are ignored.
+// The topK and temperature members of the options object are deprecated. They will only be considered when
+// LanguageModel.create() is called from within a Chrome Extension. In web page contexts, they are ignored.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
-// Deprecated: This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`) are now only available within Chrome Extension contexts. Web pages can no longer call this method.
+// Deprecated: This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
+// are now only available within Chrome Extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
@@ -723,8 +724,8 @@ The method will return a promise that fulfills with one of the following availab
 An example usage is the following:
 
 ```js
-// The topK and temperature members of the options object are deprecated. They will only be considered when LanguageModel.create() is called
-// from within a Chrome Extension. In web page contexts, they are ignored.
+// The topK and temperature members of the options object are deprecated. They will only be considered when
+// LanguageModel.create() is called from within a Chrome Extension. In web page contexts, they are ignored.
 const options = {
   expectedInputs: [
     { type: "text", languages: ["en", "es"] },
