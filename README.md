@@ -45,7 +45,7 @@ The following are potential goals we are not yet certain of:
 
 Both of these potential goals could pose challenges to interoperability, so we want to investigate more how important such functionality is to developers to find the right tradeoff.
 
-### API Updates: Deprecations and Renames
+### API Updates: Deprecations and Renaming
 
 To improve API clarity, consistency, and address inconsistencies in parameter support across various models, the LanguageModel API has been updated.
 
@@ -64,12 +64,12 @@ These features may be completely removed in the future. This change is intended 
 
 The following features have been renamed. The old names are now deprecated and will only function as aliases within Chrome Extension contexts:
 
-| Old Name (Deprecated in Extensions, Removed in Web) | New Name (Available in All Contexts) |
-| :-------------------------------------------------- | :----------------------------------- |
-| `languageModel.inputUsage`                          | `languageModel.contextUsage`         |
-| `languageModel.inputQuota`                          | `languageModel.contextWindow`        |
-| `languageModel.measureInputUsage()`                 | `languageModel.measureContextUsage()`  |
-| `languagemodel.onquotaoverflow`                   | `languagemodel.oncontextwindowoverflow`.   |
+| Old Name (Deprecated in Extensions, Removed in Web) | New Name (Available in All Contexts)     |
+| :-------------------------------------------------- | :----------------------------------------|
+| `languageModel.inputUsage`                          | `languageModel.contextUsage`             |
+| `languageModel.inputQuota`                          | `languageModel.contextWindow`            |
+| `languageModel.measureInputUsage()`                 | `languageModel.measureContextUsage()`    |
+| `languagemodel.onquotaoverflow`                     | `languagemodel.oncontextwindowoverflow`. |
 
 **Note:** Developers using any of the deprecated names or features within an extension context will receive warnings in the DevTools Issues tab. These deprecated features and aliases may be completely removed in a future Chrome release.
 
