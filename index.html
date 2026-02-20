@@ -5,10 +5,10 @@
   <title>Prompt API</title>
   <meta content="CG-DRAFT" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/cg-draft" rel="stylesheet">
-  <meta content="Bikeshed version 86e3be07a, updated Tue Nov 18 16:58:08 2025 +0000" name="generator">
+  <meta content="Bikeshed version 3c53a5b02, updated Thu Nov 27 17:03:30 2025 +0000" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="50687ea3592d01a8bf77c67bbb43d05f052c7bc0" name="revision">
+  <meta content="eaddfc9f8c4387ad8054234e70510599e63d5c50" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -743,7 +743,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
 </p>
    <h1 class="no-ref p-name" id="title">Prompt API</h1>
    <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
-    <time class="dt-updated" datetime="2025-11-24">24 November 2025</time></p>
+    <time class="dt-updated" datetime="2026-02-20">20 February 2026</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -760,7 +760,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
     </div>
    </details>
    <div data-fill-with="warning"></div>
-   <p class="copyright" data-fill-with="copyright"><a href="https://www.w3.org/policies/#copyright">Copyright</a> © 2025 the Contributors to the Prompt API Specification, published by the <a href="https://www.w3.org/community/webmachinelearning/">Web Machine Learning Community Group</a> under the <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a>.
+   <p class="copyright" data-fill-with="copyright"><a href="https://www.w3.org/policies/#copyright">Copyright</a> © 2026 the Contributors to the Prompt API Specification, published by the <a href="https://www.w3.org/community/webmachinelearning/">Web Machine Learning Community Group</a> under the <a href="https://www.w3.org/community/about/agreements/cla/">W3C Community Contributor License Agreement (CLA)</a>.
 A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/">summary</a> is available.
 </p>
    <hr title="Separator for header">
@@ -787,7 +787,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <div data-fill-with="at-risk"></div>
   <nav data-fill-with="table-of-contents" id="toc">
    <h2 class="no-num no-ref no-toc" id="contents">Table of Contents</h2>
-   <ol class="toc" role="directory">
+   <ol class="toc">
     <li><a href="#intro"><span class="secno">1</span> <span class="content">Introduction</span></a>
     <li><a href="#dependencies"><span class="secno">2</span> <span class="content">Dependencies</span></a>
     <li>
@@ -825,6 +825,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 <c- b>interface</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="interface" data-export id="languagemodel"><code><c- g>LanguageModel</c-></code></dfn> : <a data-link-type="idl-name" href="https://dom.spec.whatwg.org/#eventtarget" id="ref-for-eventtarget"><c- n>EventTarget</c-></a> {
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel" id="ref-for-languagemodel"><c- n>LanguageModel</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="create(options)|create()" id="dom-languagemodel-create"><code><c- g>create</c-></code></dfn>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreateoptions" id="ref-for-dictdef-languagemodelcreateoptions"><c- n>LanguageModelCreateOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/create(options), LanguageModel/create()" data-dfn-type="argument" data-export id="dom-languagemodel-create-options-options"><code><c- g>options</c-></code></dfn> = {});
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise①"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability" id="ref-for-enumdef-availability"><c- n>Availability</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="availability(options)|availability()" id="dom-languagemodel-availability"><code><c- g>availability</c-></code></dfn>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreatecoreoptions" id="ref-for-dictdef-languagemodelcreatecoreoptions"><c- n>LanguageModelCreateCoreOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/availability(options), LanguageModel/availability()" data-dfn-type="argument" data-export id="dom-languagemodel-availability-options-options"><code><c- g>options</c-></code></dfn> = {});
+  // **DEPRECATED**: This method is only available in extension contexts.
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise②"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodelparams" id="ref-for-languagemodelparams"><c- n>LanguageModelParams</c-></a>?> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="params()" id="dom-languagemodel-params"><code><c- g>params</c-></code></dfn>();
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
@@ -849,13 +850,16 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double" id="ref-for-idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="attribute" data-export data-readonly data-type="unrestricted double" id="dom-languagemodel-inputquota"><code><c- g>inputQuota</c-></code></dfn>;
   <c- b>attribute</c-> <a data-link-type="idl-name" href="https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler" id="ref-for-eventhandler"><c- n>EventHandler</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="attribute" data-export data-type="EventHandler" id="dom-languagemodel-onquotaoverflow"><code><c- g>onquotaoverflow</c-></code></dfn>;
 
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unsigned-long" id="ref-for-idl-unsigned-long"><c- b>unsigned</c-> <c- b>long</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="attribute" data-export data-readonly data-type="unsigned long" id="dom-languagemodel-topk"><code><c- g>topK</c-></code></dfn>;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float" id="ref-for-idl-float"><c- b>float</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="attribute" data-export data-readonly data-type="float" id="dom-languagemodel-temperature"><code><c- g>temperature</c-></code></dfn>;
 
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise⑥"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel" id="ref-for-languagemodel①"><c- n>LanguageModel</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="clone(options)|clone()" id="dom-languagemodel-clone"><code><c- g>clone</c-></code></dfn>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcloneoptions" id="ref-for-dictdef-languagemodelcloneoptions"><c- n>LanguageModelCloneOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/clone(options), LanguageModel/clone()" data-dfn-type="argument" data-export id="dom-languagemodel-clone-options-options"><code><c- g>options</c-></code></dfn> = {});
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-undefined" id="ref-for-idl-undefined①"><c- b>undefined</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="method" data-export data-lt="destroy()" id="dom-languagemodel-destroy"><code><c- g>destroy</c-></code></dfn>();
 };
 
+// **DEPRECATED**: This interface and its attributes are only available in extension contexts.
 [<a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#Exposed" id="ref-for-Exposed①"><c- g>Exposed</c-></a>=<c- n>Window</c->, <a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#SecureContext" id="ref-for-SecureContext①"><c- g>SecureContext</c-></a>]
 <c- b>interface</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="interface" data-export id="languagemodelparams"><code><c- g>LanguageModelParams</c-></code></dfn> {
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unsigned-long" id="ref-for-idl-unsigned-long①"><c- b>unsigned</c-> <c- b>long</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelParams" data-dfn-type="attribute" data-export data-readonly data-type="unsigned long" id="dom-languagemodelparams-defaulttopk"><code><c- g>defaultTopK</c-></code></dfn>;
@@ -880,7 +884,9 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 <c- b>dictionary</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="dictionary" data-export id="dictdef-languagemodelcreatecoreoptions"><code><c- g>LanguageModelCreateCoreOptions</c-></code></dfn> {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
+  // **DEPRECATED**: This option is only allowed in extension contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double" id="ref-for-idl-unrestricted-double①"><c- b>unrestricted</c-> <c- b>double</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="unrestricted double" id="dom-languagemodelcreatecoreoptions-topk"><code><c- g>topK</c-></code></dfn>;
+  // **DEPRECATED**: This option is only allowed in extension contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double" id="ref-for-idl-unrestricted-double②"><c- b>unrestricted</c-> <c- b>double</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="unrestricted double" id="dom-languagemodelcreatecoreoptions-temperature"><code><c- g>temperature</c-></code></dfn>;
 
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected" id="ref-for-dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelExpected>" id="dom-languagemodelcreatecoreoptions-expectedinputs"><code><c- g>expectedInputs</c-></code></dfn>;
@@ -1290,6 +1296,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 <c- b>interface</c-> <a href="#languagemodel"><code><c- g>LanguageModel</c-></code></a> : <a data-link-type="idl-name" href="https://dom.spec.whatwg.org/#eventtarget"><c- n>EventTarget</c-></a> {
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel"><c- n>LanguageModel</c-></a>> <a href="#dom-languagemodel-create"><code><c- g>create</c-></code></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreateoptions"><c- n>LanguageModelCreateOptions</c-></a> <a href="#dom-languagemodel-create-options-options"><code><c- g>options</c-></code></a> = {});
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#enumdef-availability"><c- n>Availability</c-></a>> <a href="#dom-languagemodel-availability"><code><c- g>availability</c-></code></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcreatecoreoptions"><c- n>LanguageModelCreateCoreOptions</c-></a> <a href="#dom-languagemodel-availability-options-options"><code><c- g>options</c-></code></a> = {});
+  // **DEPRECATED**: This method is only available in extension contexts.
   <c- b>static</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodelparams"><c- n>LanguageModelParams</c-></a>?> <a href="#dom-languagemodel-params"><code><c- g>params</c-></code></a>();
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
@@ -1314,13 +1321,16 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <a data-readonly data-type="unrestricted double" href="#dom-languagemodel-inputquota"><code><c- g>inputQuota</c-></code></a>;
   <c- b>attribute</c-> <a data-link-type="idl-name" href="https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler"><c- n>EventHandler</c-></a> <a data-type="EventHandler" href="#dom-languagemodel-onquotaoverflow"><code><c- g>onquotaoverflow</c-></code></a>;
 
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unsigned-long"><c- b>unsigned</c-> <c- b>long</c-></a> <a data-readonly data-type="unsigned long" href="#dom-languagemodel-topk"><code><c- g>topK</c-></code></a>;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float"><c- b>float</c-></a> <a data-readonly data-type="float" href="#dom-languagemodel-temperature"><code><c- g>temperature</c-></code></a>;
 
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel"><c- n>LanguageModel</c-></a>> <a href="#dom-languagemodel-clone"><code><c- g>clone</c-></code></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcloneoptions"><c- n>LanguageModelCloneOptions</c-></a> <a href="#dom-languagemodel-clone-options-options"><code><c- g>options</c-></code></a> = {});
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-undefined"><c- b>undefined</c-></a> <a href="#dom-languagemodel-destroy"><code><c- g>destroy</c-></code></a>();
 };
 
+// **DEPRECATED**: This interface and its attributes are only available in extension contexts.
 [<a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#Exposed"><c- g>Exposed</c-></a>=<c- n>Window</c->, <a class="idl-code" data-link-type="extended-attribute" href="https://webidl.spec.whatwg.org/#SecureContext"><c- g>SecureContext</c-></a>]
 <c- b>interface</c-> <a href="#languagemodelparams"><code><c- g>LanguageModelParams</c-></code></a> {
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unsigned-long"><c- b>unsigned</c-> <c- b>long</c-></a> <a data-readonly data-type="unsigned long" href="#dom-languagemodelparams-defaulttopk"><code><c- g>defaultTopK</c-></code></a>;
@@ -1345,7 +1355,9 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
 <c- b>dictionary</c-> <a href="#dictdef-languagemodelcreatecoreoptions"><code><c- g>LanguageModelCreateCoreOptions</c-></code></a> {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
+  // **DEPRECATED**: This option is only allowed in extension contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <a data-type="unrestricted double" href="#dom-languagemodelcreatecoreoptions-topk"><code><c- g>topK</c-></code></a>;
+  // **DEPRECATED**: This option is only allowed in extension contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <a data-type="unrestricted double" href="#dom-languagemodelcreatecoreoptions-temperature"><code><c- g>temperature</c-></code></a>;
 
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <a data-type="sequence<LanguageModelExpected>" href="#dom-languagemodelcreatecoreoptions-expectedinputs"><code><c- g>expectedInputs</c-></code></a>;
