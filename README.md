@@ -69,7 +69,7 @@ The following features have been renamed. The old names are now deprecated and w
 | `languageModel.inputUsage`                          | `languageModel.contextUsage`             |
 | `languageModel.inputQuota`                          | `languageModel.contextWindow`            |
 | `languageModel.measureInputUsage()`                 | `languageModel.measureContextUsage()`    |
-| `languagemodel.onquotaoverflow`                     | `languagemodel.oncontextwindowoverflow`. |
+| `languagemodel.onquotaoverflow`                     | `languagemodel.oncontextoverflow`. |
 
 **Note:** Developers using any of the deprecated features within an extension context will receive warnings in the DevTools Issues tab. These deprecated features and aliases may be completely removed in a future Chrome release.
 
