@@ -47,7 +47,7 @@ Both of these potential goals could pose challenges to interoperability, so we w
 
 ### Deprecation Notice
 
-The following features of the LanguageModel API are **deprecated** and their functionality is now restricted to Chrome Extension contexts only:
+The following features of the LanguageModel API are **deprecated** and their functionality is now restricted to web extension contexts only:
 
 *   The static method `LanguageModel.params()`
 *   The instance attributes `languageModel.topK` and `languageModel.temperature`
