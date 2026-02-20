@@ -72,6 +72,7 @@ interface LanguageModel : EventTarget {
   readonly attribute double inputUsage;
   // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute unrestricted double inputQuota;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   attribute EventHandler onquotaoverflow;
 
   // **DEPRECATED**: This attribute is only available in extension contexts.
