@@ -435,7 +435,7 @@ Note that `append()` can also cause [overflow](#tokenization-context-window-leng
 
 In addition to the `initialPrompts` option shown above, in extension contexts, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
 
-**Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within Chrome Extension contexts and will be ignored or unavailable in standard web page contexts. They may be completely removed in a future release.
+**Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within web extension contexts and will be ignored or unavailable in standard web page contexts. They may be completely removed in a future release.
 
 The `LanguageModel.params()` API, only available in extensions, can be used to query the default and maximum values for these parameters.
 
