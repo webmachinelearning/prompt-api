@@ -61,7 +61,7 @@ interface LanguageModel : EventTarget {
   );
   readonly attribute double contextUsage;
   readonly attribute unrestricted double contextWindow;
-  attribute EventHandler oncontextwindowoverflow;
+  attribute EventHandler oncontextoverflow;
 
   // **DEPRECATED**: This method is only available in extension contexts.
   Promise<double> measureInputUsage(
