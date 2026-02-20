@@ -724,14 +724,11 @@ The method will return a promise that fulfills with one of the following availab
 An example usage is the following:
 
 ```js
-// The topK and temperature members of the options object are deprecated. They will only be considered when
-// LanguageModel.create() is called from within a Chrome Extension. In web page contexts, they are ignored.
 const options = {
   expectedInputs: [
     { type: "text", languages: ["en", "es"] },
     { type: "audio", languages: ["en", "es"] }
   ],
-  temperature: 2
 };
 
 const availability = await LanguageModel.availability(options);
