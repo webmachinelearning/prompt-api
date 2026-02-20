@@ -45,6 +45,17 @@ The following are potential goals we are not yet certain of:
 
 Both of these potential goals could pose challenges to interoperability, so we want to investigate more how important such functionality is to developers to find the right tradeoff.
 
+### Deprecation Notice
+
+The following features of the LanguageModel API are **deprecated** and their functionality is now restricted to web extension contexts only:
+
+*   The static method `LanguageModel.params()`
+*   The instance attributes `languageModel.topK` and `languageModel.temperature`
+*   The `LanguageModelParams` interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
+*   The `topK` and `temperature` options within `LanguageModel.create()`
+
+These features may be completely removed in the future. This change is intended to simplify the API and address inconsistencies in parameter support across various models.
+
 ## Examples
 
 ### Zero-shot prompting
@@ -422,16 +433,23 @@ Note that `append()` can also cause [overflow](#tokenization-context-window-leng
 
 ### Configuration of per-session parameters
 
-In addition to the `initialPrompts` option shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
+In addition to the `initialPrompts` option shown above, in extension contexts, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
 
-_However, see [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
+**Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within web extension contexts and will be ignored or unavailable in standard web page contexts. They may be completely removed in a future release.
+
+The `LanguageModel.params()` API, only available in extensions, can be used to query the default and maximum values for these parameters.
+
+_The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
 ```js
+// The topK and temperature members of the options object are deprecated. They will only be considered when
+// LanguageModel.create() is called from within a Chrome Extension. In web page contexts, they are ignored.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
-
+// This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
+// are now only available within Chrome Extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
@@ -711,7 +729,6 @@ const options = {
     { type: "text", languages: ["en", "es"] },
     { type: "audio", languages: ["en", "es"] }
   ],
-  temperature: 2
 };
 
 const availability = await LanguageModel.availability(options);
