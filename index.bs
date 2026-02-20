@@ -54,11 +54,23 @@ interface LanguageModel : EventTarget {
     optional LanguageModelAppendOptions options = {}
   );
 
+
+  Promise<double> measureContextUsage(
+    LanguageModelPrompt input,
+    optional LanguageModelPromptOptions options = {}
+  );
+  readonly attribute double contextUsage;
+  readonly attribute unrestricted double contextWindow;
+  attribute EventHandler oncontextwindowoverflow;
+
+  // **DEPRECATED**: This method is only available in extension contexts.
   Promise<double> measureInputUsage(
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute double inputUsage;
+  // **DEPRECATED**: This attribute is only available in extension contexts.
   readonly attribute unrestricted double inputQuota;
   attribute EventHandler onquotaoverflow;
 
