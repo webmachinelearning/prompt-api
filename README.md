@@ -45,7 +45,11 @@ The following are potential goals we are not yet certain of:
 
 Both of these potential goals could pose challenges to interoperability, so we want to investigate more how important such functionality is to developers to find the right tradeoff.
 
-### Deprecation Notice
+### API Updates: Deprecations and Renaming
+
+To improve API clarity, consistency, and address inconsistencies in parameter support across various models, the LanguageModel API has been updated.
+
+**Deprecated Features:**
 
 The following features of the LanguageModel API are **deprecated** and their functionality is now restricted to web extension contexts only:
 
@@ -55,6 +59,19 @@ The following features of the LanguageModel API are **deprecated** and their fun
 *   The `topK` and `temperature` options within `LanguageModel.create()`
 
 These features may be completely removed in the future. This change is intended to simplify the API and address inconsistencies in parameter support across various models.
+
+**Renamed Features:**
+
+The following features have been renamed. The old names are now deprecated and will only function as aliases within Chrome Extension contexts:
+
+| Old Name (Deprecated in Extensions, Removed in Web) | New Name (Available in All Contexts)     |
+| :-------------------------------------------------- | :----------------------------------------|
+| `languageModel.inputUsage`                          | `languageModel.contextUsage`             |
+| `languageModel.inputQuota`                          | `languageModel.contextWindow`            |
+| `languageModel.measureInputUsage()`                 | `languageModel.measureContextUsage()`    |
+| `languagemodel.onquotaoverflow`                     | `languagemodel.oncontextoverflow`. |
+
+**Note:** Developers using any of the deprecated features within an extension context will receive warnings in the DevTools Issues tab. These deprecated features and aliases may be completely removed in a future Chrome release.
 
 ## Examples
 
@@ -339,7 +356,7 @@ The returned value will be a string that matches the input `RegExp`. If the user
 
 If a value that is neither a `RegExp` object or a valid JSON schema object is given, the method will error with a `TypeError`.
 
-By default, the implementation may include the schema or regular expression as part of the message sent to the underlying language model, which will use up some of the [input quota](#tokenization-context-window-length-limits-and-overflow). You can measure how much it will use up by passing the `responseConstraint` option to `session.measureInputUsage()`. If you want to avoid this behavior, you can use the `omitResponseConstraintInput` option. In such cases, it's strongly recommended to include some guidance in the prompt string itself:
+By default, the implementation may include the schema or regular expression as part of the message sent to the underlying language model, which will use up some of the [context window](#tokenization-context-window-length-limits-and-overflow). You can measure how much it will use up by passing the `responseConstraint` option to `session.measureContextUsage()`. If you want to avoid this behavior, you can use the `omitResponseConstraintInput` option. In such cases, it's strongly recommended to include some guidance in the prompt string itself:
 
 ```js
 const result = await session.prompt(`
@@ -429,7 +446,7 @@ analyzeButton.onclick = async (e) => {
 
 The promise returned by `append()` will reject if the prompt cannot be appended (e.g., too big, invalid modalities for the session, etc.), or will fulfill once the prompt has been validated, processed, and appended to the session.
 
-Note that `append()` can also cause [overflow](#tokenization-context-window-length-limits-and-overflow), in which case it will evict the oldest non-system prompts from the session and fire the `"quotaoverflow"` event.
+Note that `append()` can also cause [overflow](#tokenization-context-window-length-limits-and-overflow), in which case it will evict the oldest non-system prompts from the session and fire the `"contextoverflow"` event.
 
 ### Configuration of per-session parameters
 
@@ -577,18 +594,18 @@ Finally, note that if either prompting or appending has caused an [overflow](#to
 
 ### Tokenization, context window length limits, and overflow
 
-A given language model session will have a maximum number of tokens it can process. Developers can check their current usage and progress toward that limit by using the following properties on the session object:
+A given language model session will have a maximum number of tokens it can process. Developers can check their current context usage and progress toward that limit by using the following properties on the session object:
 
 ```js
-console.log(`${session.inputUsage} tokens used, out of ${session.inputQuota} tokens available.`);
+console.log(`${session.contextUsage} tokens used, out of ${session.contextWindow} tokens available.`);
 ```
 
-To know how many tokens a prompt will consume, without actually processing it, developers can use the `measureInputUsage()` method. This method accepts the same input types as `prompt()`, including strings and multimodal input arrays:
+To know how many tokens a prompt will consume, without actually processing it, developers can use the `measureContextUsage()` method. This method accepts the same input types as `prompt()`, including strings and multimodal input arrays:
 
 ```js
-const stringUsage = await session.measureInputUsage(promptString);
+const stringUsage = await session.measureContextUsage(promptString);
 
-const audioUsage = await session.measureInputUsage([{
+const audioUsage = await session.measureContextUsage([{
   role: "user",
   content: [
     { type: "text", value: "My response to your critique:" },
@@ -601,23 +618,23 @@ Some notes on this API:
 
 * We do not expose the actual tokenization to developers since that would make it too easy to depend on model-specific details.
 * Implementations must include in their count any control tokens that will be necessary to process the prompt, e.g. ones indicating the start or end of the input.
-* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureInputUsage(promptString, { signal })`.
-* We use the phrases "input usage" and "input quota" in the API, to avoid being specific to the current language model tokenization paradigm. In the future, even if we change paradigms, we anticipate some concept of usage and quota still being applicable, even if it's just string length.
+* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureContextUsage(promptString, { signal })`.
+* We use the phrases "context usage" and "context window" in the API, to avoid being specific to the current language model tokenization paradigm. In the future, even if we change paradigms, we anticipate some concept of usage and context window still being applicable, even if it's just string length.
 
-It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureInputUsage(promptString) > session.inputQuota - session.inputUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed.
+It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureContextUsage(promptString) > session.contextWindow - session.contextUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed.
 
-Such overflows can be detected by listening for the `"quotaoverflow"` event on the session:
+Such overflows can be detected by listening for the `"contextoverflow"` event on the session:
 
 ```js
-session.addEventListener("quotaoverflow", () => {
-  console.log("We've gone past the quota, and some inputs will be dropped!");
+session.addEventListener("contextoverflow", () => {
+  console.log("We've gone past the context window, and some inputs will be dropped!");
 });
 ```
 
 If it's not possible to remove enough tokens from the conversation history to process the new prompt, then the `prompt()` or `promptStreaming()` call will fail with a `QuotaExceededError` exception and nothing will be removed. This is a proposed new type of exception, which subclasses `DOMException`, and replaces the web platform's existing `"QuotaExceededError"` `DOMException`. See [whatwg/webidl#1465](https://github.com/whatwg/webidl/pull/1465) for this proposal. For our purposes, the important part is that it has the following properties:
 
 * `requested`: how many tokens the input consists of
-* `quota`: how many tokens were available (which will be less than `requested`, and equal to the value of `session.inputQuota - session.inputUsage` at the time of the call)
+* `context window`: how many tokens were available (which will be less than `requested`, and equal to the value of `session.contextWindow - session.contextUsage` at the time of the call)
 
 ### Multilingual content and expected input languages
 
@@ -728,7 +745,7 @@ const options = {
   expectedInputs: [
     { type: "text", languages: ["en", "es"] },
     { type: "audio", languages: ["en", "es"] }
-  ],
+  ]
 };
 
 const availability = await LanguageModel.availability(options);
