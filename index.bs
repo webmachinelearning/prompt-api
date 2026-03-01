@@ -40,8 +40,11 @@ interface LanguageModel : EventTarget {
   // **DEPRECATED**: This method is only available in extension contexts.
   static Promise<LanguageModelParams?> params();
 
+  // The return type from prompt() method and those alike.
+  typedef (DOMString or sequence<LanguageModelMessageContent>) LanguageModelPromptResult;
+
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
-  Promise<DOMString> prompt(
+  Promise<LanguageModelPromptResult> prompt(
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
@@ -97,13 +100,11 @@ interface LanguageModelParams {
 callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
 
 // A description of a tool call that a language model can invoke.
-dictionary LanguageModelTool {
+dictionary LanguageModelToolDeclaration {
   required DOMString name;
   required DOMString description;
   // JSON schema for the input parameters.
   required object inputSchema;
-  // The function to be invoked by user agent on behalf of language model.
-  required LanguageModelToolFunction execute;
 };
 
 dictionary LanguageModelCreateCoreOptions {
@@ -116,7 +117,7 @@ dictionary LanguageModelCreateCoreOptions {
 
   sequence<LanguageModelExpected> expectedInputs;
   sequence<LanguageModelExpected> expectedOutputs;
-  sequence<LanguageModelTool> tools;
+  sequence<LanguageModelToolDeclaration> tools;
 };
 
 dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
@@ -167,16 +168,52 @@ dictionary LanguageModelMessageContent {
   required LanguageModelMessageValue value;
 };
 
-enum LanguageModelMessageRole { "system", "user", "assistant" };
+enum LanguageModelMessageRole { "system", "user", "assistant", "tool-call", "tool-response" };
 
-enum LanguageModelMessageType { "text", "image", "audio" };
+enum LanguageModelMessageType { "text", "image", "audio","tool-call", "tool-response"  };
 
 typedef (
   ImageBitmapSource
   or AudioBuffer
   or BufferSource
   or DOMString
+  or LanguageModelToolCall
+  or LanguageModelToolResponse
 ) LanguageModelMessageValue;
+
+// The definitions of `LanguageModelToolCall` and `LanguageModelToolResponse` values
+enum LanguageModelToolResultType { "text", "image", "audio", "object" };
+
+dictionary LanguageModelToolResultContent {
+  required LanguageModelToolResultType type;
+  required any value;
+};
+
+// Represents a tool call requested by the language model.
+dictionary LanguageModelToolCall {
+  required DOMString callID;
+  required DOMString name;
+  object arguments;
+};
+
+// Successful tool execution result.
+dictionary LanguageModelToolSuccess {
+  required DOMString callID;
+  required DOMString name;
+  required sequence<LanguageModelToolResultContent> result;
+};
+
+// Failed tool execution result.
+dictionary LanguageModelToolError {
+  required DOMString callID;
+  required DOMString name;
+  required DOMString errorMessage;
+};
+
+// The response from executing a tool call - either success or error.
+typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolResponse;
+
+
 </xmp>
 
 <h3 id="prompt-processing">Prompt processing</h3>
