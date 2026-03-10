@@ -401,7 +401,11 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
 
-  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial messages=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
+
+    1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, |omitResponseConstraintInput|, |responseConstraint|, |error|, and |stopProducing|.
+
+    1. If |prefillSuccess| is true, then [=generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
 
   1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
 </div>
@@ -413,7 +417,11 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
 
-  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial messages=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
+
+    1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, |omitResponseConstraintInput|, |responseConstraint|, |error|, and |stopProducing|.
+
+    1. If |prefillSuccess| is true, then [=generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
 
   1. Return the result of [=getting a streaming AI model result=] given [=this=], |options|, and |operation|.
 </div>
@@ -421,9 +429,13 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <div algorithm>
   The <dfn method for="LanguageModel">append(|input|, |options|)</dfn> method steps are:
 
-  1. Return the result of [=prompting=] given |input|, [=this=]'s [=LanguageModel/initial messages=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], null, false, null, null, null, and null.
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
 
-     <p class="note">|options| is currently unused.</p>
+    1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, false, null, |error|, and |stopProducing|.
+
+    1. If |prefillSuccess| is true and |done| is not null, then perform |done|.
+
+  1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
 </div>
 
 <div algorithm>
@@ -452,22 +464,73 @@ The following are the [=event handlers=] (and their corresponding [=event handle
   1. Return the result of [=cloning a language model=] given [=this=] and |options|.
 </div>
 
-<h4 id="language-model-prompting">The algorithm</h4>
+<h4 id="language-model-prompting">Prefilling and generating</h4>
 
 <div algorithm>
-  To <dfn>prompt</dfn> given:
+  To <dfn>prefill</dfn> given:
 
+  * a {{LanguageModel}} |model|,
   * a {{LanguageModelPrompt}} |input|,
-  * a [=list=] of {{LanguageModelMessage}}s |initialMessages|,
-  * an unsigned long |topK|,
-  * a float |temperature|,
-  * a [=list=] of {{LanguageModelExpected}}s |expectedInputs|,
-  * a [=list=] of {{LanguageModelExpected}}s |expectedOutputs|,
-  * a [=list=] of {{LanguageModelTool}}s |tools|,
-  * an unrestricted double |contextWindowSize|,
-  * a double |currentContextUsage|,
-  * an object-or-null |responseConstraint|,
   * a boolean |omitResponseConstraintInput|,
+  * an object-or-null |responseConstraint|,
+  * an algorithm-or-null |error| that takes [=error information=] and returns nothing, and
+  * an algorithm-or-null |stopPrefilling| that takes no arguments and returns a boolean,
+
+  perform the following steps:
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. Let |responseConstraintToMeasure| be null.
+
+  1. If |omitResponseConstraintInput| is false, then set |responseConstraintToMeasure| to |responseConstraint|.
+
+  1. Let |requested| be the result of [=measuring language model context usage=] given |input|, |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], |responseConstraintToMeasure|, and |stopPrefilling|.
+
+  1. If |requested| is null, then return false.
+
+  1. If |requested| is an [=error information=], then:
+    1. If |error| is not null, perform |error| given |requested|.
+    1. Return false.
+
+  1. [=Assert=]: |requested| is a number.
+
+  1. If |model|'s [=LanguageModel/current context usage=] + |requested| is greater than |model|'s [=LanguageModel/context window size=], then:
+    1. If |error| is not null, then:
+      1. Let |errorInfo| be a [=quota exceeded error information=] with a [=QuotaExceededError/requested=] of |model|'s [=LanguageModel/current context usage=] + |requested| and a [=QuotaExceededError/quota=] of |model|'s [=LanguageModel/context window size=].
+      1. Perform |error| given |errorInfo|.
+    1. Return false.
+
+  1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |model|'s [=LanguageModel/expected inputs=].
+
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
+
+    If this throws an exception |e|, then:
+    1. If |error| is not null, perform |error| given a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
+    1. Return false.
+
+  1. In an [=implementation-defined=] manner, update the underlying model's internal state to include |messages|.
+
+     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], and |model|'s [=LanguageModel/tools=] to guide how the state is updated.
+
+     The process must conform to the guidance given in [[#privacy]] and [[#security]].
+
+     If during this process |stopPrefilling| returns true, then return false.
+
+     If an error occurred during prefilling:
+     1. Let the error be represented as [=error information=] |errorInfo| according to the guidance in [[#language-model-errors]].
+     1. If |error| is not null, perform |error| given |errorInfo|.
+     1. Return false.
+
+  1. Set |model|'s [=LanguageModel/current context usage=] to |model|'s [=LanguageModel/current context usage=] + |requested|.
+
+  1. Return true.
+</div>
+
+<div algorithm>
+  To <dfn>generate</dfn> given:
+
+  * a {{LanguageModel}} |model|,
+  * an object-or-null |responseConstraint|,
   * an algorithm-or-null |chunkProduced| that takes a [=string=] and returns nothing,
   * an algorithm-or-null |done| that takes no arguments and returns nothing,
   * an algorithm-or-null |error| that takes [=error information=] and returns nothing, and
@@ -475,7 +538,41 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   perform the following steps:
 
-  1. TODO: Use |input|, |initialMessages|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |currentContextUsage|, |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. In an [=implementation-defined=] manner, subject to the following guidelines, begin the process of producing a response from the language model based on its current internal state.
+
+     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], |model|'s [=LanguageModel/tools=], and |responseConstraint| to guide the model's behavior.
+
+     The prompting process must conform to the guidance given in [[#privacy]] and [[#security]].
+
+     If |model|'s [=LanguageModel/tools=] is not empty, the model may use the provided tools by calling their <var ignore>execute</var> functions.
+
+  1. While true:
+
+    1. Wait for the next chunk of response data to be produced, for the process to finish, or for the result of calling |stopProducing| to become true.
+
+    1. If such a chunk is successfully produced:
+
+      1. Let it be represented as a [=string=] |chunk|.
+
+      1. If |chunkProduced| is not null, perform |chunkProduced| given |chunk|.
+
+    1. Otherwise, if the process has finished:
+
+      1. If |done| is not null, perform |done|.
+
+      1. [=iteration/Break=].
+
+    1. Otherwise, if |stopProducing| returns true, then [=iteration/break=].
+
+    1. Otherwise, if an error occurred during prompting:
+
+      1. Let the error be represented as [=error information=] |errorInfo| according to the guidance in [[#language-model-errors]].
+
+      1. If |error| is not null, perform |error| given |errorInfo|.
+
+      1. [=iteration/Break=].
 </div>
 
 <h4 id="language-model-usage">Usage</h4>
@@ -499,7 +596,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
     If this throws an exception |e|, then return a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
 
-  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prompt=] given |messages|, |expectedInputs|, |expectedOutputs|, an empty [=list=], |responseConstraint|, and false.
+  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prefill=] given |messages|, |expectedInputs|, |expectedOutputs|, |responseConstraint|, and false.
 
     <p class="note">This will generally consist of the encoding of all of the inputs, possibly with prompt engineering or other implementation-defined wrappers.</p>
 
