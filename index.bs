@@ -81,8 +81,8 @@ interface LanguageModel : EventTarget {
   readonly attribute float temperature;
 
   Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
-  undefined destroy();
 };
+LanguageModel includes DestroyableModel;
 
 // **DEPRECATED**: This interface and its attributes are only available in extension contexts.
 [Exposed=Window, SecureContext]
@@ -179,12 +179,309 @@ typedef (
 ) LanguageModelMessageValue;
 </xmp>
 
+<h3 id="language-model-creation">Creation</h3>
+
+<div algorithm>
+  The static <dfn method for="LanguageModel">create(|options|)</dfn> method steps are:
+
+  1. Return the result of [=creating an AI model object=] given |options|, "language-model", [=validate and canonicalize language model options=], [=compute language model options availability=], [=download the language model=], [=initialize the language model=], [=create a language model object=], and false.
+</div>
+
+<div algorithm>
+  To <dfn>validate and canonicalize language model options</dfn> given a {{LanguageModelCreateCoreOptions}} |options|, perform the following steps. They mutate |options| in place to canonicalize and deduplicate language tags, and throw an exception if any are invalid.
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+</div>
+
+<div algorithm>
+  To <dfn>download the language model</dfn>, given a {{LanguageModelCreateCoreOptions}} |options|:
+
+  1. [=Assert=]: these steps are running [=in parallel=].
+
+  1. Initiate the download process for everything the user agent needs to prompt a language model according to |options|. This could include a base AI model, fine-tunings for specific languages or option values, or other resources.
+
+  1. If the download process cannot be started for any reason, then return false.
+
+  1. Return true.
+</div>
+
+<div algorithm>
+  To <dfn>initialize the language model</dfn>, given a {{LanguageModelCreateOptions}} |options|:
+
+  1. [=Assert=]: these steps are running [=in parallel=].
+
+  1. Perform any necessary initialization operations for the AI model backing the user agent's prompting capabilities.
+
+    This could include loading the model into memory, loading |options|["{{LanguageModelCreateOptions/initialPrompts}}"] or |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window, or loading any fine-tunings necessary to support the other options expressed by |options|.
+
+  1. If initialization failed because the process of loading |options| resulted in using up all of the model's context window, then:
+
+    1. Let |requested| be the amount of context window needed to encode |options|. The encoding of |options| as input is [=implementation-defined=].
+
+    1. Let |quota| be the maximum context window size that the user agent supports.
+
+    1. [=Assert=]: |requested| is greater than |quota|. (That is how we reached this error branch.)
+
+    1. Return a [=quota exceeded error information=] whose [=QuotaExceededError/requested=] is |requested| and [=QuotaExceededError/quota=] is |quota|.
+
+  1. If initialization failed for any other reason, then return a [=DOMException error information=] whose [=DOMException error information/name=] is "{{OperationError}}" and whose [=DOMException error information/details=] contain appropriate detail.
+
+  1. Return null.
+</div>
+
+<div algorithm>
+  To <dfn>create a language model object</dfn>, given a [=ECMAScript/realm=] |realm| and a {{LanguageModelCreateOptions}} |options|:
+
+  1. [=Assert=]: these steps are running on |realm|'s [=ECMAScript/surrounding agent=]'s [=agent/event loop=].
+
+  1. Let |contextWindowSize| be the amount of context window that is available to the user agent for this model. (This value is [=implementation-defined=], and may be +∞ if there are no specific limits beyond, e.g., the user's memory, or the limits of JavaScript strings.)
+
+  1. Return a new {{LanguageModel}} object, created in |realm|, with
+
+    <dl class="props">
+      : [=LanguageModel/initial prompts=]
+      :: |options|["{{LanguageModelCreateOptions/initialPrompts}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/top K=]
+      :: |options|["{{LanguageModelCreateCoreOptions/topK}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+
+      : [=LanguageModel/temperature=]
+      :: |options|["{{LanguageModelCreateCoreOptions/temperature}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+
+      : [=LanguageModel/expected inputs=]
+      :: |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/expected outputs=]
+      :: |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/tools=]
+      :: |options|["{{LanguageModelCreateCoreOptions/tools}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/context window size=]
+      :: |contextWindowSize|
+    </dl>
+</div>
+
+<h3 id="language-model-availability">Availability</h3>
+
+<div algorithm>
+  The static <dfn method for="LanguageModel">availability(|options|)</dfn> method steps are:
+
+  1. Return the result of [=computing AI model availability=] given |options|, "language-model", [=validate and canonicalize language model options=], and [=compute language model options availability=].
+</div>
+
+<div algorithm>
+  To <dfn>compute language model options availability</dfn> given a {{LanguageModelCreateCoreOptions}} |options|, perform the following steps. They return either an {{Availability}} value or null, and they mutate |options| in place to update language tags to their best-fit matches.
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. Let |availability| be the [=language model non-language options availability=] given |options|.
+
+  1. If |availability| is null, then return null.
+
+  1. Let |availabilities| be a [=list=] containing |availability|.
+
+  1. Let |inputPartition| be the result of [=getting the language availabilities partition=] given the purpose of prompting a language model with text in that language.
+
+  1. Let |outputPartition| be the result of [=getting the language availabilities partition=] given the purpose of producing language model output in that language.
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then:
+      1. Let |inputLanguageAvailability| be the result of [=computing language availability=] given |expected|["{{LanguageModelExpected/languages}}"] and |inputPartition|.
+      1. [=list/Append=] |inputLanguageAvailability| to |availabilities|.
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then:
+      1. Let |outputLanguageAvailability| be the result of [=computing language availability=] given |expected|["{{LanguageModelExpected/languages}}"] and |outputPartition|.
+      1. [=list/Append=] |outputLanguageAvailability| to |availabilities|.
+
+  1. Return the [=Availability/minimum availability=] given |availabilities|.
+</div>
+
+<div algorithm>
+  The <dfn>language model non-language options availability</dfn>, given a {{LanguageModelCreateCoreOptions}} |options|, is given by the following steps. They return an {{Availability}} value or null.
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. If there is some error attempting to determine whether the user agent [=model availability/can support=] prompting a language model, which the user agent believes to be transient (such that re-querying could stop producing such an error), then return null.
+
+  1. If the user agent [=model availability/currently supports=] prompting a language model with the configuration described by |options|, then return "{{Availability/available}}".
+
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model according to |options|, but only after finishing a download that is already ongoing, then return "{{Availability/downloading}}".
+
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model according to |options|, but only after performing a not-currently-ongoing download, then return "{{Availability/downloadable}}".
+
+  1. Otherwise, return "{{Availability/unavailable}}".
+</div>
+
+<h3 id="the-languagemodel-class">The {{LanguageModel}} class</h3>
+
+Every {{LanguageModel}} has an <dfn for="LanguageModel">initial prompts</dfn>, a [=list=] of {{LanguageModelMessage}}s, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">top K</dfn>, an unsigned long, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">temperature</dfn>, a float, set during creation.
+
+Every {{LanguageModel}} has an <dfn for="LanguageModel">expected inputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
+
+Every {{LanguageModel}} has an <dfn for="LanguageModel">expected outputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] of {{LanguageModelTool}}s, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">context window size</dfn>, an unrestricted double, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">current context usage</dfn>, a double, initially 0.
+
+<hr>
+
+The <dfn attribute for="LanguageModel">contextUsage</dfn> getter steps are to return [=this=]'s [=LanguageModel/current context usage=].
+
+The <dfn attribute for="LanguageModel">inputUsage</dfn> getter steps are to return [=this=]'s [=LanguageModel/current context usage=].
+
+The <dfn attribute for="LanguageModel">contextWindow</dfn> getter steps are to return [=this=]'s [=LanguageModel/context window size=].
+
+The <dfn attribute for="LanguageModel">inputQuota</dfn> getter steps are to return [=this=]'s [=LanguageModel/context window size=].
+
+The <dfn attribute for="LanguageModel">topK</dfn> getter steps are to return [=this=]'s [=LanguageModel/top K=].
+
+The <dfn attribute for="LanguageModel">temperature</dfn> getter steps are to return [=this=]'s [=LanguageModel/temperature=].
+
+<hr>
+
+The following are the [=event handlers=] (and their corresponding [=event handler event types=]) that must be supported, as [=event handler IDL attributes=], by all {{LanguageModel}} objects:
+
+<table>
+  <thead>
+    <tr>
+      <th>[=Event handler=]
+      <th>[=Event handler event type=]
+  <tbody>
+    <tr>
+      <td><dfn attribute for="LanguageModel">oncontextoverflow</dfn>
+      <td><dfn event for="LanguageModel">contextoverflow</dfn>
+    <tr>
+      <td><dfn attribute for="LanguageModel">onquotaoverflow</dfn>
+      <td><dfn event for="LanguageModel">quotaoverflow</dfn>
+</table>
+
+<hr>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">prompt(|input|, |options|)</dfn> method steps are:
+
+  1. Let |responseConstraint| be |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+
+  1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
+
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+
+  1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">promptStreaming(|input|, |options|)</dfn> method steps are:
+
+  1. Let |responseConstraint| be |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+
+  1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
+
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+
+  1. Return the result of [=getting a streaming AI model result=] given [=this=], |options|, and |operation|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">append(|input|, |options|)</dfn> method steps are:
+
+  1. Return the result of [=prompting=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], null, false, null, null, null, and null.
+
+     <p class="note">|options| is currently unused.</p>
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">measureContextUsage(|input|, |options|)</dfn> method steps are:
+
+  1. Let |responseConstraint| be |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+
+  1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
+
+  1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], |responseConstraint|, |omitResponseConstraintInput|, and |stopMeasuring|.
+
+  1. Return the result of [=measuring AI model input usage=] given [=this=], |options|, and |measureUsage|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">measureInputUsage(|input|, |options|)</dfn> method steps are:
+
+  1. Return the result of running the {{LanguageModel/measureContextUsage()}} method steps given |input| and |options|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">clone(|options|)</dfn> method steps are:
+
+  1. Return the result of [=cloning a language model=] given [=this=] and |options|.
+</div>
+
 <h3 id="prompt-processing">Prompt processing</h3>
 
 <p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
 
 <div algorithm>
-  To <dfn>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
+  To <dfn>prompt</dfn> given:
+
+  * a {{LanguageModelPrompt}} |input|,
+  * a [=list=] of {{LanguageModelMessage}}s |initialPrompts|,
+  * an unsigned long |topK|,
+  * a float |temperature|,
+  * a [=list=] of {{LanguageModelExpected}}s |expectedInputs|,
+  * a [=list=] of {{LanguageModelExpected}}s |expectedOutputs|,
+  * a [=list=] of {{LanguageModelTool}}s |tools|,
+  * an unrestricted double |contextWindowSize|,
+  * a double |currentContextUsage|,
+  * an object-or-null |responseConstraint|,
+  * a boolean |omitResponseConstraintInput|,
+  * an algorithm-or-null |chunkProduced| that takes a [=string=] and returns nothing,
+  * an algorithm-or-null |done| that takes no arguments and returns nothing,
+  * an algorithm-or-null |error| that takes [=error information=] and returns nothing, and
+  * an algorithm-or-null |stopProducing| that takes no arguments and returns a boolean,
+
+  perform the following steps:
+
+  1. TODO: Use |input|, |initialPrompts|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |currentContextUsage|, |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+</div>
+
+<div algorithm>
+  To <dfn>measure language model context usage</dfn> given:
+
+  * a {{LanguageModelPrompt}} |input|,
+  * a [=list=] of {{LanguageModelMessage}}s |initialPrompts|,
+  * an unsigned long |topK|,
+  * a float |temperature|,
+  * a [=list=] of {{LanguageModelExpected}}s |expectedInputs|,
+  * a [=list=] of {{LanguageModelExpected}}s |expectedOutputs|,
+  * a [=list=] of {{LanguageModelTool}}s |tools|,
+  * an unrestricted double |contextWindowSize|,
+  * an object-or-null |responseConstraint|,
+  * a boolean |omitResponseConstraintInput|, and
+  * an algorithm |stopMeasuring| that takes no arguments and returns a boolean,
+
+  perform the following steps:
+
+  1. TODO: Use |input|, |initialPrompts|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |responseConstraint|, |omitResponseConstraintInput|, and |stopMeasuring|.
+</div>
+
+<div algorithm>
+  To <dfn>clone a language model</dfn> given a {{LanguageModel}} |model| and a {{LanguageModelCloneOptions}} |options|:
+
+  1. TODO: Use |model| and |options|.
+</div>
+
+<div algorithm>
+  To <dfn export>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
 
   1. [=Assert=]: |expectedTypes| [=list/contains=] "{{LanguageModelMessageType/text}}".
 
