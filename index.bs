@@ -197,10 +197,8 @@ typedef (
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
-    1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
-    1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
-      1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
-    1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+    1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
     1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
 </div>
 
@@ -228,10 +226,8 @@ typedef (
     1. Loading the model into memory.
 
     1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
-      1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
-      1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
-        1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
-      1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+      1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+      1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
       1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
       1. Load |initialMessages| into the model's context window.
 
@@ -264,10 +260,8 @@ typedef (
   1. Let |initialMessages| be an empty [=list=] of {{LanguageModelMessage}}s.
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
-    1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
-    1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
-      1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
-    1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+    1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
 
   1. Return a new {{LanguageModel}} object, created in |realm|, with
@@ -499,12 +493,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
-
-  1. [=list/For each=] |expected| of |expectedInputs|:
-    1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
-
-  1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+  1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
 
   1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
 
@@ -531,7 +520,18 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
 <h4 id="language-model-options">Options</h4>
 
-<p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
+<div algorithm>
+  To <dfn>get the expected input types</dfn> given a [=list=] of {{LanguageModelExpected}}s |expectedInputs|:
+
+  1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+
+  1. [=list/For each=] |expected| of |expectedInputs|:
+    1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
+
+  1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+
+  1. Return |expectedInputTypes|.
+</div>
 
 <div algorithm>
   To <dfn export lt="validate and canonicalize a prompt|validating and canonicalizing a prompt">validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
