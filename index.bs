@@ -195,6 +195,13 @@ typedef (
 
   1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+    1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+    1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+      1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
+    1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+    1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
 </div>
 
 <div algorithm>
@@ -216,7 +223,21 @@ typedef (
 
   1. Perform any necessary initialization operations for the AI model backing the user agent's prompting capabilities.
 
-    This could include loading the model into memory, loading |options|["{{LanguageModelCreateOptions/initialPrompts}}"] or |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window, or loading any fine-tunings necessary to support the other options expressed by |options|.
+    This could include:
+
+    1. Loading the model into memory.
+
+    1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+      1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+      1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+        1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
+      1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+      1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
+      1. Load |initialMessages| into the model's context window.
+
+    1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] [=map/exists=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
+
+    1. Load any fine-tunings necessary to support the other options expressed by |options|.
 
   1. If initialization failed because the process of loading |options| resulted in using up all of the model's context window, then:
 
@@ -240,11 +261,20 @@ typedef (
 
   1. Let |contextWindowSize| be the amount of context window that is available to the user agent for this model. (This value is [=implementation-defined=], and may be +∞ if there are no specific limits beyond, e.g., the user's memory, or the limits of JavaScript strings.)
 
+  1. Let |initialMessages| be an empty [=list=] of {{LanguageModelMessage}}s.
+
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+    1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+    1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+      1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
+    1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+    1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
+
   1. Return a new {{LanguageModel}} object, created in |realm|, with
 
     <dl class="props">
-      : [=LanguageModel/initial prompts=]
-      :: |options|["{{LanguageModelCreateOptions/initialPrompts}}"] if it [=map/exists=]; otherwise an empty [=list=]
+      : [=LanguageModel/initial messages=]
+      :: |initialMessages|
 
       : [=LanguageModel/top K=]
       :: |options|["{{LanguageModelCreateCoreOptions/topK}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
@@ -320,7 +350,7 @@ typedef (
 
 <h3 id="the-languagemodel-class">The {{LanguageModel}} class</h3>
 
-Every {{LanguageModel}} has an <dfn for="LanguageModel">initial prompts</dfn>, a [=list=] of {{LanguageModelMessage}}s, set during creation.
+Every {{LanguageModel}} has an <dfn for="LanguageModel">initial messages</dfn>, a [=list=] of {{LanguageModelMessage}}s, set during creation.
 
 Every {{LanguageModel}} has a <dfn for="LanguageModel">top K</dfn>, an unsigned long, set during creation.
 
@@ -377,7 +407,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
 
-  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial messages=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
 
   1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
 </div>
@@ -389,7 +419,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
 
-  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and [=prompts=] given |input|, [=this=]'s [=LanguageModel/initial messages=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
 
   1. Return the result of [=getting a streaming AI model result=] given [=this=], |options|, and |operation|.
 </div>
@@ -397,7 +427,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <div algorithm>
   The <dfn method for="LanguageModel">append(|input|, |options|)</dfn> method steps are:
 
-  1. Return the result of [=prompting=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], null, false, null, null, null, and null.
+  1. Return the result of [=prompting=] given |input|, [=this=]'s [=LanguageModel/initial messages=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], [=this=]'s [=LanguageModel/current context usage=], null, false, null, null, null, and null.
 
      <p class="note">|options| is currently unused.</p>
 </div>
@@ -434,7 +464,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
   To <dfn>prompt</dfn> given:
 
   * a {{LanguageModelPrompt}} |input|,
-  * a [=list=] of {{LanguageModelMessage}}s |initialPrompts|,
+  * a [=list=] of {{LanguageModelMessage}}s |initialMessages|,
   * an unsigned long |topK|,
   * a float |temperature|,
   * a [=list=] of {{LanguageModelExpected}}s |expectedInputs|,
@@ -451,7 +481,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   perform the following steps:
 
-  1. TODO: Use |input|, |initialPrompts|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |currentContextUsage|, |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+  1. TODO: Use |input|, |initialMessages|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |currentContextUsage|, |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
 </div>
 
 <h4 id="language-model-usage">Usage</h4>
