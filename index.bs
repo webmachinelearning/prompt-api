@@ -405,11 +405,13 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <div algorithm>
   The <dfn method for="LanguageModel">measureContextUsage(|input|, |options|)</dfn> method steps are:
 
-  1. Let |responseConstraint| be |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+  1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a {{TypeError}}.
 
-  1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
+  1. Let |responseConstraint| be null.
 
-  1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |input|, [=this=]'s [=LanguageModel/initial prompts=], [=this=]'s [=LanguageModel/top K=], [=this=]'s [=LanguageModel/temperature=], [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], [=this=]'s [=LanguageModel/tools=], [=this=]'s [=LanguageModel/context window size=], |responseConstraint|, |omitResponseConstraintInput|, and |stopMeasuring|.
+  1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, then set |responseConstraint| to |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+
+  1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |input|, [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], |responseConstraint|, and |stopMeasuring|.
 
   1. Return the result of [=measuring AI model input usage=] given [=this=], |options|, and |measureUsage|.
 </div>
@@ -426,9 +428,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
   1. Return the result of [=cloning a language model=] given [=this=] and |options|.
 </div>
 
-<h3 id="prompt-processing">Prompt processing</h3>
-
-<p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
+<h4 id="language-model-prompting">The algorithm</h4>
 
 <div algorithm>
   To <dfn>prompt</dfn> given:
@@ -454,34 +454,57 @@ The following are the [=event handlers=] (and their corresponding [=event handle
   1. TODO: Use |input|, |initialPrompts|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |currentContextUsage|, |responseConstraint|, |omitResponseConstraintInput|, |chunkProduced|, |done|, |error|, and |stopProducing|.
 </div>
 
+<h4 id="language-model-usage">Usage</h4>
+
 <div algorithm>
   To <dfn>measure language model context usage</dfn> given:
 
   * a {{LanguageModelPrompt}} |input|,
-  * a [=list=] of {{LanguageModelMessage}}s |initialPrompts|,
-  * an unsigned long |topK|,
-  * a float |temperature|,
   * a [=list=] of {{LanguageModelExpected}}s |expectedInputs|,
   * a [=list=] of {{LanguageModelExpected}}s |expectedOutputs|,
-  * a [=list=] of {{LanguageModelTool}}s |tools|,
-  * an unrestricted double |contextWindowSize|,
-  * an object-or-null |responseConstraint|,
-  * a boolean |omitResponseConstraintInput|, and
+  * an object-or-null |responseConstraint|, and
   * an algorithm |stopMeasuring| that takes no arguments and returns a boolean,
 
   perform the following steps:
 
-  1. TODO: Use |input|, |initialPrompts|, |topK|, |temperature|, |expectedInputs|, |expectedOutputs|, |tools|, |contextWindowSize|, |responseConstraint|, |omitResponseConstraintInput|, and |stopMeasuring|.
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+
+  1. [=list/For each=] |expected| of |expectedInputs|:
+    1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
+
+  1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
+
+    If this throws an exception |e|, then return a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
+
+  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prompt=] given |messages|, |expectedInputs|, |expectedOutputs|, an empty [=list=], |responseConstraint|, and false.
+
+    <p class="note">This will generally consist of the encoding of all of the inputs, possibly with prompt engineering or other implementation-defined wrappers.</p>
+
+    If during this process |stopMeasuring| starts returning true, then return null.
+
+    If an error occurs during this process, then return an appropriate [=DOMException error information=] according to the guidance in [[#language-model-errors]].
+
+  1. Return the amount of context usage needed to represent |inputToModel| when given to the underlying model. The exact calculation procedure is [=implementation-defined=], subject to the following constraints.
+
+    The returned context usage must be nonnegative and finite. It should be roughly proportional to the amount of data in |inputToModel|.
+
+    <p class="note">This might be the number of tokens needed to represent the input in a <a href="https://arxiv.org/abs/2404.08335">language model tokenization scheme</a>, or it might be related to the size of the data in bytes.</p>
+
+    If during this process |stopMeasuring| starts returning true, then instead return null.
+
+    If an error occurs during this process, then instead return an appropriate [=DOMException error information=] according to the guidance in [[#language-model-errors]].
 </div>
 
-<div algorithm>
-  To <dfn>clone a language model</dfn> given a {{LanguageModel}} |model| and a {{LanguageModelCloneOptions}} |options|:
+<h4 id="language-model-options">Options</h4>
 
-  1. TODO: Use |model| and |options|.
-</div>
+<p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
 
 <div algorithm>
-  To <dfn export>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
+  To <dfn export lt="validate and canonicalize a prompt|validating and canonicalizing a prompt">validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
 
   1. [=Assert=]: |expectedTypes| [=list/contains=] "{{LanguageModelMessageType/text}}".
 
@@ -582,6 +605,45 @@ The following are the [=event handlers=] (and their corresponding [=event handle
   1. If |messages| [=list/is empty=], then throw a "{{SyntaxError}}" {{DOMException}}.
 
   1. Return |messages|.
+</div>
+
+<h4 id="language-model-errors">Errors</h4>
+
+When prompting fails, the following possible reasons may be surfaced to the web developer. This table lists the possible {{DOMException}} [=DOMException/names=] and the cases in which an implementation should use them:
+
+<table class="data">
+  <thead>
+    <tr>
+      <th>{{DOMException}} [=DOMException/name=]
+      <th>Scenarios
+  <tbody>
+    <tr>
+      <td>"{{NotAllowedError}}"
+      <td>
+        <p>Prompting is disabled by user choice or user agent policy.
+    <tr>
+      <td>"{{NotReadableError}}"
+      <td>
+        <p>The model output was filtered by the user agent, e.g., because it was detected to be harmful, inaccurate, or nonsensical.
+    <tr>
+      <td>"{{NotSupportedError}}"
+      <td>
+        <p>The input to be processed was in a language that the user agent does not support, or was not provided properly in the call to {{LanguageModel/create()}}.
+
+        <p>The model output ended up being in a language that the user agent does not support (e.g., because the user agent has not performed sufficient quality control tests on that output language).
+    <tr>
+      <td>"{{UnknownError}}"
+      <td>
+        <p>All other scenarios, including if the user agent believes it cannot prompt the model and also meet the requirements given in [[#privacy]] or [[#security]]. Or, if the user agent would prefer not to disclose the failure reason.
+</table>
+
+<p class="note">This table does not give the complete list of exceptions that can be surfaced by the prompt API. It only contains those which can come from certain [=implementation-defined=] steps.
+
+
+<div algorithm>
+  To <dfn>clone a language model</dfn> given a {{LanguageModel}} |model| and a {{LanguageModelCloneOptions}} |options|:
+
+  1. TODO: Use |model| and |options|.
 </div>
 
 <h3 id="permissions-policy">Permissions policy integration</h3>
