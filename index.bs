@@ -431,7 +431,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
 
-    1. [=Assert=]: |chunkProduced| is never called.
+    <p class="note">|chunkProduced| is never called because the [=prefilling=] algorithm does not generate chunks.</p>
 
     1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, false, null, |error|, and |stopProducing|.
 
