@@ -176,9 +176,11 @@ const session = await LanguageModel.create({
   initialPrompts: [
     {
       role: "system",
-      content: `You are a helpful assistant. You can use tools to help the user.`
-    }
+      content: `You are a helpful assistant. You can use tools to help the user.`,
+    },
   ],
+  expectedInputs: [{ type: "text", languages: ["en"] }],
+  expectedOutputs: [{ type: "tool-call" }, { type: "text", languages: ["en"] }],
   tools: [
     {
       name: "getWeather",
@@ -194,12 +196,14 @@ const session = await LanguageModel.create({
         required: ["location"],
       },
       async execute({ location }) {
-        const res = await fetch("https://weatherapi.example/?location=" + location);
+        const res = await fetch(
+          "https://weatherapi.example/?location=" + location,
+        );
         // Returns the result as a JSON string.
         return JSON.stringify(await res.json());
       },
-    }
-  ]
+    },
+  ],
 });
 
 const result = await session.prompt("What is the weather in Seattle?");
