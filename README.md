@@ -179,8 +179,8 @@ const session = await LanguageModel.create({
       content: `You are a helpful assistant. You can use tools to help the user.`,
     },
   ],
-  expectedInputs: [{ type: "text", languages: ["en"] }],
-  expectedOutputs: [{ type: "tool-call" }, { type: "text", languages: ["en"] }],
+  expectedInputs: [{ type: "text", languages: ["en"] }, { type: "tool-response" }],
+  expectedOutputs: [{ type: "text", languages: ["en"] }, { type: "tool-call" }],
   tools: [
     {
       name: "getWeather",
