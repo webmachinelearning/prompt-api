@@ -169,7 +169,7 @@ dictionary LanguageModelMessageContent {
 
 enum LanguageModelMessageRole { "system", "user", "assistant" };
 
-enum LanguageModelMessageType { "text", "image", "audio" };
+enum LanguageModelMessageType { "text", "image", "audio", "tool-call", "tool-response" };
 
 typedef (
   ImageBitmapSource
@@ -198,7 +198,7 @@ typedef (
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-    1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
+    1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
     1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
 </div>
 
@@ -227,7 +227,7 @@ typedef (
 
     1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
       1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-      1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
+      1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
       1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
       1. Load |initialMessages| into the model's context window.
 
@@ -261,7 +261,7 @@ typedef (
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-    1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
+    1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and true.
 
   1. Return a new {{LanguageModel}} object, created in |realm|, with
@@ -502,7 +502,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
       1. Perform |error| given |errorInfo|.
     1. Return false.
 
-  1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |model|'s [=LanguageModel/expected inputs=].
+  1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |model|'s [=LanguageModel/expected inputs=].
 
   1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
 
@@ -592,7 +592,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |expectedInputTypes| be the result of [=getting the expected input types=] given |expectedInputs|.
+  1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
 
   1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
 
@@ -652,6 +652,19 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: |input| is a [=list=] of {{LanguageModelMessage}}s.
 
+  1. If |input| is [=list/list-is-empty=], then return <span style="white-space: pre-wrap">«
+      «[
+        "{{LanguageModelMessage/role}}" → "{{LanguageModelMessageRole/user}}",
+        "{{LanguageModelMessage/content}}" → «
+          «[
+            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContent/value}}" → ""
+          ]»
+        »,
+        "{{LanguageModelMessage/prefix}}" → false
+      ]»
+    »</span>.
+
   1. Let |seenNonSystemRole| be false.
 
   1. Let |messages| be an empty [=list=] of {{LanguageModelMessage}}s.
@@ -663,7 +676,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
         "{{LanguageModelMessage/content}}" → «
           «[
             "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-            "{{LanguageModelMessageContent/value}}" → |message|
+            "{{LanguageModelMessageContent/value}}" → |message|["{{LanguageModelMessage/content}}"]
           ]»
         »,
         "{{LanguageModelMessage/prefix}}" → |message|["{{LanguageModelMessage/prefix}}"]
@@ -673,10 +686,17 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/assistant}}", then throw a "{{SyntaxError}}" {{DOMException}}.
 
-          <p class="note">Per the below validation steps, this will also guarantee that |message|["{{LanguageModelMessage/content}}"] only contains text content.
-
       1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
+    1. If |message|["{{LanguageModelMessage/content}}"] is [=list/list-is-empty=], then:
+
+      1. Let |emptyContent| be a new LanguageModelMessageContent initialized with <span style="white-space: pre-wrap">«[
+        "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+        "{{LanguageModelMessageContent/value}}" → ""
+      ]»</span>.
+      
+      1. [=list/append=] |emptyContent| to |message|["{{LanguageModelMessage/content}}"].
+    
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
 
       1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
