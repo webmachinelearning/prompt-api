@@ -49,18 +49,15 @@ Both of these potential goals could pose challenges to interoperability, so we w
 
 ### Sampling Parameters
 
-Developers have expressed the value of tuning parameters for both testing and use-case specific optimizations. At the same time, web standards engagements have highlighted the need for more interoperable API shapes for sampling parameters.
+Developers have expressed the value of tuning language model sampling parameters for testing and optimizing task-specific model behavior. At the same time, web standards engagements have highlighted the need for more interoperable API shapes for sampling parameters among different models.
 
-**Experimental and Extension-only Parameters:**
+The API was initially made available in extension contexts with the following sampling parameter options and attributes:
 
-The API was initially made available in Extension contexts with the following sampling parameter options and attributes:
+*   The static method `LanguageModel.params()`, which exposes default and maximum values for sampling parameters: `defaultTemperature`, `maxTemperature`, `defaultTopK`, `maxTopK`.
+*   The `temperature` and `topK` options, which may be provided to `LanguageModel.create()` to control the sampling behavior of individual language model sessions.
+*   The `temperature` and `topK` attributes on `LanguageModel` session instances, which expose the current values of the sampling parameters for that session.
 
-*   The static method `LanguageModel.params()`
-*   The instance attributes `languageModel.topK` and `languageModel.temperature`
-*   The `LanguageModelParams` interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
-*   The `topK` and `temperature` options within `LanguageModel.create()`
-
-Access to these features is limited to extension and experimental web contexts. Ongoing experimentation and community engagement will explore different parameters and options that satisfy developer requirements and address interoperability concerns.
+Access to these features is limited to extension and experimental web contexts. Ongoing experimentation and community engagement will explore different API shapes that satisfy developer requirements and address interoperability concerns.
 
 ### Renamed Features
 
@@ -455,9 +452,9 @@ Note that `append()` can also cause [overflow](#tokenization-context-window-leng
 
 ### Configuration of per-session parameters
 
-Sampling parameter tuning can be useful for both testing and fine-tuning model behavior for specific tasks. Common sampling parameters include [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [topK](https://huggingface.co/blog/how-to-generate#top-k-sampling).
+Tuning language model sampling parameters can be useful for both testing and adjusting task-specific model behavior. Common sampling parameters include [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [topK](https://huggingface.co/blog/how-to-generate#top-k-sampling).
 
-**Experimental Notice:** Sampling parameter introspection and controls are currently only available within extension and experimental contexts. While they are useful for exploring model behavior, the current parameters are not guaranteed to be supported or interpreted consistently across all models or user agents.
+**Notice:** Sampling parameter features are currently only available within extension and experimental contexts. While they are useful for exploring model behavior, the current fields are not guaranteed to be supported or interpreted consistently across all models or user agents.
 
 _The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
@@ -469,7 +466,7 @@ In extension and experimental contexts:
 
 
 ```js
-// Sampling parameter support is limited to Chrome Extension and experimental web contexts.
+// Sampling parameter support is limited to extension and experimental web contexts.
 // Accessors are undefined, and options are ignored, outside of those contexts.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
