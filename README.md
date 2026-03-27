@@ -45,24 +45,26 @@ The following are potential goals we are not yet certain of:
 
 Both of these potential goals could pose challenges to interoperability, so we want to investigate more how important such functionality is to developers to find the right tradeoff.
 
-### API Updates: Deprecations and Renaming
+## Experiments and Updates
 
-To improve API clarity, consistency, and address inconsistencies in parameter support across various models, the LanguageModel API has been updated.
+### Sampling Parameters
 
-**Deprecated Features:**
+Developers have expressed the value of tuning parameters for both testing and use-case specific optimizations. At the same time, web standards engagements have highlighted the need for more interoperable API shapes for sampling parameters.
 
-The following features of the LanguageModel API are **deprecated** and their functionality is now restricted to web extension contexts only:
+**Experimental and Extension-only Parameters:**
+
+The API was initially made available in Extension contexts with the following sampling parameter options and attributes:
 
 *   The static method `LanguageModel.params()`
 *   The instance attributes `languageModel.topK` and `languageModel.temperature`
 *   The `LanguageModelParams` interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
 *   The `topK` and `temperature` options within `LanguageModel.create()`
 
-These features may be completely removed in the future. This change is intended to simplify the API and address inconsistencies in parameter support across various models.
+Access to these features is limited to extension and experimental web contexts. Ongoing experimentation and community engagement will explore different parameters and options that satisfy developer requirements and address interoperability concerns.
 
-**Renamed Features:**
+### Renamed Features
 
-The following features have been renamed. The old names are now deprecated and will only function as aliases within Chrome Extension contexts:
+The following features have been recently renamed. The legacy aliases are deprecated, and clients should update their code to use the new names. The legacy aliases will be removed from extension contexts in a future release.
 
 | Old Name (Deprecated in Extensions, Removed in Web) | New Name (Available in All Contexts)     |
 | :-------------------------------------------------- | :----------------------------------------|
@@ -71,7 +73,6 @@ The following features have been renamed. The old names are now deprecated and w
 | `languageModel.measureInputUsage()`                 | `languageModel.measureContextUsage()`    |
 | `languagemodel.onquotaoverflow`                     | `languagemodel.oncontextoverflow`. |
 
-**Note:** Developers using any of the deprecated features within an extension context will receive warnings in the DevTools Issues tab. These deprecated features and aliases may be completely removed in a future Chrome release.
 
 ## Examples
 
@@ -454,23 +455,26 @@ Note that `append()` can also cause [overflow](#tokenization-context-window-leng
 
 ### Configuration of per-session parameters
 
-In addition to the `initialPrompts` option shown above, in extension contexts, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
+Sampling parameter tuning can be useful for both testing and fine-tuning model behavior for specific tasks. Common sampling parameters include [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [topK](https://huggingface.co/blog/how-to-generate#top-k-sampling).
 
-**Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within web extension contexts and will be ignored or unavailable in standard web page contexts. They may be completely removed in a future release.
-
-The `LanguageModel.params()` API, only available in extensions, can be used to query the default and maximum values for these parameters.
+**Experimental Notice:** Sampling parameter introspection and controls are currently only available within extension and experimental contexts. While they are useful for exploring model behavior, the current parameters are not guaranteed to be supported or interpreted consistently across all models or user agents.
 
 _The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
 
+In extension and experimental contexts:
+* The `LanguageModel.params()` static method provides default and maximum values for temperature and topK parameters, once the user agent has ascertained or downloaded the specific underlying model.
+* The `temperature` and `topK` instance attributes provide the current values for these parameters for a given session.
+* Sampling parameters can also be configured at session creation time via the `temperature` and `topK` options for `LanguageModel.create()`
+
+
+
 ```js
-// The topK and temperature members of the options object are deprecated. They will only be considered when
-// LanguageModel.create() is called from within a Chrome Extension. In web page contexts, they are ignored.
+// Sampling parameter support is limited to Chrome Extension and experimental web contexts.
+// Accessors are undefined, and options are ignored, outside of those contexts.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
-// This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
-// are now only available within Chrome Extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
@@ -831,7 +835,7 @@ Note that although the API is not exposed to web platform workers, a browser cou
 To actually get a response back from the model given a prompt, the following possible stages are involved:
 
 1. Download the model, if necessary.
-2. Establish a session, including configuring per-session options and parameters.
+2. Establish a session, including configuring per-session options.
 3. Add an initial prompt to establish context. (This will not generate a response.)
 4. Execute a prompt and receive a response.
 
