@@ -198,7 +198,7 @@ typedef (
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-    1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
+    1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
 </div>
 
@@ -219,31 +219,31 @@ typedef (
 
   1. [=Assert=]: these steps are running [=in parallel=].
 
+  1. Let |availability| be the result of [=compute language model options availability=] given |options|.
+
+    1. If |availability| is null or {{Availability/unavailable}}, then return a [=DOMException error information=] whose [=DOMException error information/name=] is "{{NotSupportedError}}" and whose [=DOMException error information/details=] contain appropriate detail.
+
   1. Perform any necessary initialization operations for the AI model backing the user agent's prompting capabilities.
 
-    This could include:
-
-    1. Loading the model into memory.
+    This could include loading the appropriate model and any fine-tunings necessary to support |options| into memory.
 
     1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
       1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-      1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
+      1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
       1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
       1. Load |initialMessages| into the model's context window.
 
     1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] [=map/exists=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
 
-    1. Load any fine-tunings necessary to support the other options expressed by |options|.
-
   1. If initialization failed because the process of loading |options| resulted in using up all of the model's context window, then:
 
     1. Let |requested| be the amount of context window needed to encode |options|. The encoding of |options| as input is [=implementation-defined=].
 
-    1. Let |quota| be the maximum context window size that the user agent supports.
+    1. Let |maximum| be the maximum context window size that the user agent supports.
 
-    1. [=Assert=]: |requested| is greater than |quota|. (That is how we reached this error branch.)
+    1. [=Assert=]: |requested| is greater than |maximum|. (That is how we reached this error branch.)
 
-    1. Return a [=quota exceeded error information=] whose [=QuotaExceededError/requested=] is |requested| and [=QuotaExceededError/quota=] is |quota|.
+    1. Return a [=quota exceeded error information=] whose [=QuotaExceededError/requested=] is |requested| and [=QuotaExceededError/quota=] is |maximum|.
 
   1. If initialization failed for any other reason, then return a [=DOMException error information=] whose [=DOMException error information/name=] is "{{OperationError}}" and whose [=DOMException error information/details=] contain appropriate detail.
 
@@ -259,13 +259,13 @@ typedef (
 
   1. Let |initialMessages| be an empty [=list=] of {{LanguageModelMessage}}s.
 
-  1. Let |initialMessageUsage| be 0.
+  1. Let |initialMessagesUsage| be 0.
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-    1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
+    1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
-    1. Set |initialMessageUsage| to the result of [=measure language model context usage=] given |initialMessages|, and |options|["{{LanguageModelCreateOptions/signal}}"].
+    1. Set |initialMessagesUsage| to the result of [=measure language model context usage=] given |initialMessages|, and |options|["{{LanguageModelCreateOptions/signal}}"].
 
   1. Return a new {{LanguageModel}} object, created in |realm|, with
 
@@ -292,10 +292,7 @@ typedef (
       :: |contextWindowSize|
 
       : [=LanguageModel/current context usage=]
-      :: |initialMessageUsage|
-
-      : [=LanguageModel/appended input=]
-      :: false if |initialMessages| [=list/is empty=]; otherwise true
+      :: |initialMessagesUsage|
     </dl>
 </div>
 
@@ -312,7 +309,7 @@ typedef (
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |availability| be the [=language model non-language options availability=] given |options|.
+  1. Let |availability| be the [=language model non-options availability=].
 
   1. If |availability| is null, then return null.
 
@@ -326,29 +323,47 @@ typedef (
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then:
       1. Let |inputLanguageAvailability| be the result of [=computing language availability=] given |expected|["{{LanguageModelExpected/languages}}"] and |inputPartition|.
       1. [=list/Append=] |inputLanguageAvailability| to |availabilities|.
+    1. Let |inputTypeAvailability| be the [=language model content type availability=] given |expected|["{{LanguageModelExpected/type}}"] and true.
+    1. [=list/Append=] |inputTypeAvailability| to |availabilities|.
 
   1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then:
       1. Let |outputLanguageAvailability| be the result of [=computing language availability=] given |expected|["{{LanguageModelExpected/languages}}"] and |outputPartition|.
       1. [=list/Append=] |outputLanguageAvailability| to |availabilities|.
+    1. Let |outputTypeAvailability| be the [=language model content type availability=] given |expected|["{{LanguageModelExpected/type}}"] and false.
+    1. [=list/Append=] |outputTypeAvailability| to |availabilities|.
 
   1. Return the [=Availability/minimum availability=] given |availabilities|.
 </div>
 
 <div algorithm>
-  The <dfn>language model non-language options availability</dfn>, given a {{LanguageModelCreateCoreOptions}} |options|, is given by the following steps. They return an {{Availability}} value or null.
+  The <dfn>language model non-options availability</dfn> is given by the following steps. They return an {{Availability}} value or null.
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
   1. If there is some error attempting to determine whether the user agent [=model availability/can support=] prompting a language model, which the user agent believes to be transient (such that re-querying could stop producing such an error), then return null.
 
-  1. If the user agent [=model availability/currently supports=] prompting a language model with the configuration described by |options|, then return "{{Availability/available}}".
+  1. If the user agent [=model availability/currently supports=] prompting a language model, then return {{Availability/available}}.
 
-  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model according to |options|, but only after finishing a download that is already ongoing, then return "{{Availability/downloading}}".
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after finishing a download that is already ongoing, then return {{Availability/downloading}}.
 
-  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model according to |options|, but only after performing a not-currently-ongoing download, then return "{{Availability/downloadable}}".
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after performing a not-currently-ongoing download, then return {{Availability/downloadable}}.
 
-  1. Otherwise, return "{{Availability/unavailable}}".
+  1. Otherwise, return {{Availability/unavailable}}.
+</div>
+
+<div algorithm>
+  The <dfn>language model content type availability</dfn> given a {{LanguageModelMessageType}} |type| and a boolean |isInput|, is given by the following steps. They return an {{Availability}} value.
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. If the user agent [=model availability/currently supports=] |type| as an input if |isInput| is true, or as an output if |isInput| is false, then return {{Availability/available}}.
+
+  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after finishing a download that is already ongoing, then return {{Availability/downloading}}.
+
+  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after performing a not-currently-ongoing download, then return {{Availability/downloadable}}.
+
+  1. Otherwise, return {{Availability/unavailable}}.
 </div>
 
 <h3 id="the-languagemodel-class">The {{LanguageModel}} class</h3>
@@ -368,8 +383,6 @@ Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] o
 Every {{LanguageModel}} has a <dfn for="LanguageModel">context window size</dfn>, an unrestricted double, set during creation.
 
 Every {{LanguageModel}} has a <dfn for="LanguageModel">current context usage</dfn>, a double, initially 0.
-
-Every {{LanguageModel}} has a <dfn for="LanguageModel">appended input</dfn>, a boolean, set during creation.
 
 <hr>
 
@@ -456,9 +469,9 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a {{TypeError}}.
 
-  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |messages|, |expectedInputTypes|, and false.
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
 
-  1. If |options|["{{LanguageModelPromptOptions/responseConstraint}}"] [=map/exists=] and is not null and |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
+  1. If |options|["{{LanguageModelPromptOptions/responseConstraint}}"] [=map/exists=] and is not null and |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, then implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
 
   1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |messages|, and |stopMeasuring|.
 
@@ -493,13 +506,13 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and |model|'s [=LanguageModel/appended input=].
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and true if |model|'s [=LanguageModel/current context usage=] is greater than 0, otherwise false.
 
     If this throws an exception |e|, then:
     1. If |error| is not null, perform |error| given a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
     1. Return false.
 
-  1. If |responseConstraint| is not null and |omitResponseConstraintInput| is false, implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
+  1. If |responseConstraint| is not null and |omitResponseConstraintInput| is false, then implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
 
   1. Let |requested| be the result of [=measuring language model context usage=] given |messages|, and |stopPrefilling|.
 
@@ -517,13 +530,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
       1. Perform |error| given |errorInfo|.
     1. Return false.
 
-  1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |model|'s [=LanguageModel/expected inputs=].
-
-  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and |model|'s [=LanguageModel/appended input=].
-
-    If this throws an exception |e|, then:
-    1. If |error| is not null, perform |error| given a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
-    1. Return false.
+  1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |model|'s [=LanguageModel/expected inputs=].
 
   1. In an [=implementation-defined=] manner, update the underlying model's internal state to include |messages|.
 
@@ -539,8 +546,6 @@ The following are the [=event handlers=] (and their corresponding [=event handle
      1. Return false.
 
   1. Set |model|'s [=LanguageModel/current context usage=] to |model|'s [=LanguageModel/current context usage=] + |requested|.
-
-  1. Set |model|'s [=LanguageModel/appended input=] to true.
 
   1. Return true.
 </div>
@@ -606,7 +611,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prefill=] given |messages|, and false.
+  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prefill=] given |messages|.
 
     <p class="note">This will generally consist of the encoding of all of the inputs, possibly with prompt engineering or other implementation-defined wrappers.</p>
 
@@ -628,16 +633,16 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <h4 id="language-model-options">Options</h4>
 
 <div algorithm>
-  To <dfn>get the expected input types</dfn> given a [=list=] of {{LanguageModelExpected}}s |expectedInputs|:
+  To <dfn>get the expected content types</dfn> given a [=list=] of {{LanguageModelExpected}}s |expectedContents|:
 
-  1. Let |expectedInputTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+  1. Let |expectedTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
 
-  1. [=list/For each=] |expected| of |expectedInputs|:
-    1. If |expectedInputTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedInputTypes|.
+  1. [=list/For each=] |expected| of |expectedContents|:
+    1. If |expectedTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedTypes|.
 
-  1. If |expectedInputTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedInputTypes|.
+  1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedTypes|.
 
-  1. Return |expectedInputTypes|.
+  1. Return |expectedTypes|.
 </div>
 
 <div algorithm>
@@ -673,8 +678,6 @@ The following are the [=event handlers=] (and their corresponding [=event handle
       ]»
     »</span>.
 
-  1. Let |seenNonSystemRole| be false.
-
   1. Let |messages| be an empty [=list=] of {{LanguageModelMessage}}s.
 
   1. [=list/For each=] |message| of |input|:
@@ -696,6 +699,10 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
+    1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
+
+      1. If |hasAppendedInput| is true, then throw a "{{TypeError}}" {{DOMException}}.
+
     1. If |message|["{{LanguageModelMessage/content}}"] is an empty [=list=], then:
 
       1. Let |emptyContent| be a new {{LanguageModelMessageContent}} initialized with <span style="white-space: pre-wrap">«[
@@ -706,14 +713,6 @@ The following are the [=event handlers=] (and their corresponding [=event handle
       1. [=list/append=] |emptyContent| to |message|["{{LanguageModelMessage/content}}"].
     
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
-
-      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
-
-        1. If |hasAppendedInput| is true, then throw a "{{NotSupportedError}}" {{DOMException}}.
-
-        1. If |seenNonSystemRole| is true, then throw a "{{SyntaxError}}" {{DOMException}}.
-
-      1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/system}}", then set |seenNonSystemRole| to true.
 
       1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
@@ -758,6 +757,8 @@ The following are the [=event handlers=] (and their corresponding [=event handle
       1. Set |message|["{{LanguageModelMessage/content}}"] to |contentWithContiguousTextCollapsed|.
 
     1. [=list/Append=] |message| to |messages|.
+
+    1. Set |hasAppendedInput| to true.
 
   1. If |messages| [=list/is empty=], then throw a "{{SyntaxError}}" {{DOMException}}.
 
