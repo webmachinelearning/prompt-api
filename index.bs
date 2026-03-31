@@ -263,10 +263,9 @@ typedef (
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
-    1. Let |expectedOutputs| be |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
     1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
-    1. Set |initialMessageUsage| to the result of [=measure language model context usage=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputs|, |expectedOutputs|, null, and |options|["{{LanguageModelCreateOptions/signal}}"].
+    1. Set |initialMessageUsage| to the result of [=measure language model context usage=] given |initialMessages|, and |options|["{{LanguageModelCreateOptions/signal}}"].
 
   1. Return a new {{LanguageModel}} object, created in |realm|, with
 
@@ -457,11 +456,11 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a {{TypeError}}.
 
-  1. Let |responseConstraint| be null.
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |messages|, |expectedInputTypes|, and false.
 
-  1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, then set |responseConstraint| to |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+  1. If |options|["{{LanguageModelPromptOptions/responseConstraint}}"] [=map/exists=] and is not null and |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
 
-  1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |input|, [=this=]'s [=LanguageModel/expected inputs=], [=this=]'s [=LanguageModel/expected outputs=], |responseConstraint|, [=this=]'s [=LanguageModel/appended input=], and |stopMeasuring|.
+  1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |messages|, and |stopMeasuring|.
 
   1. Return the result of [=measuring AI model input usage=] given [=this=], |options|, and |measureUsage|.
 </div>
@@ -494,11 +493,15 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |responseConstraintToMeasure| be null.
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and |model|'s [=LanguageModel/appended input=].
 
-  1. If |omitResponseConstraintInput| is false, then set |responseConstraintToMeasure| to |responseConstraint|.
+    If this throws an exception |e|, then:
+    1. If |error| is not null, perform |error| given a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
+    1. Return false.
 
-  1. Let |requested| be the result of [=measuring language model context usage=] given |input|, |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], |responseConstraintToMeasure|, and |stopPrefilling|.
+  1. If |responseConstraint| is not null and |omitResponseConstraintInput| is false, implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
+
+  1. Let |requested| be the result of [=measuring language model context usage=] given |messages|, and |stopPrefilling|.
 
   1. If |requested| is null, then return false.
 
@@ -596,23 +599,14 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <div algorithm>
   To <dfn>measure language model context usage</dfn> given:
 
-  * a {{LanguageModelPrompt}} |input|,
-  * a [=list=] of {{LanguageModelExpected}}s |expectedInputs|,
-  * a [=list=] of {{LanguageModelExpected}}s |expectedOutputs|,
-  * an object-or-null |responseConstraint|, and
+  * a [=list=] of {{LanguageModelMessages}} |messages|,
   * an algorithm |stopMeasuring| that takes no arguments and returns a boolean,
 
   perform the following steps:
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. Let |expectedInputTypes| be the result of [=get the expected input types=] given |expectedInputs|.
-
-  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
-
-    If this throws an exception |e|, then return a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
-
-  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prefill=] given |messages|, |expectedInputs|, |expectedOutputs|, |responseConstraint|, and false.
+  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prefill=] given |messages|, and false.
 
     <p class="note">This will generally consist of the encoding of all of the inputs, possibly with prompt engineering or other implementation-defined wrappers.</p>
 
