@@ -652,7 +652,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: |input| is a [=list=] of {{LanguageModelMessage}}s.
 
-  1. If |input| is [=list/list-is-empty=], then return <span style="white-space: pre-wrap">«
+  1. If |input| is an empty [=list=], then return <span style="white-space: pre-wrap">«
       «[
         "{{LanguageModelMessage/role}}" → "{{LanguageModelMessageRole/user}}",
         "{{LanguageModelMessage/content}}" → «
@@ -688,12 +688,12 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
-    1. If |message|["{{LanguageModelMessage/content}}"] is [=list/list-is-empty=], then:
+    1. If |message|["{{LanguageModelMessage/content}}"] is an empty [=list=], then:
 
-      1. Let |emptyContent| be a new LanguageModelMessageContent initialized with <span style="white-space: pre-wrap">«[
-        "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-        "{{LanguageModelMessageContent/value}}" → ""
-      ]»</span>.
+      1. Let |emptyContent| be a new {{LanguageModelMessageContent}} initialized with <span style="white-space: pre-wrap">«[
+          "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+          "{{LanguageModelMessageContent/value}}" → ""
+        ]»</span>.
       
       1. [=list/append=] |emptyContent| to |message|["{{LanguageModelMessage/content}}"].
     
