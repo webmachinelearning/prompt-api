@@ -20,7 +20,7 @@ Die On: warning
 
 <h2 id="intro">Introduction</h2>
 
-TODO
+The Prompt API gives web pages the ability to directly prompt a browser-provided language model. It provides a uniform JavaScript API that abstracts away specific details of the underlying model (such as templating or tokenization). By leveraging built-in language models, it offers benefits such as local processing of sensitive data, offline usage, model sharing, and reduced cost compared to cloud-based or bring-your-own-model approaches.
 
 <h2 id="dependencies">Dependencies</h2>
 
