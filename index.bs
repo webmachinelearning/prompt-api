@@ -604,7 +604,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <div algorithm>
   To <dfn>measure language model context usage</dfn> given:
 
-  * a [=list=] of {{LanguageModelMessages}} |messages|,
+  * a [=list=] of {{LanguageModelMessage}} |messages|,
   * an algorithm |stopMeasuring| that takes no arguments and returns a boolean,
 
   perform the following steps:
