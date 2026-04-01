@@ -18,6 +18,11 @@ Indent: 2
 Die On: warning
 </pre>
 
+<pre class="link-defaults">
+spec:webidl; type:exception; text:TypeError
+spec:webidl; type:exception; text:SyntaxError
+</pre>
+
 <h2 id="intro">Introduction</h2>
 
 The Prompt API gives web pages the ability to directly prompt a browser-provided language model. It provides a uniform JavaScript API that abstracts away specific details of the underlying model (such as templating or tokenization). By leveraging built-in language models, it offers benefits such as local processing of sensitive data, offline usage, model sharing, and reduced cost compared to cloud-based or bring-your-own-model approaches.
@@ -184,7 +189,7 @@ typedef (
 <div algorithm>
   The static <dfn method for="LanguageModel">create(|options|)</dfn> method steps are:
 
-  1. Return the result of [=creating an AI model object=] given |options|, "language-model", [=validate and canonicalize language model options=], [=compute language model options availability=], [=download the language model=], [=initialize the language model=], [=create a language model object=], and false.
+  1. Return the result of [=creating an AI model object=] given |options|, "{{language-model}}", [=validate and canonicalize language model options=], [=compute language model options availability=], [=download the language model=], [=initialize the language model=], [=create a language model object=], and false.
 </div>
 
 <div algorithm>
@@ -467,7 +472,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 <div algorithm>
   The <dfn method for="LanguageModel">measureContextUsage(|input|, |options|)</dfn> method steps are:
 
-  1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a {{TypeError}}.
+  1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a "{{TypeError}}" {{DOMException}}.
 
   1. Let |expectedInputTypes| be the result of [=get the expected content types=] given [=this=]'s [=LanguageModel/expected inputs=].
 
@@ -718,19 +723,19 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a "{{TypeError}}" {{DOMException}}.
 
       1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/image}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/image}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a "{{TypeError}}" {{DOMException}}.
 
       1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/audio}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a "{{TypeError}}" {{DOMException}}.
 
     1. Let |contentWithContiguousTextCollapsed| be an empty [=list=] of {{LanguageModelMessageContent}}s.
 
