@@ -801,7 +801,61 @@ When prompting fails, the following possible reasons may be surfaced to the web 
 <div algorithm>
   To <dfn>clone a language model</dfn> given a {{LanguageModel}} |model| and a {{LanguageModelCloneOptions}} |options|:
 
-  1. TODO: Use |model| and |options|.
+  1. Let |global| be |model|'s [=relevant global object=].
+
+  1. [=Assert=]: |global| is a {{Window}} object.
+
+  1. If |global|'s [=associated Document=] is not [=Document/fully active=], then return [=a promise rejected with=] an "{{InvalidStateError}}" {{DOMException}}.
+
+  1. Let |signals| be « |model|'s [=DestroyableModel/destruction abort controller=]'s [=AbortController/signal=] ».
+
+  1. If |options|["`signal`"] [=map/exists=], then [=set/append=] it to |signals|.
+
+  1. Let |compositeSignal| be the result of [=creating a dependent abort signal=] given |signals| using {{AbortSignal}} and |model|'s [=relevant realm=].
+
+  1. If |compositeSignal| is [=AbortSignal/aborted=], then return [=a promise rejected with=] |compositeSignal|'s [=AbortSignal/abort reason=].
+
+  1. Let |signal| be |options|["{{LanguageModelCloneOptions/signal}}"] if it [=map/exists=]; otherwise null.
+
+  1. If |signal| is not null and is [=AbortSignal/aborted=], then return a promise rejected with |signal|'s [=AbortSignal/abort reason=].
+
+  1. Let |promise| be [=a new promise=] created in |model|'s [=relevant realm=].
+
+  1. Let |abortedDuringOperation| be false.
+
+    <p class="note">This variable will be written to from the [=event loop=], but read from [=in parallel=].
+
+  1. [=AbortSignal/add|Add the following abort steps=] to |compositeSignal|:
+
+    1. Set |abortedDuringOperation| to true.
+
+    1. [=Reject=] |promise| with |compositeSignal|'s [=AbortSignal/abort reason=].
+
+  1. [=In parallel=]:
+
+    1. [=Queue a global task=] on the [=AI task source=] to perform the following steps:
+
+      1. If |abortedDuringOperation| is true, then return.
+
+      1. Let |clonedModel| be a new {{LanguageModel}} object with:
+        - [=LanguageModel/initial messages=] set to |model|'s [=LanguageModel/initial messages=].
+        - [=LanguageModel/top K=] set to |model|'s [=LanguageModel/top K=].
+        - [=LanguageModel/temperature=] set to |model|'s [=LanguageModel/temperature=].
+        - [=LanguageModel/expected inputs=] set to |model|'s [=LanguageModel/expected inputs=].
+        - [=LanguageModel/expected outputs=] set to |model|'s [=LanguageModel/expected outputs=].
+        - [=LanguageModel/tools=] set to |model|'s [=LanguageModel/tools=].
+        - [=LanguageModel/context window size=] set to |model|'s [=LanguageModel/context window size=].
+        - [=LanguageModel/current context usage=] set to |model|'s [=LanguageModel/current context usage=].
+
+      1. In an [=implementation-defined=] manner, copy any other state from |model| to |clonedModel|.
+
+      1. If the copy operation fails:
+        1. [=Reject=] |promise| with a "{{OperationError}}" {{DOMException}}.
+        1. Return.
+
+      1. [=Resolve=] |promise| with |clonedModel|.
+
+  1. Return |promise|.
 </div>
 
 <h3 id="permissions-policy">Permissions policy integration</h3>
