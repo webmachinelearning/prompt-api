@@ -469,6 +469,8 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a {{TypeError}}.
 
+  1. Let |expectedInputTypes| be the result of [=get the expected content types=] given [=this=]'s [=LanguageModel/expected inputs=].
+
   1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
 
   1. If |options|["{{LanguageModelPromptOptions/responseConstraint}}"] [=map/exists=] and is not null and |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, then implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
