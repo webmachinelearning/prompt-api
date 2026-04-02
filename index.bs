@@ -18,9 +18,14 @@ Indent: 2
 Die On: warning
 </pre>
 
+<pre class="link-defaults">
+spec:webidl; type:exception; text:TypeError
+spec:webidl; type:exception; text:SyntaxError
+</pre>
+
 <h2 id="intro">Introduction</h2>
 
-TODO
+The Prompt API gives web pages the ability to directly prompt a browser-provided language model. It provides a uniform JavaScript API that abstracts away specific details of the underlying model (such as templating or tokenization). By leveraging built-in language models, it offers benefits such as local processing of sensitive data, offline usage, model sharing, and reduced cost compared to cloud-based or bring-your-own-model approaches.
 
 <h2 id="dependencies">Dependencies</h2>
 
@@ -81,8 +86,8 @@ interface LanguageModel : EventTarget {
   readonly attribute float temperature;
 
   Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
-  undefined destroy();
 };
+LanguageModel includes DestroyableModel;
 
 // **EXPERIMENTAL**: Only available in extension and experimental contexts.
 [Exposed=Window, SecureContext]
@@ -169,7 +174,7 @@ dictionary LanguageModelMessageContent {
 
 enum LanguageModelMessageRole { "system", "user", "assistant" };
 
-enum LanguageModelMessageType { "text", "image", "audio" };
+enum LanguageModelMessageType { "text", "image", "audio", "tool-call", "tool-response" };
 
 typedef (
   ImageBitmapSource
@@ -179,12 +184,476 @@ typedef (
 ) LanguageModelMessageValue;
 </xmp>
 
-<h3 id="prompt-processing">Prompt processing</h3>
-
-<p class="note">This will be incorporated into a proper part of the specification later. For now, we're just writing out this algorithm as a full spec, since it's complicated.</p>
+<h3 id="language-model-creation">Creation</h3>
 
 <div algorithm>
-  To <dfn>validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |isInitial|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
+  The static <dfn method for="LanguageModel">create(|options|)</dfn> method steps are:
+
+  1. Return the result of [=creating an AI model object=] given |options|, "{{language-model}}", [=validate and canonicalize language model options=], [=compute language model options availability=], [=download the language model=], [=initialize the language model=], [=create a language model object=], and false.
+</div>
+
+<div algorithm>
+  To <dfn>validate and canonicalize language model options</dfn> given a {{LanguageModelCreateCoreOptions}} |options|, perform the following steps. They mutate |options| in place to canonicalize and deduplicate language tags, and throw an exception if any are invalid.
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+    1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
+    1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
+</div>
+
+<div algorithm>
+  To <dfn>download the language model</dfn>, given a {{LanguageModelCreateCoreOptions}} |options|:
+
+  1. [=Assert=]: these steps are running [=in parallel=].
+
+  1. Initiate the download process for everything the user agent needs to prompt a language model according to |options|. This could include a base AI model, fine-tunings for specific languages or option values, or other resources.
+
+  1. If the download process cannot be started for any reason, then return false.
+
+  1. Return true.
+</div>
+
+<div algorithm>
+  To <dfn>initialize the language model</dfn>, given a {{LanguageModelCreateOptions}} |options|:
+
+  1. [=Assert=]: these steps are running [=in parallel=].
+
+  1. Let |availability| be the result of [=compute language model options availability=] given |options|.
+
+    1. If |availability| is null or {{Availability/unavailable}}, then return a [=DOMException error information=] whose [=DOMException error information/name=] is "{{NotSupportedError}}" and whose [=DOMException error information/details=] contain appropriate detail.
+
+  1. Perform any necessary initialization operations for the AI model backing the user agent's prompting capabilities.
+
+    This could include loading the appropriate model and any fine-tunings necessary to support |options| into memory.
+
+    1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+      1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+      1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
+      1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
+      1. Load |initialMessages| into the model's context window.
+
+    1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] [=map/exists=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
+
+  1. If initialization failed because the process of loading |options| resulted in using up all of the model's context window, then:
+
+    1. Let |requested| be the amount of context window needed to encode |options|. The encoding of |options| as input is [=implementation-defined=].
+
+    1. Let |maximum| be the maximum context window size that the user agent supports.
+
+    1. [=Assert=]: |requested| is greater than |maximum|. (That is how we reached this error branch.)
+
+    1. Return a [=quota exceeded error information=] whose [=QuotaExceededError/requested=] is |requested| and [=QuotaExceededError/quota=] is |maximum|.
+
+  1. If initialization failed for any other reason, then return a [=DOMException error information=] whose [=DOMException error information/name=] is "{{OperationError}}" and whose [=DOMException error information/details=] contain appropriate detail.
+
+  1. Return null.
+</div>
+
+<div algorithm>
+  To <dfn>create a language model object</dfn>, given a [=ECMAScript/realm=] |realm| and a {{LanguageModelCreateOptions}} |options|:
+
+  1. [=Assert=]: these steps are running on |realm|'s [=ECMAScript/surrounding agent=]'s [=agent/event loop=].
+
+  1. Let |contextWindowSize| be the amount of context window that is available to the user agent for this model. (This value is [=implementation-defined=], and may be +∞ if there are no specific limits beyond, e.g., the user's memory, or the limits of JavaScript strings.)
+
+  1. Let |initialMessages| be an empty [=list=] of {{LanguageModelMessage}}s.
+
+  1. Let |initialMessagesUsage| be 0.
+
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+    1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
+    1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
+    1. Set |initialMessagesUsage| to the result of [=measure language model context usage=] given |initialMessages|, and |options|["{{LanguageModelCreateOptions/signal}}"].
+
+  1. Return a new {{LanguageModel}} object, created in |realm|, with
+
+    <dl class="props">
+      : [=LanguageModel/initial messages=]
+      :: |initialMessages|
+
+      : [=LanguageModel/top K=]
+      :: |options|["{{LanguageModelCreateCoreOptions/topK}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+
+      : [=LanguageModel/temperature=]
+      :: |options|["{{LanguageModelCreateCoreOptions/temperature}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+
+      : [=LanguageModel/expected inputs=]
+      :: |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/expected outputs=]
+      :: |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/tools=]
+      :: |options|["{{LanguageModelCreateCoreOptions/tools}}"] if it [=map/exists=]; otherwise an empty [=list=]
+
+      : [=LanguageModel/context window size=]
+      :: |contextWindowSize|
+
+      : [=LanguageModel/current context usage=]
+      :: |initialMessagesUsage|
+    </dl>
+</div>
+
+<h3 id="language-model-availability">Availability</h3>
+
+<div algorithm>
+  The static <dfn method for="LanguageModel">availability(|options|)</dfn> method steps are:
+
+  1. Return the result of [=computing AI model availability=] given |options|, "{{language-model}}", [=validate and canonicalize language model options=], and [=compute language model options availability=].
+</div>
+
+<div algorithm>
+  To <dfn>compute language model options availability</dfn> given a {{LanguageModelCreateCoreOptions}} |options|, perform the following steps. They return either an {{Availability}} value or null, and they mutate |options| in place to update language tags to their best-fit matches.
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. Let |availability| be the [=language model non-options availability=].
+
+  1. If |availability| is null, then return null.
+
+  1. Let |availabilities| be a [=list=] containing |availability|.
+
+  1. Let |inputPartition| be the result of [=getting the language availabilities partition=] given the purpose of prompting a language model with text in that language.
+
+  1. Let |outputPartition| be the result of [=getting the language availabilities partition=] given the purpose of producing language model output in that language.
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then:
+      1. Let |inputLanguageAvailability| be the result of [=computing language availability=] given |expected|["{{LanguageModelExpected/languages}}"] and |inputPartition|.
+      1. [=list/Append=] |inputLanguageAvailability| to |availabilities|.
+    1. Let |inputTypeAvailability| be the [=language model content type availability=] given |expected|["{{LanguageModelExpected/type}}"] and true.
+    1. [=list/Append=] |inputTypeAvailability| to |availabilities|.
+
+  1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then:
+      1. Let |outputLanguageAvailability| be the result of [=computing language availability=] given |expected|["{{LanguageModelExpected/languages}}"] and |outputPartition|.
+      1. [=list/Append=] |outputLanguageAvailability| to |availabilities|.
+    1. Let |outputTypeAvailability| be the [=language model content type availability=] given |expected|["{{LanguageModelExpected/type}}"] and false.
+    1. [=list/Append=] |outputTypeAvailability| to |availabilities|.
+
+  1. Return the [=Availability/minimum availability=] given |availabilities|.
+</div>
+
+<div algorithm>
+  The <dfn>language model non-options availability</dfn> is given by the following steps. They return an {{Availability}} value or null.
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. If there is some error attempting to determine whether the user agent [=model availability/can support=] prompting a language model, which the user agent believes to be transient (such that re-querying could stop producing such an error), then return null.
+
+  1. If the user agent [=model availability/currently supports=] prompting a language model, then return "{{Availability/available}}".
+
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after finishing a download that is already ongoing, then return "{{Availability/downloading}}".
+
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after performing a not-currently-ongoing download, then return "{{Availability/downloadable}}".
+
+  1. Otherwise, return "{{Availability/unavailable}}".
+</div>
+
+<div algorithm>
+  The <dfn>language model content type availability</dfn> given a {{LanguageModelMessageType}} |type| and a boolean |isInput|, is given by the following steps. They return an {{Availability}} value.
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. If the user agent [=model availability/currently supports=] |type| as an input if |isInput| is true, or as an output if |isInput| is false, then return "{{Availability/available}}".
+
+  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after finishing a download that is already ongoing, then return "{{Availability/downloading}}".
+
+  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after performing a not-currently-ongoing download, then return "{{Availability/downloadable}}".
+
+  1. Otherwise, return "{{Availability/unavailable}}".
+</div>
+
+<h3 id="the-languagemodel-class">The {{LanguageModel}} class</h3>
+
+Every {{LanguageModel}} has an <dfn for="LanguageModel">initial messages</dfn>, a [=list=] of {{LanguageModelMessage}}s, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">top K</dfn>, an unsigned long, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">temperature</dfn>, a float, set during creation.
+
+Every {{LanguageModel}} has an <dfn for="LanguageModel">expected inputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
+
+Every {{LanguageModel}} has an <dfn for="LanguageModel">expected outputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] of {{LanguageModelTool}}s, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">context window size</dfn>, an unrestricted double, set during creation.
+
+Every {{LanguageModel}} has a <dfn for="LanguageModel">current context usage</dfn>, a double, initially 0.
+
+<hr>
+
+The <dfn attribute for="LanguageModel">contextUsage</dfn> getter steps are to return [=this=]'s [=LanguageModel/current context usage=].
+
+The <dfn attribute for="LanguageModel">inputUsage</dfn> getter steps are to return [=this=]'s [=LanguageModel/current context usage=].
+
+The <dfn attribute for="LanguageModel">contextWindow</dfn> getter steps are to return [=this=]'s [=LanguageModel/context window size=].
+
+The <dfn attribute for="LanguageModel">inputQuota</dfn> getter steps are to return [=this=]'s [=LanguageModel/context window size=].
+
+The <dfn attribute for="LanguageModel">topK</dfn> getter steps are to return [=this=]'s [=LanguageModel/top K=].
+
+The <dfn attribute for="LanguageModel">temperature</dfn> getter steps are to return [=this=]'s [=LanguageModel/temperature=].
+
+<hr>
+
+The following are the [=event handlers=] (and their corresponding [=event handler event types=]) that must be supported, as [=event handler IDL attributes=], by all {{LanguageModel}} objects:
+
+<table>
+  <thead>
+    <tr>
+      <th>[=Event handler=]
+      <th>[=Event handler event type=]
+  <tbody>
+    <tr>
+      <td><dfn attribute for="LanguageModel">oncontextoverflow</dfn>
+      <td><dfn event for="LanguageModel">contextoverflow</dfn>
+    <tr>
+      <td><dfn attribute for="LanguageModel">onquotaoverflow</dfn>
+      <td><dfn event for="LanguageModel">quotaoverflow</dfn>
+</table>
+
+<hr>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">prompt(|input|, |options|)</dfn> method steps are:
+
+  1. Let |responseConstraint| be |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+
+  1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
+
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
+
+    1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, |omitResponseConstraintInput|, |responseConstraint|, |error|, and |stopProducing|.
+
+    1. If |prefillSuccess| is true, then [=generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+
+  1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">promptStreaming(|input|, |options|)</dfn> method steps are:
+
+  1. Let |responseConstraint| be |options|["{{LanguageModelPromptOptions/responseConstraint}}"] if it [=map/exists=]; otherwise null.
+
+  1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
+
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
+
+    1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, |omitResponseConstraintInput|, |responseConstraint|, |error|, and |stopProducing|.
+
+    1. If |prefillSuccess| is true, then [=generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+
+  1. Return the result of [=getting a streaming AI model result=] given [=this=], |options|, and |operation|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">append(|input|, |options|)</dfn> method steps are:
+
+  1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
+
+    <p class="note">|chunkProduced| is never called because the [=prefilling=] algorithm does not generate chunks.</p>
+
+    1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, false, null, |error|, and |stopProducing|.
+
+    1. If |prefillSuccess| is true and |done| is not null, then perform |done|.
+
+  1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">measureContextUsage(|input|, |options|)</dfn> method steps are:
+
+  1. If |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is true and |options|["{{LanguageModelPromptOptions/responseConstraint}}"] does not [=map/exist=], then throw a "{{TypeError}}" {{DOMException}}.
+
+  1. Let |expectedInputTypes| be the result of [=get the expected content types=] given [=this=]'s [=LanguageModel/expected inputs=].
+
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and false.
+
+  1. If |options|["{{LanguageModelPromptOptions/responseConstraint}}"] [=map/exists=] and is not null and |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"] is false, then implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
+
+  1. Let |measureUsage| be an algorithm step which takes argument |stopMeasuring|, and returns the result of [=measuring language model context usage=] given |messages|, and |stopMeasuring|.
+
+  1. Return the result of [=measuring AI model input usage=] given [=this=], |options|, and |measureUsage|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">measureInputUsage(|input|, |options|)</dfn> method steps are:
+
+  1. Return the result of running the {{LanguageModel/measureContextUsage()}} method steps given |input| and |options|.
+</div>
+
+<div algorithm>
+  The <dfn method for="LanguageModel">clone(|options|)</dfn> method steps are:
+
+  1. Return the result of [=cloning a language model=] given [=this=] and |options|.
+</div>
+
+<h4 id="language-model-prompting">Prefilling and generating</h4>
+
+<div algorithm>
+  To <dfn>prefill</dfn> given:
+
+  * a {{LanguageModel}} |model|,
+  * a {{LanguageModelPrompt}} |input|,
+  * a boolean |omitResponseConstraintInput|,
+  * an object-or-null |responseConstraint|,
+  * an algorithm-or-null |error| that takes [=error information=] and returns nothing, and
+  * an algorithm-or-null |stopPrefilling| that takes no arguments and returns a boolean,
+
+  perform the following steps:
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and true if |model|'s [=LanguageModel/current context usage=] is greater than 0, otherwise false.
+
+    If this throws an exception |e|, then:
+    1. If |error| is not null, perform |error| given a [=DOMException error information=] whose [=DOMException error information/name=] is |e|'s [=DOMException/name=] and whose [=DOMException error information/details=] contain appropriate detail.
+    1. Return false.
+
+  1. If |responseConstraint| is not null and |omitResponseConstraintInput| is false, then implementations may insert an [=implementation-defined=] {{LanguageModelMessage}} to |messages| to guide the model's behavior.
+
+  1. Let |requested| be the result of [=measuring language model context usage=] given |messages|, and |stopPrefilling|.
+
+  1. If |requested| is null, then return false.
+
+  1. If |requested| is an [=error information=], then:
+    1. If |error| is not null, perform |error| given |requested|.
+    1. Return false.
+
+  1. [=Assert=]: |requested| is a number.
+
+  1. If |model|'s [=LanguageModel/current context usage=] + |requested| is greater than |model|'s [=LanguageModel/context window size=], then:
+    1. If |error| is not null, then:
+      1. Let |errorInfo| be a [=quota exceeded error information=] with a [=QuotaExceededError/requested=] of |model|'s [=LanguageModel/current context usage=] + |requested| and a [=QuotaExceededError/quota=] of |model|'s [=LanguageModel/context window size=].
+      1. Perform |error| given |errorInfo|.
+    1. Return false.
+
+  1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |model|'s [=LanguageModel/expected inputs=].
+
+  1. In an [=implementation-defined=] manner, update the underlying model's internal state to include |messages|.
+
+     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], and |model|'s [=LanguageModel/tools=] to guide how the state is updated.
+
+     The process must conform to the guidance given in [[#privacy]] and [[#security]].
+
+     If during this process |stopPrefilling| returns true, then return false.
+
+     If an error occurred during prefilling:
+     1. Let the error be represented as [=error information=] |errorInfo| according to the guidance in [[#language-model-errors]].
+     1. If |error| is not null, perform |error| given |errorInfo|.
+     1. Return false.
+
+  1. Set |model|'s [=LanguageModel/current context usage=] to |model|'s [=LanguageModel/current context usage=] + |requested|.
+
+  1. Return true.
+</div>
+
+<div algorithm>
+  To <dfn>generate</dfn> given:
+
+  * a {{LanguageModel}} |model|,
+  * an object-or-null |responseConstraint|,
+  * an algorithm-or-null |chunkProduced| that takes a [=string=] and returns nothing,
+  * an algorithm-or-null |done| that takes no arguments and returns nothing,
+  * an algorithm-or-null |error| that takes [=error information=] and returns nothing, and
+  * an algorithm-or-null |stopProducing| that takes no arguments and returns a boolean,
+
+  perform the following steps:
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. In an [=implementation-defined=] manner, subject to the following guidelines, begin the process of producing a response from the language model based on its current internal state.
+
+     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], |model|'s [=LanguageModel/tools=], and |responseConstraint| to guide the model's behavior.
+
+     The prompting process must conform to the guidance given in [[#privacy]] and [[#security]].
+
+     If |model|'s [=LanguageModel/tools=] is not empty, the model may use the provided tools by calling their <var ignore>execute</var> functions.
+
+  1. While true:
+
+    1. Wait for the next chunk of response data to be produced, for the process to finish, or for the result of calling |stopProducing| to become true.
+
+    1. If such a chunk is successfully produced:
+
+      1. Let it be represented as a [=string=] |chunk|.
+
+      1. If |chunkProduced| is not null, perform |chunkProduced| given |chunk|.
+
+    1. Otherwise, if the process has finished:
+
+      1. If |done| is not null, perform |done|.
+
+      1. [=iteration/Break=].
+
+    1. Otherwise, if |stopProducing| returns true, then [=iteration/break=].
+
+    1. Otherwise, if an error occurred during prompting:
+
+      1. Let the error be represented as [=error information=] |errorInfo| according to the guidance in [[#language-model-errors]].
+
+      1. If |error| is not null, perform |error| given |errorInfo|.
+
+      1. [=iteration/Break=].
+</div>
+
+<h4 id="language-model-usage">Usage</h4>
+
+<div algorithm>
+  To <dfn>measure language model context usage</dfn> given:
+
+  * a [=list=] of {{LanguageModelMessage}} |messages|,
+  * an algorithm |stopMeasuring| that takes no arguments and returns a boolean,
+
+  perform the following steps:
+
+  1. [=Assert=]: this algorithm is running [=in parallel=].
+
+  1. Let |inputToModel| be the [=implementation-defined=] input that would be sent to the underlying model in order to [=prefill=] given |messages|.
+
+    <p class="note">This will generally consist of the encoding of all of the inputs, possibly with prompt engineering or other implementation-defined wrappers.</p>
+
+    If during this process |stopMeasuring| starts returning true, then return null.
+
+    If an error occurs during this process, then return an appropriate [=DOMException error information=] according to the guidance in [[#language-model-errors]].
+
+  1. Return the amount of context usage needed to represent |inputToModel| when given to the underlying model. The exact calculation procedure is [=implementation-defined=], subject to the following constraints.
+
+    The returned context usage must be nonnegative and finite. It should be roughly proportional to the amount of data in |inputToModel|.
+
+    <p class="note">This might be the number of tokens needed to represent the input in a <a href="https://arxiv.org/abs/2404.08335">language model tokenization scheme</a>, or it might be related to the size of the data in bytes.</p>
+
+    If during this process |stopMeasuring| starts returning true, then instead return null.
+
+    If an error occurs during this process, then instead return an appropriate [=DOMException error information=] according to the guidance in [[#language-model-errors]].
+</div>
+
+<h4 id="language-model-options">Options</h4>
+
+<div algorithm>
+  To <dfn>get the expected content types</dfn> given a [=list=] of {{LanguageModelExpected}}s |expectedContents|:
+
+  1. Let |expectedTypes| be an empty [=list=] of {{LanguageModelMessageType}}s.
+
+  1. [=list/For each=] |expected| of |expectedContents|:
+    1. If |expectedTypes| does not [=list/contain=] |expected|["{{LanguageModelExpected/type}}"], then [=list/append=] |expected|["{{LanguageModelExpected/type}}"] to |expectedTypes|.
+
+  1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/text}}", then [=list/append=] "{{LanguageModelMessageType/text}}" to |expectedTypes|.
+
+  1. Return |expectedTypes|.
+</div>
+
+<div algorithm>
+  To <dfn export lt="validate and canonicalize a prompt|validating and canonicalizing a prompt">validate and canonicalize a prompt</dfn> given a {{LanguageModelPrompt}} |input|, a [=list=] of {{LanguageModelMessageType}}s |expectedTypes|, and a boolean |hasAppendedInput|, perform the following steps. The return value will be a non-empty [=list=] of {{LanguageModelMessage}}s in their "longhand" form.
 
   1. [=Assert=]: |expectedTypes| [=list/contains=] "{{LanguageModelMessageType/text}}".
 
@@ -203,7 +672,18 @@ typedef (
 
   1. [=Assert=]: |input| is a [=list=] of {{LanguageModelMessage}}s.
 
-  1. Let |seenNonSystemRole| be false.
+  1. If |input| is an empty [=list=], then return <span style="white-space: pre-wrap">«
+      «[
+        "{{LanguageModelMessage/role}}" → "{{LanguageModelMessageRole/user}}",
+        "{{LanguageModelMessage/content}}" → «
+          «[
+            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContent/value}}" → ""
+          ]»
+        »,
+        "{{LanguageModelMessage/prefix}}" → false
+      ]»
+    »</span>.
 
   1. Let |messages| be an empty [=list=] of {{LanguageModelMessage}}s.
 
@@ -214,7 +694,7 @@ typedef (
         "{{LanguageModelMessage/content}}" → «
           «[
             "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
-            "{{LanguageModelMessageContent/value}}" → |message|
+            "{{LanguageModelMessageContent/value}}" → |message|["{{LanguageModelMessage/content}}"]
           ]»
         »,
         "{{LanguageModelMessage/prefix}}" → |message|["{{LanguageModelMessage/prefix}}"]
@@ -224,35 +704,38 @@ typedef (
 
       1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/assistant}}", then throw a "{{SyntaxError}}" {{DOMException}}.
 
-          <p class="note">Per the below validation steps, this will also guarantee that |message|["{{LanguageModelMessage/content}}"] only contains text content.
-
       1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
+    1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
+
+      1. If |hasAppendedInput| is true, then throw a "{{TypeError}}" {{DOMException}}.
+
+    1. If |message|["{{LanguageModelMessage/content}}"] is an empty [=list=], then:
+
+      1. Let |emptyContent| be a new {{LanguageModelMessageContent}} initialized with <span style="white-space: pre-wrap">«[
+          "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+          "{{LanguageModelMessageContent/value}}" → ""
+        ]»</span>.
+      
+      1. [=list/append=] |emptyContent| to |message|["{{LanguageModelMessage/content}}"].
+    
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
-
-      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
-
-        1. If |isInitial| is false, then throw a "{{NotSupportedError}}" {{DOMException}}.
-
-        1. If |seenNonSystemRole| is true, then throw a "{{SyntaxError}}" {{DOMException}}.
-
-      1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/system}}", then set |seenNonSystemRole| to true.
 
       1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a "{{TypeError}}" {{DOMException}}.
 
       1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/image}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/image}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a "{{TypeError}}" {{DOMException}}.
 
       1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/audio}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a "{{TypeError}}" {{DOMException}}.
 
     1. Let |contentWithContiguousTextCollapsed| be an empty [=list=] of {{LanguageModelMessageContent}}s.
 
@@ -282,9 +765,104 @@ typedef (
 
     1. [=list/Append=] |message| to |messages|.
 
+    1. Set |hasAppendedInput| to true.
+
   1. If |messages| [=list/is empty=], then throw a "{{SyntaxError}}" {{DOMException}}.
 
   1. Return |messages|.
+</div>
+
+<h4 id="language-model-errors">Errors</h4>
+
+When prompting fails, the following possible reasons may be surfaced to the web developer. This table lists the possible {{DOMException}} [=DOMException/names=] and the cases in which an implementation should use them:
+
+<table class="data">
+  <thead>
+    <tr>
+      <th>{{DOMException}} [=DOMException/name=]
+      <th>Scenarios
+  <tbody>
+    <tr>
+      <td>"{{NotAllowedError}}"
+      <td>
+        <p>Prompting is disabled by user choice or user agent policy.
+    <tr>
+      <td>"{{NotReadableError}}"
+      <td>
+        <p>The model output was filtered by the user agent, e.g., because it was detected to be harmful, inaccurate, or nonsensical.
+    <tr>
+      <td>"{{NotSupportedError}}"
+      <td>
+        <p>The input to be processed was in a language that the user agent does not support, or was not provided properly in the call to {{LanguageModel/create()}}.
+
+        <p>The model output ended up being in a language that the user agent does not support (e.g., because the user agent has not performed sufficient quality control tests on that output language).
+    <tr>
+      <td>"{{UnknownError}}"
+      <td>
+        <p>All other scenarios, including if the user agent believes it cannot prompt the model and also meet the requirements given in [[#privacy]] or [[#security]]. Or, if the user agent would prefer not to disclose the failure reason.
+</table>
+
+<p class="note">This table does not give the complete list of exceptions that can be surfaced by the prompt API. It only contains those which can come from certain [=implementation-defined=] steps.
+
+
+<div algorithm>
+  To <dfn>clone a language model</dfn> given a {{LanguageModel}} |model| and a {{LanguageModelCloneOptions}} |options|:
+
+  1. Let |global| be |model|'s [=relevant global object=].
+
+  1. [=Assert=]: |global| is a {{Window}} object.
+
+  1. If |global|'s [=associated Document=] is not [=Document/fully active=], then return [=a promise rejected with=] an "{{InvalidStateError}}" {{DOMException}}.
+
+  1. Let |signals| be « |model|'s [=DestroyableModel/destruction abort controller=]'s [=AbortController/signal=] ».
+
+  1. If |options|["`signal`"] [=map/exists=], then [=set/append=] it to |signals|.
+
+  1. Let |compositeSignal| be the result of [=creating a dependent abort signal=] given |signals| using {{AbortSignal}} and |model|'s [=relevant realm=].
+
+  1. If |compositeSignal| is [=AbortSignal/aborted=], then return [=a promise rejected with=] |compositeSignal|'s [=AbortSignal/abort reason=].
+
+  1. Let |signal| be |options|["{{LanguageModelCloneOptions/signal}}"] if it [=map/exists=]; otherwise null.
+
+  1. If |signal| is not null and is [=AbortSignal/aborted=], then return a promise rejected with |signal|'s [=AbortSignal/abort reason=].
+
+  1. Let |promise| be [=a new promise=] created in |model|'s [=relevant realm=].
+
+  1. Let |abortedDuringOperation| be false.
+
+    <p class="note">This variable will be written to from the [=event loop=], but read from [=in parallel=].
+
+  1. [=AbortSignal/add|Add the following abort steps=] to |compositeSignal|:
+
+    1. Set |abortedDuringOperation| to true.
+
+    1. [=Reject=] |promise| with |compositeSignal|'s [=AbortSignal/abort reason=].
+
+  1. [=In parallel=]:
+
+    1. [=Queue a global task=] on the [=AI task source=] to perform the following steps:
+
+      1. If |abortedDuringOperation| is true, then return.
+
+      1. Let |clonedModel| be a new {{LanguageModel}} object with:
+        - [=LanguageModel/initial messages=] set to |model|'s [=LanguageModel/initial messages=].
+        - [=LanguageModel/top K=] set to |model|'s [=LanguageModel/top K=].
+        - [=LanguageModel/temperature=] set to |model|'s [=LanguageModel/temperature=].
+        - [=LanguageModel/expected inputs=] set to |model|'s [=LanguageModel/expected inputs=].
+        - [=LanguageModel/expected outputs=] set to |model|'s [=LanguageModel/expected outputs=].
+        - [=LanguageModel/tools=] set to |model|'s [=LanguageModel/tools=].
+        - [=LanguageModel/context window size=] set to |model|'s [=LanguageModel/context window size=].
+        - [=LanguageModel/current context usage=] set to |model|'s [=LanguageModel/current context usage=].
+
+      1. In an [=implementation-defined=] manner, copy any other state from |model| to |clonedModel|.
+
+      1. If the copy operation fails:
+        1. [=Reject=] |promise| with a "{{OperationError}}" {{DOMException}}.
+        1. Return.
+
+      1. [=Resolve=] |promise| with |clonedModel|.
+
+  1. Return |promise|.
 </div>
 
 <h3 id="permissions-policy">Permissions policy integration</h3>
