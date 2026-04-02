@@ -306,7 +306,7 @@ typedef (
 <div algorithm>
   The static <dfn method for="LanguageModel">availability(|options|)</dfn> method steps are:
 
-  1. Return the result of [=computing AI model availability=] given |options|, "language-model", [=validate and canonicalize language model options=], and [=compute language model options availability=].
+  1. Return the result of [=computing AI model availability=] given |options|, "{{language-model}}", [=validate and canonicalize language model options=], and [=compute language model options availability=].
 </div>
 
 <div algorithm>
@@ -348,13 +348,13 @@ typedef (
 
   1. If there is some error attempting to determine whether the user agent [=model availability/can support=] prompting a language model, which the user agent believes to be transient (such that re-querying could stop producing such an error), then return null.
 
-  1. If the user agent [=model availability/currently supports=] prompting a language model, then return {{Availability/available}}.
+  1. If the user agent [=model availability/currently supports=] prompting a language model, then return "{{Availability/available}}".
 
-  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after finishing a download that is already ongoing, then return {{Availability/downloading}}.
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after finishing a download that is already ongoing, then return "{{Availability/downloading}}".
 
-  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after performing a not-currently-ongoing download, then return {{Availability/downloadable}}.
+  1. If the user agent believes it will be able to [=model availability/support=] prompting a language model, but only after performing a not-currently-ongoing download, then return "{{Availability/downloadable}}".
 
-  1. Otherwise, return {{Availability/unavailable}}.
+  1. Otherwise, return "{{Availability/unavailable}}".
 </div>
 
 <div algorithm>
@@ -362,13 +362,13 @@ typedef (
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
-  1. If the user agent [=model availability/currently supports=] |type| as an input if |isInput| is true, or as an output if |isInput| is false, then return {{Availability/available}}.
+  1. If the user agent [=model availability/currently supports=] |type| as an input if |isInput| is true, or as an output if |isInput| is false, then return "{{Availability/available}}".
 
-  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after finishing a download that is already ongoing, then return {{Availability/downloading}}.
+  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after finishing a download that is already ongoing, then return "{{Availability/downloading}}".
 
-  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after performing a not-currently-ongoing download, then return {{Availability/downloadable}}.
+  1. If the user agent believes it will be able to [=model availability/support=] |type| as such, but only after performing a not-currently-ongoing download, then return "{{Availability/downloadable}}".
 
-  1. Otherwise, return {{Availability/unavailable}}.
+  1. Otherwise, return "{{Availability/unavailable}}".
 </div>
 
 <h3 id="the-languagemodel-class">The {{LanguageModel}} class</h3>
