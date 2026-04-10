@@ -12,7 +12,7 @@ Browsers and operating systems are increasingly expected to gain access to langu
 * Translation between languages
 * Proofreading
 
-The Google Chrome, Microsoft Edge, and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proposals/issues/7)). This proposal additionally explores a general-purpose "Prompt API" that allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
+The Google Chrome, Microsoft Edge, and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proofreader-api)). This proposal additionally explores a general-purpose "Prompt API" that allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
 
 Currently, web developers wishing to use language models must either call out to cloud APIs, or bring their own and run them using technologies like [WASM](https://webassembly.org/) and [WebGPU](https://www.w3.org/TR/webgpu/), usually through JS runtime frameworks. By providing web platform API access to the browser or operating system's existing language model, we can provide the following benefits compared to cloud APIs:
 
@@ -93,7 +93,7 @@ for await (const chunk of stream) {
 
 ### System prompts
 
-The language model can be configured with a special "system prompt" which gives it the context for future interactions. The system prompt must be the first message, whether passed via the `initialPrompts` option to `create()`, or as the first message to the first `prompt()` or `append()` method call.  Role and content formatting aligns with the `` "chat completions API" `{ role, content }` format, which are expanded upon in [the following section](#n-shot-prompting).
+The language model can be configured with a special "system prompt" which gives it the context for future interactions. The system prompt must be the first message, whether passed via the `initialPrompts` option to `create()`, or as the first message to the first `prompt()` or `append()` method call.  Role and content formatting aligns with the "chat completions API" `{ role, content }` format, which are expanded upon in [the following section](#n-shot-prompting).
 
 ```js
 // Option 1: Create a new session with a system prompt as the first message.
