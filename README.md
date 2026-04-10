@@ -1,41 +1,41 @@
 # Explainer for the Prompt API
 
-_This proposal is an early design sketch by the Chrome built-in AI team to describe the problem below and solicit feedback on the proposed solution. It has not been approved to ship in Chrome._
+_This explainer and the accompanied draft report are in active development by the Web Machine Learning Community Group. CG members are seeking feedback and support for this proposal to gain Working Group and implementer adoption. Implementations are experimentally available in [Google Chrome](https://developer.chrome.com/docs/ai/prompt-api) and [Microsoft Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api)._
 
-Browsers and operating systems are increasingly expected to gain access to a language model. ([Example](https://developer.chrome.com/docs/ai/built-in), [example](https://blogs.windows.com/windowsdeveloper/2024/05/21/unlock-a-new-era-of-innovation-with-windows-copilot-runtime-and-copilot-pcs/), [example](https://www.apple.com/apple-intelligence/).) Language models are known for their versatility. With enough creative [prompting](https://developers.google.com/machine-learning/resources/prompt-eng), they can help accomplish tasks as diverse as:
+Browsers and operating systems are increasingly expected to gain access to language models. ([Example](https://developer.chrome.com/docs/ai/built-in), [example](https://learn.microsoft.com/windows/ai/apis/local-llms), [example](https://www.apple.com/apple-intelligence/).) Language models are known for their versatility. With enough creative [prompting](https://developers.google.com/machine-learning/resources/prompt-eng), they can help accomplish tasks as diverse as:
 
-* Classification, tagging, and keyword extraction of arbitrary text;
-* Helping users compose text, such as blog posts, reviews, or biographies;
-* Summarizing, e.g. of articles, user reviews, or chat logs;
+* Classification, tagging, and keyword extraction of arbitrary text
+* Helping users compose text, such as blog posts, reviews, or biographies
+* Summarizing, e.g. of articles, user reviews, or chat logs
 * Generating titles or headlines from article contents
 * Answering questions based on the unstructured contents of a web page
 * Translation between languages
 * Proofreading
 
-The Chrome built-in AI team and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proposals/issues/7)). This proposal additionally exploring a general-purpose "prompt API" which allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
+The Google Chrome, Microsoft Edge, and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proofreader-api)). This proposal additionally explores a general-purpose "Prompt API" that allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
 
-Currently, web developers wishing to use language models must either call out to cloud APIs, or bring their own and run them using technologies like WebAssembly and WebGPU. By providing access to the browser or operating system's existing language model, we can provide the following benefits compared to cloud APIs:
+Currently, web developers wishing to use language models must either call out to cloud APIs, or bring their own and run them using technologies like [WASM](https://webassembly.org/) and [WebGPU](https://www.w3.org/TR/webgpu/), usually through JS runtime frameworks. By providing web platform API access to the browser or operating system's existing language model, we can provide the following benefits compared to cloud APIs:
 
-* Local processing of sensitive data, e.g. allowing websites to combine AI features with end-to-end encryption.
-* Potentially faster results, since there is no server round-trip involved.
-* Offline usage.
-* Lower API costs for web developers.
-* Allowing hybrid approaches, e.g. free users of a website use on-device AI whereas paid users use a more powerful API-based model.
+* Local processing of sensitive data, e.g. allowing websites to combine AI features with end-to-end encryption
+* Potentially faster results, since there is no server round-trip involved
+* Offline usage
+* Lower API costs for web developers
+* Allowing hybrid approaches, e.g. free users of a website use on-device AI whereas paid users use a more powerful API-based model
 
-Similarly, compared to bring-your-own-AI approaches, using a built-in language model can save the user's bandwidth, likely benefit from more optimizations, and have a lower barrier to entry for web developers.
+Similarly, compared to developer-supplied model approaches, using a built-in language model can save the user's bandwidth, storage, and memory resources, while using a model that is optimized for the device. This pattern can also provide a lower barrier to entry for web developers by removing the need for developers to serve models and manage dependencies.
 
 ## Goals
 
 Our goals are to:
 
-* Provide web developers a uniform JavaScript API for accessing browser-provided language models.
-* Abstract away specific details of the language model in question as much as possible, e.g. tokenization, system messages, or control tokens.
+* Provide web developers a uniform JavaScript API for accessing browser-provided language models of varying capabilities.
+* Encapsulate model management and execution details as much as possible, e.g. downloads, updates, templating, parsing.
 * Guide web developers to gracefully handle failure cases, e.g. no browser-provided model being available.
-* Allow a variety of implementation strategies, including on-device or cloud-based models, while keeping these details abstracted from developers.
+* Develop formal implementations guidelines and definitions; e.g. initial on-device models, and possible cloud services.
 
 The following are explicit non-goals:
 
-* We do not intend to force every browser to ship or expose a language model; in particular, not all devices will be capable of storing or running one. It would be conforming to implement this API by always signaling that no language model is available, or to implement this API entirely by using cloud services instead of on-device models.
+* We do not intend to force every browser to ship or expose a language model; in particular, not all devices will be capable of storing or running one. It would be conforming to implement this API by always signaling that no language model is available; it may also be viable to implement this API entirely by using cloud services instead of on-device models.
 * We do not intend to provide guarantees of language model quality, stability, or interoperability between browsers. In particular, we cannot guarantee that the models exposed by these APIs are particularly good at any given use case. These are left as quality-of-implementation issues, similar to the [shape detection API](https://wicg.github.io/shape-detection-api/). (See also a [discussion of interop](https://www.w3.org/reports/ai-web-impact/#interop) in the W3C "AI & the Web" document.)
 
 The following are potential goals we are not yet certain of:
@@ -93,19 +93,27 @@ for await (const chunk of stream) {
 
 ### System prompts
 
-The language model can be configured with a special "system prompt" which gives it the context for future interactions. This is done using the `initialPrompts` option and the "chat completions API" `{ role, content }` format, which are expanded upon in [the following section](#n-shot-prompting).
+The language model can be configured with a special "system prompt" which gives it the context for future interactions. The system prompt must be the first message, whether passed via the `initialPrompts` option to `create()`, or as the first message to the first `prompt()` or `append()` method call.  Role and content formatting aligns with the "chat completions API" `{ role, content }` format, which are expanded upon in [the following section](#n-shot-prompting).
 
 ```js
-const session = await LanguageModel.create({
+// Option 1: Create a new session with a system prompt as the first message.
+const session1 = await LanguageModel.create({
   initialPrompts: [{ role: "system", content: "Pretend to be an eloquent hamster." }]
 });
+console.log(await session1.prompt("What is your favorite food?"));
 
-console.log(await session.prompt("What is your favorite food?"));
+// Option 2: Create a new session and append a system prompt as the first message.
+const session2 = await LanguageModel.create();
+await session2.append([{ role: "system", content: "Pretend to be an eloquent hamster." }]);
+console.log(await session2.prompt("What is your favorite food?"));
+
+// Option 3: Create a new session and prompt with a system prompt as the first message.
+const session3 = await LanguageModel.create();
+console.log(await session3.prompt([
+  { role: "system", content: "Pretend to be an eloquent hamster." },
+  { role: "user", content: "What is your favorite food?" }
+]));
 ```
-
-The system prompt is special, in that the language model will not respond to it, and it will be preserved even if the context window otherwise overflows due to too many calls to `prompt()`.
-
-If the system prompt is too large, then the promise will be rejected with a `QuotaExceededError` exception. See [below](#tokenization-context-window-length-limits-and-overflow) for more details on token counting and this new exception type.
 
 ### N-shot prompting
 
@@ -137,7 +145,7 @@ const result2 = await predictEmoji("This code is so good you should get promoted
 
 Some details on error cases:
 
-* Placing the `{ role: "system" }` prompt anywhere besides at the 0th position in `initialPrompts` will reject with a `TypeError`.
+* Placing the `{ role: "system" }` prompt anywhere besides at the 0th position of the first `LanguageModelMessage` sequence sent to any of `create()`, `append()`, or `prompt()` will reject with a `TypeError`.
 * If the combined token length of all the initial prompts is too large, then the promise will be rejected with a [`QuotaExceededError` exception](#tokenization-context-window-length-limits-and-overflow).
 
 ### Customizing the role per prompt
@@ -626,7 +634,7 @@ Some notes on this API:
 * The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureContextUsage(promptString, { signal })`.
 * We use the phrases "context usage" and "context window" in the API, to avoid being specific to the current language model tokenization paradigm. In the future, even if we change paradigms, we anticipate some concept of usage and context window still being applicable, even if it's just string length.
 
-It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureContextUsage(promptString) > session.contextWindow - session.contextUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed.
+It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureContextUsage(promptString) > session.contextWindow - session.contextUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the `initialPrompts`, which are never removed.
 
 Such overflows can be detected by listening for the `"contextoverflow"` event on the session:
 
