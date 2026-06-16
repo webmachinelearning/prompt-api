@@ -85,7 +85,7 @@ interface LanguageModel : EventTarget {
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   readonly attribute float temperature;
 
-  readonly attribute LanguageModelSamplingMode? samplingMode;
+  readonly attribute LanguageModelSamplingMode samplingMode;
 
   Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
 };
