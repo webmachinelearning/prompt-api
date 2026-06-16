@@ -460,14 +460,14 @@ Note that `append()` can also cause [overflow](#tokenization-context-window-leng
 
 ### Configuration of sampling modes
 
-For standard web page contexts, developers can specify a high-level `samplingMode` during session creation to configure the model's output variety and creativity without worrying about model-internal scalar parameters.
+Developers can specify a high-level `samplingMode` during session creation to configure the model's output variety and creativity without worrying about model-internal scalar parameters.
 
 The allowed values for `samplingMode` are:
-*   `"most-predictable"`: For tasks requiring strict consistency and reproducibility (e.g., code generation or factual extraction).
+*   `"most-predictable"`: For tasks requiring strict consistency and reproducibility (e.g. testing, code generation, or content extraction).
 *   `"predictable"`: For focused outputs with minimal variation.
 *   `"balanced"` (default): The standard preset for most conversational interactions.
-*   `"creative"`: For tasks where variety and creativity are preferred over strict factual reproducibility.
-*   `"most-creative"`: For maximum diversity of tokens and creative brainstorming.
+*   `"creative"`: For tasks where variety and creativity are preferred over strict reproducibility.
+*   `"most-creative"`: For maximum diversity of output and creative brainstorming.
 
 Example:
 ```js
