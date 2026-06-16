@@ -458,28 +458,48 @@ The promise returned by `append()` will reject if the prompt cannot be appended 
 
 Note that `append()` can also cause [overflow](#tokenization-context-window-length-limits-and-overflow), in which case it will evict the oldest non-system prompts from the session and fire the `"contextoverflow"` event.
 
-### Configuration of per-session parameters
+### Configuration of sampling modes
 
-Tuning language model sampling parameters can be useful for both testing and adjusting task-specific model behavior. Common sampling parameters include [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [topK](https://huggingface.co/blog/how-to-generate#top-k-sampling).
+For standard web page contexts, developers can specify a high-level `samplingMode` during session creation to configure the model's output variety and creativity without worrying about model-internal scalar parameters.
 
-**Notice:** Sampling parameter features are currently only available within extension and experimental contexts. While they are useful for exploring model behavior, the current fields are not guaranteed to be supported or interpreted consistently across all models or user agents.
+The allowed values for `samplingMode` are:
+*   `"most-predictable"`: For tasks requiring strict consistency and reproducibility (e.g., code generation or factual extraction).
+*   `"predictable"`: For focused outputs with minimal variation.
+*   `"balanced"` (default): The standard preset for most conversational interactions.
+*   `"creative"`: For tasks where variety and creativity are preferred over strict factual reproducibility.
+*   `"most-creative"`: For maximum diversity of tokens and creative brainstorming.
 
-_The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
+Example:
+```js
+const creativeSession = await LanguageModel.create({
+  samplingMode: "creative"
+});
+console.log(creativeSession.samplingMode); // "creative"
+```
 
-In extension and experimental contexts:
-* The `LanguageModel.params()` static method provides default and maximum values for temperature and topK parameters, once the user agent has ascertained or downloaded the specific underlying model.
-* The `temperature` and `topK` instance attributes provide the current values for these parameters for a given session.
-* Sampling parameters can also be configured at session creation time via the `temperature` and `topK` options for `LanguageModel.create()`
+The resolved `samplingMode` used to create the session is exposed as a read-only attribute on the session object.
 
+### Legacy: Configuration of per-session raw parameters
 
+**Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within web extension contexts and will be ignored in standard web page contexts. They may be completely removed in a future release.
+
+To avoid breaking existing pages, standard web page contexts can still pass `topK` and `temperature` in the options object without throwing an error (a deprecation warning will be logged in the console), but they are ignored at runtime and the corresponding properties on the session object will be `undefined` (or fallback to default values).
+
+Furthermore, in contexts where raw parameters are supported (e.g. Web Extensions), passing both `samplingMode` and a raw parameter (`topK` or `temperature`) will reject the `create()` promise with a `TypeError`.
+
+The `LanguageModel.params()` API, only available in extensions, can be used to query the default and maximum values for these parameters.
+
+_The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42) and [issue #203](https://github.com/webmachinelearning/prompt-api/issues/203)._
 
 ```js
-// Sampling parameter support is limited to extension and experimental web contexts.
-// Accessors are undefined, and options are ignored, outside of those contexts.
+// The topK and temperature members of the options object are deprecated. They will only be considered when
+// LanguageModel.create() is called from within a web extension. In web page contexts, they are ignored.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
+// This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
+// are now only available within web extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
@@ -489,7 +509,7 @@ const conditionalSession = await LanguageModel.create({
 
 If the language model is not available at all in this browser, `params()` will fulfill with `null`.
 
-Error-handling behavior:
+Error-handling behavior (only applicable in contexts where legacy parameters are active, e.g. Web Extensions):
 
 * If values below 0 are passed for `temperature`, then `create()` will return a promise rejected with a `RangeError`.
 * If values above `maxTemperature` are passed for `temperature`, then `create()` will clamp to `maxTemperature`. (`+Infinity` is specifically allowed, as a way of requesting maximum temperature.)
