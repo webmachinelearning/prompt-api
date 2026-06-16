@@ -499,7 +499,7 @@ const customSession = await LanguageModel.create({
   topK: 10
 });
 // This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
-// are now only available within Chrome Extension contexts. Web pages can no longer call this method.
+// are now only available within web extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
