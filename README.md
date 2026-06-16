@@ -493,7 +493,7 @@ _The limited applicability and non-universal nature of these sampling hyperparam
 
 ```js
 // The topK and temperature members of the options object are deprecated. They will only be considered when
-// LanguageModel.create() is called from within a Chrome Extension. In web page contexts, they are ignored.
+// LanguageModel.create() is called from within a web extension. In web page contexts, they are ignored.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
