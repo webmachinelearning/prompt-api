@@ -485,7 +485,7 @@ The resolved `samplingMode` used to create the session is exposed as a read-only
 
 To avoid breaking existing pages, standard web page contexts can still pass `topK` and `temperature` in the options object without throwing an error (a deprecation warning will be logged in the console), but they are ignored at runtime and the corresponding properties on the session object will be `undefined` (or fallback to default values).
 
-Furthermore, in contexts where raw parameters are supported (e.g. Chrome Extensions), passing both `samplingMode` and a raw parameter (`topK` or `temperature`) will reject the `create()` promise with a `TypeError`.
+Furthermore, in contexts where raw parameters are supported (e.g. Web Extensions), passing both `samplingMode` and a raw parameter (`topK` or `temperature`) will reject the `create()` promise with a `TypeError`.
 
 The `LanguageModel.params()` API, only available in extensions, can be used to query the default and maximum values for these parameters.
 
