@@ -483,7 +483,7 @@ The resolved `samplingMode` used to create the session is exposed as a read-only
 
 **Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within web extension contexts and will be ignored in standard web page contexts. They may be completely removed in a future release.
 
-To avoid breaking existing pages, standard web page contexts can still pass `topK` and `temperature` in the options object without throwing an error (to log deprecation warnings in the console), but they are ignored at runtime and the corresponding properties on the session object will be `undefined` (or fallback to default values).
+To avoid breaking existing pages, standard web page contexts can still pass `topK` and `temperature` in the options object without throwing an error (a deprecation warning will be logged in the console), but they are ignored at runtime and the corresponding properties on the session object will be `undefined` (or fallback to default values).
 
 Furthermore, in contexts where raw parameters are supported (e.g. Chrome Extensions), passing both `samplingMode` and a raw parameter (`topK` or `temperature`) will reject the `create()` promise with a `TypeError`.
 
