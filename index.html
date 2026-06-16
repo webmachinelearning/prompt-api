@@ -5,10 +5,10 @@
   <title>Prompt API</title>
   <meta content="CG-DRAFT" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/cg-draft" rel="stylesheet">
-  <meta content="Bikeshed version 0ef803fdf, updated Tue Jan 6 11:59:39 2026 -0800" name="generator">
+  <meta content="Bikeshed version d113b2e81, updated Tue Jun 9 14:57:55 2026 -0700" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="8c88a6022af8014a3b9d8ce64fd375e5de8d713f" name="revision">
+  <meta content="6a92d97ada49b995625f0b08e0d18f9b09890b5e" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -304,7 +304,7 @@ pre .property::before, pre .property::after {
 </style>
 <style>/* Boilerplate: style-counters */
 body {
-    counter-reset: example figure issue;
+    counter-reset: example figure issue table;
 }
 .issue {
     counter-increment: issue;
@@ -329,6 +329,13 @@ figcaption {
 }
 figcaption:not(.no-marker)::before {
     content: "Figure " counter(figure) " ";
+}
+
+figure.table figcaption {
+    counter-increment: table;
+}
+figure.table figcaption:not(.no-marker)::before {
+    content: "Table " counter(table) " ";
 }
 </style>
 <style>/* Boilerplate: style-dfn-panel */
@@ -691,6 +698,30 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     c-[vm] { color: #cb4b16 } /* Name.Variable.Magic */
     c-[il] { color: #657b83 } /* Literal.Number.Integer.Long */
 }
+
+@media print {
+    /* Darken colors for print that would otherwise print too faintly */
+    c-[c]  { color: #555555 } /* Comment */
+    c-[d]  { color: #555555 } /* Comment.Multiline */
+    c-[cp] { color: #555555 } /* Comment.Preproc */
+    c-[c1] { color: #555555 } /* Comment.Single */
+    c-[cs] { color: #555555 } /* Comment.Special */
+    c-[o]  { color: #222222 } /* Operator */
+    c-[p]  { color: #222222 } /* Punctuation */
+    c-[ow] { color: #222222 } /* Operator.Word */
+    c-[s]  { color: #664400 } /* Literal.String */
+    c-[t]  { color: #664400 } /* Literal.String.Single */
+    c-[u]  { color: #664400 } /* Literal.String.Double */
+    c-[sb] { color: #664400 } /* Literal.String.Backtick */
+    c-[sc] { color: #664400 } /* Literal.String.Char */
+    c-[sd] { color: #664400 } /* Literal.String.Doc */
+    c-[se] { color: #664400 } /* Literal.String.Escape */
+    c-[sh] { color: #664400 } /* Literal.String.Heredoc */
+    c-[si] { color: #664400 } /* Literal.String.Interpol */
+    c-[sx] { color: #664400 } /* Literal.String.Other */
+    c-[sr] { color: #664400 } /* Literal.String.Regex */
+    c-[ss] { color: #664400 } /* Literal.String.Symbol */
+}
 </style>
 <style>/* Boilerplate: style-var-click-highlighting */
 /*
@@ -743,7 +774,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
 </p>
    <h1 class="no-ref p-name" id="title">Prompt API</h1>
    <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
-    <time class="dt-updated" datetime="2026-04-10">10 April 2026</time></p>
+    <time class="dt-updated" datetime="2026-06-16">16 June 2026</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -817,7 +848,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
      <ol class="toc">
       <li><a href="#normative"><span class="secno"></span> <span class="content">Normative References</span></a>
-      <li><a href="#informative"><span class="secno"></span> <span class="content">Informative References</span></a>
+      <li><a href="#informative"><span class="secno"></span> <span class="content">Non-Normative References</span></a>
      </ol>
     <li><a href="#idl-index"><span class="secno"></span> <span class="content">IDL Index</span></a>
    </ol>
@@ -877,6 +908,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float" id="ref-for-idl-float"><c- b>float</c-></a> <a class="idl-code" data-link-type="attribute" data-readonly data-type="float" href="#dom-languagemodel-temperature" id="ref-for-dom-languagemodel-temperature"><c- g>temperature</c-></a>;
 
+  <c- b>readonly</c-> <c- b>attribute</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode" id="ref-for-enumdef-languagemodelsamplingmode"><c- n>LanguageModelSamplingMode</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel" data-dfn-type="attribute" data-export data-readonly data-type="LanguageModelSamplingMode" id="dom-languagemodel-samplingmode"><code><c- g>samplingMode</c-></code></dfn>;
+
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise⑦"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel" id="ref-for-languagemodel①"><c- n>LanguageModel</c-></a>> <a class="idl-code" data-link-type="method" href="#dom-languagemodel-clone" id="ref-for-dom-languagemodel-clone"><c- g>clone</c-></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcloneoptions" id="ref-for-dictdef-languagemodelcloneoptions"><c- n>LanguageModelCloneOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/clone(options), LanguageModel/clone()" data-dfn-type="argument" data-export id="dom-languagemodel-clone-options-options"><code><c- g>options</c-></code></dfn> = {});
 };
 <a data-link-type="idl-name" href="#languagemodel" id="ref-for-languagemodel②"><c- n>LanguageModel</c-></a> <c- b>includes</c-> <a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#destroyablemodel" id="ref-for-destroyablemodel"><c- n>DestroyableModel</c-></a>;
@@ -910,6 +943,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double" id="ref-for-idl-unrestricted-double②"><c- b>unrestricted</c-> <c- b>double</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="unrestricted double" id="dom-languagemodelcreatecoreoptions-topk"><code><c- g>topK</c-></code></dfn>;
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double" id="ref-for-idl-unrestricted-double③"><c- b>unrestricted</c-> <c- b>double</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="unrestricted double" id="dom-languagemodelcreatecoreoptions-temperature"><code><c- g>temperature</c-></code></dfn>;
+
+  <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode" id="ref-for-enumdef-languagemodelsamplingmode①"><c- n>LanguageModelSamplingMode</c-></a> <dfn class="dfn-paneled idl-code" data-default="&quot;default&quot;" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="LanguageModelSamplingMode" id="dom-languagemodelcreatecoreoptions-samplingmode"><code><c- g>samplingMode</c-></code></dfn> = "default";
 
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected" id="ref-for-dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelExpected>" id="dom-languagemodelcreatecoreoptions-expectedinputs"><code><c- g>expectedInputs</c-></code></dfn>;
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence" id="ref-for-idl-sequence①"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected" id="ref-for-dictdef-languagemodelexpected①"><c- n>LanguageModelExpected</c-></a>> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="sequence<LanguageModelExpected>" id="dom-languagemodelcreatecoreoptions-expectedoutputs"><code><c- g>expectedOutputs</c-></code></dfn>;
@@ -963,6 +998,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>required</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelmessagetype" id="ref-for-enumdef-languagemodelmessagetype①"><c- n>LanguageModelMessageType</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageContent" data-dfn-type="dict-member" data-export data-type="LanguageModelMessageType" id="dom-languagemodelmessagecontent-type"><code><c- g>type</c-></code></dfn>;
   <c- b>required</c-> <a data-link-type="idl-name" href="#typedefdef-languagemodelmessagevalue" id="ref-for-typedefdef-languagemodelmessagevalue"><c- n>LanguageModelMessageValue</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageContent" data-dfn-type="dict-member" data-export data-type="LanguageModelMessageValue" id="dom-languagemodelmessagecontent-value"><code><c- g>value</c-></code></dfn>;
 };
+
+<c- b>enum</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="enum" data-export id="enumdef-languagemodelsamplingmode"><code><c- g>LanguageModelSamplingMode</c-></code></dfn> { <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-most-predictable"><code><c- s>"most-predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-predictable"><code><c- s>"predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-balanced"><code><c- s>"balanced"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-creative"><code><c- s>"creative"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-most-creative"><code><c- s>"most-creative"</c-></code></dfn> };
 
 <c- b>enum</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="enum" data-export id="enumdef-languagemodelmessagerole"><code><c- g>LanguageModelMessageRole</c-></code></dfn> { <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageRole" data-dfn-type="enum-value" data-export id="dom-languagemodelmessagerole-system"><code><c- s>"system"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageRole" data-dfn-type="enum-value" data-export id="dom-languagemodelmessagerole-user"><code><c- s>"user"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageRole" data-dfn-type="enum-value" data-export id="dom-languagemodelmessagerole-assistant"><code><c- s>"assistant"</c-></code></dfn> };
 
@@ -1871,6 +1908,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#dom-languagemodelmessagetype-audio">"audio"</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-availability">availability()</a><span>, in § 3.2</span>
    <li><a href="#dom-languagemodel-availability">availability(options)</a><span>, in § 3.2</span>
+   <li><a href="#dom-languagemodelsamplingmode-balanced">"balanced"</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-clone">clone()</a><span>, in § 3.3</span>
    <li><a href="#clone-a-language-model">clone a language model</a><span>, in § 3.3.4</span>
    <li><a href="#dom-languagemodel-clone">clone(options)</a><span>, in § 3.3</span>
@@ -1883,6 +1921,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#dom-languagemodel-create">create()</a><span>, in § 3.1</span>
    <li><a href="#create-a-language-model-object">create a language model object</a><span>, in § 3.1</span>
    <li><a href="#dom-languagemodel-create">create(options)</a><span>, in § 3.1</span>
+   <li><a href="#dom-languagemodelsamplingmode-creative">"creative"</a><span>, in § 3</span>
    <li><a href="#languagemodel-current-context-usage">current context usage</a><span>, in § 3.3</span>
    <li><a href="#dom-languagemodelparams-defaulttemperature">defaultTemperature</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelparams-defaulttopk">defaultTopK</a><span>, in § 3</span>
@@ -1919,6 +1958,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#languagemodelparams">LanguageModelParams</a><span>, in § 3</span>
    <li><a href="#typedefdef-languagemodelprompt">LanguageModelPrompt</a><span>, in § 3</span>
    <li><a href="#dictdef-languagemodelpromptoptions">LanguageModelPromptOptions</a><span>, in § 3</span>
+   <li><a href="#enumdef-languagemodelsamplingmode">LanguageModelSamplingMode</a><span>, in § 3</span>
    <li><a href="#dictdef-languagemodeltool">LanguageModelTool</a><span>, in § 3</span>
    <li><a href="#callbackdef-languagemodeltoolfunction">LanguageModelToolFunction</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelexpected-languages">languages</a><span>, in § 3</span>
@@ -1930,11 +1970,14 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#dom-languagemodel-measureinputusage">measureInputUsage(input, options)</a><span>, in § 3.3</span>
    <li><a href="#measure-language-model-context-usage">measure language model context usage</a><span>, in § 3.3.2</span>
    <li><a href="#dom-languagemodelcreateoptions-monitor">monitor</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodelsamplingmode-most-creative">"most-creative"</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodelsamplingmode-most-predictable">"most-predictable"</a><span>, in § 3</span>
    <li><a href="#dom-languagemodeltool-name">name</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelpromptoptions-omitresponseconstraintinput">omitResponseConstraintInput</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-oncontextoverflow">oncontextoverflow</a><span>, in § 3.3</span>
    <li><a href="#dom-languagemodel-onquotaoverflow">onquotaoverflow</a><span>, in § 3.3</span>
    <li><a href="#dom-languagemodel-params">params()</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodelsamplingmode-predictable">"predictable"</a><span>, in § 3</span>
    <li><a href="#prefill">prefill</a><span>, in § 3.3.1</span>
    <li><a href="#dom-languagemodelmessage-prefix">prefix</a><span>, in § 3</span>
    <li><a href="#dom-languagemodel-prompt">prompt(input)</a><span>, in § 3.3</span>
@@ -1944,6 +1987,12 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <li><a href="#eventdef-languagemodel-quotaoverflow">quotaoverflow</a><span>, in § 3.3</span>
    <li><a href="#dom-languagemodelpromptoptions-responseconstraint">responseConstraint</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelmessage-role">role</a><span>, in § 3</span>
+   <li>
+    samplingMode
+    <ul>
+     <li><a href="#dom-languagemodel-samplingmode">attribute for LanguageModel</a><span>, in § 3</span>
+     <li><a href="#dom-languagemodelcreatecoreoptions-samplingmode">dict-member for LanguageModelCreateCoreOptions</a><span>, in § 3</span>
+    </ul>
    <li>
     signal
     <ul>
@@ -2154,7 +2203,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
    <dt id="biblio-writing-assistance-apis">[WRITING-ASSISTANCE-APIS]
    <dd><a href="https://webmachinelearning.github.io/writing-assistance-apis/"><cite>Writing Assistance APIs</cite></a>. Draft Community Group Report. URL: <a href="https://webmachinelearning.github.io/writing-assistance-apis/">https://webmachinelearning.github.io/writing-assistance-apis/</a>
   </dl>
-  <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
+  <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Non-Normative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
    <dt id="biblio-bcp47">[BCP47]
    <dd>A. Phillips, Ed.; M. Davis, Ed.. <a href="https://www.rfc-editor.org/rfc/rfc5646"><cite>Tags for Identifying Languages</cite></a>. September 2009. Best Current Practice. URL: <a href="https://www.rfc-editor.org/rfc/rfc5646">https://www.rfc-editor.org/rfc/rfc5646</a>
@@ -2209,6 +2258,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float"><c- b>float</c-></a> <a class="idl-code" data-link-type="attribute" data-readonly data-type="float" href="#dom-languagemodel-temperature"><c- g>temperature</c-></a>;
 
+  <c- b>readonly</c-> <c- b>attribute</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode"><c- n>LanguageModelSamplingMode</c-></a> <a data-readonly data-type="LanguageModelSamplingMode" href="#dom-languagemodel-samplingmode"><code><c- g>samplingMode</c-></code></a>;
+
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel"><c- n>LanguageModel</c-></a>> <a class="idl-code" data-link-type="method" href="#dom-languagemodel-clone"><c- g>clone</c-></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcloneoptions"><c- n>LanguageModelCloneOptions</c-></a> <a href="#dom-languagemodel-clone-options-options"><code><c- g>options</c-></code></a> = {});
 };
 <a data-link-type="idl-name" href="#languagemodel"><c- n>LanguageModel</c-></a> <c- b>includes</c-> <a data-link-type="idl-name" href="https://webmachinelearning.github.io/writing-assistance-apis/#destroyablemodel"><c- n>DestroyableModel</c-></a>;
@@ -2242,6 +2293,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <a data-type="unrestricted double" href="#dom-languagemodelcreatecoreoptions-topk"><code><c- g>topK</c-></code></a>;
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <a data-type="unrestricted double" href="#dom-languagemodelcreatecoreoptions-temperature"><code><c- g>temperature</c-></code></a>;
+
+  <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode"><c- n>LanguageModelSamplingMode</c-></a> <a data-default="&quot;default&quot;" data-type="LanguageModelSamplingMode" href="#dom-languagemodelcreatecoreoptions-samplingmode"><code><c- g>samplingMode</c-></code></a> = "default";
 
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <a data-type="sequence<LanguageModelExpected>" href="#dom-languagemodelcreatecoreoptions-expectedinputs"><code><c- g>expectedInputs</c-></code></a>;
   <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#idl-sequence"><c- b>sequence</c-></a>&lt;<a data-link-type="idl-name" href="#dictdef-languagemodelexpected"><c- n>LanguageModelExpected</c-></a>> <a data-type="sequence<LanguageModelExpected>" href="#dom-languagemodelcreatecoreoptions-expectedoutputs"><code><c- g>expectedOutputs</c-></code></a>;
@@ -2295,6 +2348,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>required</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelmessagetype"><c- n>LanguageModelMessageType</c-></a> <a data-type="LanguageModelMessageType" href="#dom-languagemodelmessagecontent-type"><code><c- g>type</c-></code></a>;
   <c- b>required</c-> <a data-link-type="idl-name" href="#typedefdef-languagemodelmessagevalue"><c- n>LanguageModelMessageValue</c-></a> <a data-type="LanguageModelMessageValue" href="#dom-languagemodelmessagecontent-value"><code><c- g>value</c-></code></a>;
 };
+
+<c- b>enum</c-> <a href="#enumdef-languagemodelsamplingmode"><code><c- g>LanguageModelSamplingMode</c-></code></a> { <a href="#dom-languagemodelsamplingmode-most-predictable"><code><c- s>"most-predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-predictable"><code><c- s>"predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-balanced"><code><c- s>"balanced"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-creative"><code><c- s>"creative"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-most-creative"><code><c- s>"most-creative"</c-></code></a> };
 
 <c- b>enum</c-> <a href="#enumdef-languagemodelmessagerole"><code><c- g>LanguageModelMessageRole</c-></code></a> { <a href="#dom-languagemodelmessagerole-system"><code><c- s>"system"</c-></code></a>, <a href="#dom-languagemodelmessagerole-user"><code><c- s>"user"</c-></code></a>, <a href="#dom-languagemodelmessagerole-assistant"><code><c- s>"assistant"</c-></code></a> };
 
@@ -2638,12 +2693,14 @@ let dfnPanelData = {
 "dom-languagemodel-promptstreaming": {"dfnID":"dom-languagemodel-promptstreaming","dfnText":"promptStreaming(input, options)","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodel-promptstreaming"}],"title":"3. The API"}],"url":"#dom-languagemodel-promptstreaming"},
 "dom-languagemodel-promptstreaming-input-options-input": {"dfnID":"dom-languagemodel-promptstreaming-input-options-input","dfnText":"input","external":false,"refSections":[],"url":"#dom-languagemodel-promptstreaming-input-options-input"},
 "dom-languagemodel-promptstreaming-input-options-options": {"dfnID":"dom-languagemodel-promptstreaming-input-options-options","dfnText":"options","external":false,"refSections":[],"url":"#dom-languagemodel-promptstreaming-input-options-options"},
+"dom-languagemodel-samplingmode": {"dfnID":"dom-languagemodel-samplingmode","dfnText":"samplingMode","external":false,"refSections":[],"url":"#dom-languagemodel-samplingmode"},
 "dom-languagemodel-temperature": {"dfnID":"dom-languagemodel-temperature","dfnText":"temperature","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodel-temperature"}],"title":"3. The API"}],"url":"#dom-languagemodel-temperature"},
 "dom-languagemodel-topk": {"dfnID":"dom-languagemodel-topk","dfnText":"topK","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodel-topk"}],"title":"3. The API"}],"url":"#dom-languagemodel-topk"},
 "dom-languagemodelappendoptions-signal": {"dfnID":"dom-languagemodelappendoptions-signal","dfnText":"signal","external":false,"refSections":[],"url":"#dom-languagemodelappendoptions-signal"},
 "dom-languagemodelcloneoptions-signal": {"dfnID":"dom-languagemodelcloneoptions-signal","dfnText":"signal","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelcloneoptions-signal"}],"title":"3.3.4. Errors"}],"url":"#dom-languagemodelcloneoptions-signal"},
 "dom-languagemodelcreatecoreoptions-expectedinputs": {"dfnID":"dom-languagemodelcreatecoreoptions-expectedinputs","dfnText":"expectedInputs","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2460"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2461"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2462"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2463"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2464"}],"title":"3.1. Creation"},{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2465"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedinputs\u2466"}],"title":"3.2. Availability"}],"url":"#dom-languagemodelcreatecoreoptions-expectedinputs"},
 "dom-languagemodelcreatecoreoptions-expectedoutputs": {"dfnID":"dom-languagemodelcreatecoreoptions-expectedoutputs","dfnText":"expectedOutputs","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedoutputs"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedoutputs\u2460"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedoutputs\u2461"}],"title":"3.1. Creation"},{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedoutputs\u2462"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-expectedoutputs\u2463"}],"title":"3.2. Availability"}],"url":"#dom-languagemodelcreatecoreoptions-expectedoutputs"},
+"dom-languagemodelcreatecoreoptions-samplingmode": {"dfnID":"dom-languagemodelcreatecoreoptions-samplingmode","dfnText":"samplingMode","external":false,"refSections":[],"url":"#dom-languagemodelcreatecoreoptions-samplingmode"},
 "dom-languagemodelcreatecoreoptions-temperature": {"dfnID":"dom-languagemodelcreatecoreoptions-temperature","dfnText":"temperature","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-temperature"}],"title":"3.1. Creation"}],"url":"#dom-languagemodelcreatecoreoptions-temperature"},
 "dom-languagemodelcreatecoreoptions-tools": {"dfnID":"dom-languagemodelcreatecoreoptions-tools","dfnText":"tools","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-tools"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-tools\u2460"},{"id":"ref-for-dom-languagemodelcreatecoreoptions-tools\u2461"}],"title":"3.1. Creation"}],"url":"#dom-languagemodelcreatecoreoptions-tools"},
 "dom-languagemodelcreatecoreoptions-topk": {"dfnID":"dom-languagemodelcreatecoreoptions-topk","dfnText":"topK","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelcreatecoreoptions-topk"}],"title":"3.1. Creation"}],"url":"#dom-languagemodelcreatecoreoptions-topk"},
@@ -2672,6 +2729,11 @@ let dfnPanelData = {
 "dom-languagemodelpromptoptions-omitresponseconstraintinput": {"dfnID":"dom-languagemodelpromptoptions-omitresponseconstraintinput","dfnText":"omitResponseConstraintInput","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelpromptoptions-omitresponseconstraintinput"},{"id":"ref-for-dom-languagemodelpromptoptions-omitresponseconstraintinput\u2460"},{"id":"ref-for-dom-languagemodelpromptoptions-omitresponseconstraintinput\u2461"},{"id":"ref-for-dom-languagemodelpromptoptions-omitresponseconstraintinput\u2462"}],"title":"3.3. The LanguageModel class"}],"url":"#dom-languagemodelpromptoptions-omitresponseconstraintinput"},
 "dom-languagemodelpromptoptions-responseconstraint": {"dfnID":"dom-languagemodelpromptoptions-responseconstraint","dfnText":"responseConstraint","external":false,"refSections":[{"refs":[{"id":"ref-for-dom-languagemodelpromptoptions-responseconstraint"},{"id":"ref-for-dom-languagemodelpromptoptions-responseconstraint\u2460"},{"id":"ref-for-dom-languagemodelpromptoptions-responseconstraint\u2461"},{"id":"ref-for-dom-languagemodelpromptoptions-responseconstraint\u2462"}],"title":"3.3. The LanguageModel class"}],"url":"#dom-languagemodelpromptoptions-responseconstraint"},
 "dom-languagemodelpromptoptions-signal": {"dfnID":"dom-languagemodelpromptoptions-signal","dfnText":"signal","external":false,"refSections":[],"url":"#dom-languagemodelpromptoptions-signal"},
+"dom-languagemodelsamplingmode-balanced": {"dfnID":"dom-languagemodelsamplingmode-balanced","dfnText":"\"balanced\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-balanced"},
+"dom-languagemodelsamplingmode-creative": {"dfnID":"dom-languagemodelsamplingmode-creative","dfnText":"\"creative\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-creative"},
+"dom-languagemodelsamplingmode-most-creative": {"dfnID":"dom-languagemodelsamplingmode-most-creative","dfnText":"\"most-creative\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-most-creative"},
+"dom-languagemodelsamplingmode-most-predictable": {"dfnID":"dom-languagemodelsamplingmode-most-predictable","dfnText":"\"most-predictable\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-most-predictable"},
+"dom-languagemodelsamplingmode-predictable": {"dfnID":"dom-languagemodelsamplingmode-predictable","dfnText":"\"predictable\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-predictable"},
 "dom-languagemodeltool-description": {"dfnID":"dom-languagemodeltool-description","dfnText":"description","external":false,"refSections":[],"url":"#dom-languagemodeltool-description"},
 "dom-languagemodeltool-execute": {"dfnID":"dom-languagemodeltool-execute","dfnText":"execute","external":false,"refSections":[],"url":"#dom-languagemodeltool-execute"},
 "dom-languagemodeltool-inputschema": {"dfnID":"dom-languagemodeltool-inputschema","dfnText":"inputSchema","external":false,"refSections":[],"url":"#dom-languagemodeltool-inputschema"},
@@ -2685,6 +2747,7 @@ let dfnPanelData = {
 "efd1ec5d": {"dfnID":"efd1ec5d","dfnText":"object","external":true,"refSections":[{"refs":[{"id":"ref-for-idl-object"},{"id":"ref-for-idl-object\u2460"}],"title":"3. The API"}],"url":"https://webidl.spec.whatwg.org/#idl-object"},
 "enumdef-languagemodelmessagerole": {"dfnID":"enumdef-languagemodelmessagerole","dfnText":"LanguageModelMessageRole","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagerole"}],"title":"3. The API"}],"url":"#enumdef-languagemodelmessagerole"},
 "enumdef-languagemodelmessagetype": {"dfnID":"enumdef-languagemodelmessagetype","dfnText":"LanguageModelMessageType","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype"},{"id":"ref-for-enumdef-languagemodelmessagetype\u2460"}],"title":"3. The API"},{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype\u2461"}],"title":"3.2. Availability"},{"refs":[{"id":"ref-for-enumdef-languagemodelmessagetype\u2462"},{"id":"ref-for-enumdef-languagemodelmessagetype\u2463"}],"title":"3.3.3. Options"}],"url":"#enumdef-languagemodelmessagetype"},
+"enumdef-languagemodelsamplingmode": {"dfnID":"enumdef-languagemodelsamplingmode","dfnText":"LanguageModelSamplingMode","external":false,"refSections":[{"refs":[{"id":"ref-for-enumdef-languagemodelsamplingmode"},{"id":"ref-for-enumdef-languagemodelsamplingmode\u2460"}],"title":"3. The API"}],"url":"#enumdef-languagemodelsamplingmode"},
 "eventdef-languagemodel-contextoverflow": {"dfnID":"eventdef-languagemodel-contextoverflow","dfnText":"contextoverflow","external":false,"refSections":[],"url":"#eventdef-languagemodel-contextoverflow"},
 "eventdef-languagemodel-quotaoverflow": {"dfnID":"eventdef-languagemodel-quotaoverflow","dfnText":"quotaoverflow","external":false,"refSections":[],"url":"#eventdef-languagemodel-quotaoverflow"},
 "f0951476": {"dfnID":"f0951476","dfnText":"EventHandler","external":true,"refSections":[{"refs":[{"id":"ref-for-eventhandler"},{"id":"ref-for-eventhandler\u2460"}],"title":"3. The API"}],"url":"https://html.spec.whatwg.org/multipage/webappapis.html#eventhandler"},
@@ -3155,6 +3218,7 @@ let refsData = {
 "#download-the-language-model": {"displayText":"download the language model","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"download the language model","type":"dfn","url":"#download-the-language-model"},
 "#enumdef-languagemodelmessagerole": {"displayText":"LanguageModelMessageRole","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessageRole","type":"enum","url":"#enumdef-languagemodelmessagerole"},
 "#enumdef-languagemodelmessagetype": {"displayText":"LanguageModelMessageType","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelMessageType","type":"enum","url":"#enumdef-languagemodelmessagetype"},
+"#enumdef-languagemodelsamplingmode": {"displayText":"LanguageModelSamplingMode","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"LanguageModelSamplingMode","type":"enum","url":"#enumdef-languagemodelsamplingmode"},
 "#generate": {"displayText":"generate","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"generate","type":"dfn","url":"#generate"},
 "#get-the-expected-content-types": {"displayText":"get the expected content types","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"get the expected content types","type":"dfn","url":"#get-the-expected-content-types"},
 "#initialize-the-language-model": {"displayText":"initialize the language model","export":true,"for_":[],"level":"","normative":true,"shortname":"prompt","spec":"prompt","status":"local","text":"initialize the language model","type":"dfn","url":"#initialize-the-language-model"},
