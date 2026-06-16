@@ -509,7 +509,7 @@ const conditionalSession = await LanguageModel.create({
 
 If the language model is not available at all in this browser, `params()` will fulfill with `null`.
 
-Error-handling behavior (only applicable in contexts where legacy parameters are active, e.g. Chrome Extensions):
+Error-handling behavior (only applicable in contexts where legacy parameters are active, e.g. Web Extensions):
 
 * If values below 0 are passed for `temperature`, then `create()` will return a promise rejected with a `RangeError`.
 * If values above `maxTemperature` are passed for `temperature`, then `create()` will clamp to `maxTemperature`. (`+Infinity` is specifically allowed, as a way of requesting maximum temperature.)
