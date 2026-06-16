@@ -121,7 +121,7 @@ dictionary LanguageModelCreateCoreOptions {
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   unrestricted double temperature;
 
-  LanguageModelSamplingMode samplingMode;
+  LanguageModelSamplingMode samplingMode = "default";
 
   sequence<LanguageModelExpected> expectedInputs;
   sequence<LanguageModelExpected> expectedOutputs;
