@@ -465,7 +465,9 @@ Developers can specify a high-level `samplingMode` during session creation to co
 The allowed values for `samplingMode` are:
 *   `"most-predictable"`: For tasks requiring strict consistency and reproducibility (e.g. testing, code generation, or content extraction).
 *   `"predictable"`: For focused outputs with minimal variation.
+*   `"slightly-predictable"`: For focused outputs with a bit more variation than `"predictable"`.
 *   `"balanced"` (default): The standard preset for most conversational interactions.
+*   `"slightly-creative"`: For creative outputs that are slightly more focused than `"creative"`.
 *   `"creative"`: For tasks where variety and creativity are preferred over strict reproducibility.
 *   `"most-creative"`: For maximum diversity of output and creative brainstorming.
 

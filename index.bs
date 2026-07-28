@@ -176,7 +176,7 @@ dictionary LanguageModelMessageContent {
   required LanguageModelMessageValue value;
 };
 
-enum LanguageModelSamplingMode { "most-predictable", "predictable", "balanced", "creative", "most-creative" };
+enum LanguageModelSamplingMode { "most-predictable", "predictable", "slightly-predictable", "balanced", "slightly-creative", "creative", "most-creative" };
 
 enum LanguageModelMessageRole { "system", "user", "assistant" };
 
