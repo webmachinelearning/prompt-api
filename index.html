@@ -8,7 +8,7 @@
   <meta content="Bikeshed version d113b2e81, updated Tue Jun 9 14:57:55 2026 -0700" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="2e27365ed877c3381126fcd0e10d5e0b8114c199" name="revision">
+  <meta content="490090753bae03af1bdef51bb27f3656ab05d858" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -774,7 +774,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
 </p>
    <h1 class="no-ref p-name" id="title">Prompt API</h1>
    <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
-    <time class="dt-updated" datetime="2026-06-22">22 June 2026</time></p>
+    <time class="dt-updated" datetime="2026-07-29">29 July 2026</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -999,7 +999,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>required</c-> <a data-link-type="idl-name" href="#typedefdef-languagemodelmessagevalue" id="ref-for-typedefdef-languagemodelmessagevalue"><c- n>LanguageModelMessageValue</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageContent" data-dfn-type="dict-member" data-export data-type="LanguageModelMessageValue" id="dom-languagemodelmessagecontent-value"><code><c- g>value</c-></code></dfn>;
 };
 
-<c- b>enum</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="enum" data-export id="enumdef-languagemodelsamplingmode"><code><c- g>LanguageModelSamplingMode</c-></code></dfn> { <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-most-predictable"><code><c- s>"most-predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-predictable"><code><c- s>"predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-balanced"><code><c- s>"balanced"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-creative"><code><c- s>"creative"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-most-creative"><code><c- s>"most-creative"</c-></code></dfn> };
+<c- b>enum</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="enum" data-export id="enumdef-languagemodelsamplingmode"><code><c- g>LanguageModelSamplingMode</c-></code></dfn> { <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-most-predictable"><code><c- s>"most-predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-predictable"><code><c- s>"predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-slightly-predictable"><code><c- s>"slightly-predictable"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-balanced"><code><c- s>"balanced"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-slightly-creative"><code><c- s>"slightly-creative"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-creative"><code><c- s>"creative"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelSamplingMode" data-dfn-type="enum-value" data-export id="dom-languagemodelsamplingmode-most-creative"><code><c- s>"most-creative"</c-></code></dfn> };
 
 <c- b>enum</c-> <dfn class="dfn-paneled idl-code" data-dfn-type="enum" data-export id="enumdef-languagemodelmessagerole"><code><c- g>LanguageModelMessageRole</c-></code></dfn> { <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageRole" data-dfn-type="enum-value" data-export id="dom-languagemodelmessagerole-system"><code><c- s>"system"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageRole" data-dfn-type="enum-value" data-export id="dom-languagemodelmessagerole-user"><code><c- s>"user"</c-></code></dfn>, <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelMessageRole" data-dfn-type="enum-value" data-export id="dom-languagemodelmessagerole-assistant"><code><c- s>"assistant"</c-></code></dfn> };
 
@@ -2001,6 +2001,8 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
      <li><a href="#dom-languagemodelcreateoptions-signal">dict-member for LanguageModelCreateOptions</a><span>, in § 3</span>
      <li><a href="#dom-languagemodelpromptoptions-signal">dict-member for LanguageModelPromptOptions</a><span>, in § 3</span>
     </ul>
+   <li><a href="#dom-languagemodelsamplingmode-slightly-creative">"slightly-creative"</a><span>, in § 3</span>
+   <li><a href="#dom-languagemodelsamplingmode-slightly-predictable">"slightly-predictable"</a><span>, in § 3</span>
    <li><a href="#dom-languagemodelmessagerole-system">"system"</a><span>, in § 3</span>
    <li>
     temperature
@@ -2206,7 +2208,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <h3 class="heading no-num no-ref settled" id="informative"><span class="content">Non-Normative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
    <dt id="biblio-bcp47">[BCP47]
-   <dd>A. Phillips, Ed.; M. Davis, Ed.. <a href="https://www.rfc-editor.org/rfc/rfc5646"><cite>Tags for Identifying Languages</cite></a>. September 2009. Best Current Practice. URL: <a href="https://www.rfc-editor.org/rfc/rfc5646">https://www.rfc-editor.org/rfc/rfc5646</a>
+   <dd>A. Phillips, Ed.; M. Davis, Ed.. <a href="https://www.rfc-editor.org/info/rfc5646/"><cite>Tags for Identifying Languages</cite></a>. September 2009. Best Current Practice. URL: <a href="https://www.rfc-editor.org/info/rfc5646/">https://www.rfc-editor.org/info/rfc5646/</a>
    <dt id="biblio-uts35">[UTS35]
    <dd>Mark Davis; et al. <a href="https://www.unicode.org/reports/tr35/tr35-61/tr35.html"><cite>Unicode Locale Data Markup Language (LDML)</cite></a>. 23 October 2020. Unicode Technical Standard #35. URL: <a href="https://www.unicode.org/reports/tr35/tr35-61/tr35.html">https://www.unicode.org/reports/tr35/tr35-61/tr35.html</a>
   </dl>
@@ -2349,7 +2351,7 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   <c- b>required</c-> <a data-link-type="idl-name" href="#typedefdef-languagemodelmessagevalue"><c- n>LanguageModelMessageValue</c-></a> <a data-type="LanguageModelMessageValue" href="#dom-languagemodelmessagecontent-value"><code><c- g>value</c-></code></a>;
 };
 
-<c- b>enum</c-> <a href="#enumdef-languagemodelsamplingmode"><code><c- g>LanguageModelSamplingMode</c-></code></a> { <a href="#dom-languagemodelsamplingmode-most-predictable"><code><c- s>"most-predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-predictable"><code><c- s>"predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-balanced"><code><c- s>"balanced"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-creative"><code><c- s>"creative"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-most-creative"><code><c- s>"most-creative"</c-></code></a> };
+<c- b>enum</c-> <a href="#enumdef-languagemodelsamplingmode"><code><c- g>LanguageModelSamplingMode</c-></code></a> { <a href="#dom-languagemodelsamplingmode-most-predictable"><code><c- s>"most-predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-predictable"><code><c- s>"predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-slightly-predictable"><code><c- s>"slightly-predictable"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-balanced"><code><c- s>"balanced"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-slightly-creative"><code><c- s>"slightly-creative"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-creative"><code><c- s>"creative"</c-></code></a>, <a href="#dom-languagemodelsamplingmode-most-creative"><code><c- s>"most-creative"</c-></code></a> };
 
 <c- b>enum</c-> <a href="#enumdef-languagemodelmessagerole"><code><c- g>LanguageModelMessageRole</c-></code></a> { <a href="#dom-languagemodelmessagerole-system"><code><c- s>"system"</c-></code></a>, <a href="#dom-languagemodelmessagerole-user"><code><c- s>"user"</c-></code></a>, <a href="#dom-languagemodelmessagerole-assistant"><code><c- s>"assistant"</c-></code></a> };
 
@@ -2734,6 +2736,8 @@ let dfnPanelData = {
 "dom-languagemodelsamplingmode-most-creative": {"dfnID":"dom-languagemodelsamplingmode-most-creative","dfnText":"\"most-creative\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-most-creative"},
 "dom-languagemodelsamplingmode-most-predictable": {"dfnID":"dom-languagemodelsamplingmode-most-predictable","dfnText":"\"most-predictable\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-most-predictable"},
 "dom-languagemodelsamplingmode-predictable": {"dfnID":"dom-languagemodelsamplingmode-predictable","dfnText":"\"predictable\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-predictable"},
+"dom-languagemodelsamplingmode-slightly-creative": {"dfnID":"dom-languagemodelsamplingmode-slightly-creative","dfnText":"\"slightly-creative\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-slightly-creative"},
+"dom-languagemodelsamplingmode-slightly-predictable": {"dfnID":"dom-languagemodelsamplingmode-slightly-predictable","dfnText":"\"slightly-predictable\"","external":false,"refSections":[],"url":"#dom-languagemodelsamplingmode-slightly-predictable"},
 "dom-languagemodeltool-description": {"dfnID":"dom-languagemodeltool-description","dfnText":"description","external":false,"refSections":[],"url":"#dom-languagemodeltool-description"},
 "dom-languagemodeltool-execute": {"dfnID":"dom-languagemodeltool-execute","dfnText":"execute","external":false,"refSections":[],"url":"#dom-languagemodeltool-execute"},
 "dom-languagemodeltool-inputschema": {"dfnID":"dom-languagemodeltool-inputschema","dfnText":"inputSchema","external":false,"refSections":[],"url":"#dom-languagemodeltool-inputschema"},
