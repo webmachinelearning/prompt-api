@@ -19,8 +19,12 @@ Die On: warning
 </pre>
 
 <pre class="link-defaults">
-spec:webidl; type:exception; text:TypeError
-spec:webidl; type:exception; text:SyntaxError
+spec:webidl
+  type:exception; text:TypeError
+  type:exception; text:SyntaxError
+spec: writing-assistance-apis
+  type: dfn; text: computing language availability
+  type: dfn; text: getting the language availabilities partition
 </pre>
 
 <h2 id="intro">Introduction</h2>
