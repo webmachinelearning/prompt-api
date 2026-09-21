@@ -572,6 +572,7 @@ const session = await LanguageModel.create({
 const stream = session.promptStreaming("Plan a 3-day itinerary for Tokyo.");
 
 for await (const chunk of stream) {
+  // Both "thought" and "text" chunks may contain Markdown; we append raw text here for simplicity.
   if (chunk.type === "thought") {
     thinkingContainer.append(chunk.value);
   } else if (chunk.type === "text") {
