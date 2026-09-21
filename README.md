@@ -575,7 +575,7 @@ for await (const chunk of stream) {
   if (chunk.type === "thought") {
     thinkingContainer.append(chunk.value);
   } else if (chunk.type === "text") {
-    responseContainer.textContent += chunk.value;
+    responseContainer.append(chunk.value);
   }
 }
 ```
