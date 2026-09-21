@@ -583,7 +583,7 @@ for await (const chunk of stream) {
 
 Rather than exposing model-specific token counts, user agents map each `effort` tier to an appropriate reasoning budget for the underlying model. This budget acts as an upper bound: models stop thinking early once they reach a conclusion, or transition to the final answer if the ceiling is reached. Following standard reasoning-model behavior, intermediate thoughts are stripped from the conversation history after each turn completes and do not permanently accumulate in `session.contextUsage`.
 
-_Open questions include: offering an `"auto"` effort level, how `"thought"` blocks interleave with [Tool use](#tool-use), and whether [`samplingMode`](#configuration-of-sampling-modes) options would apply during reasoning._
+_Open questions include: offering an `"auto"` effort level, naming (`emitThoughts` vs `includeThoughts`), designating thoughts via a separate field rather than `type: "thought"` to support non-text thoughts (e.g., images, audio, or [Tool use](#tool-use)), and whether [`samplingMode`](#configuration-of-sampling-modes) options would apply during reasoning._
 
 ### Session persistence and cloning
 
