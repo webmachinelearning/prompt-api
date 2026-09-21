@@ -565,7 +565,7 @@ By default, `includeThoughts` is `false` so existing applications only receive t
 const session = await LanguageModel.create({
   thinking: {
     effort: "medium",
-    includeThoughts: true
+    includeThoughts: true,
   }
 });
 
