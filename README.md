@@ -559,7 +559,7 @@ if (status !== "unavailable") {
 
 #### Viewing intermediate thoughts
 
-By default, `includeThoughts` is `false` so existing applications only receive the final text response. When set to `true`, `promptStreaming()` and `prompt()` emit structured `{ type, value }` dictionaries (following the same pattern as [Tool use](#tool-use)) so applications can render a collapsible `"Thinking..."` UI:
+By default, `includeThoughts` is `false` so applications only receive the final text response, matching the output with thinking disabled. When set to `true`, `promptStreaming()` and `prompt()` emit structured `{ type, value }` dictionaries (following the same pattern as [Tool use](#tool-use)) so applications can render a collapsible `"Thinking..."` UI:
 
 ```js
 const session = await LanguageModel.create({
