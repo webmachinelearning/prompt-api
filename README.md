@@ -519,6 +519,72 @@ Error-handling behavior (only applicable in contexts where legacy parameters are
 * If values above `maxTopK` are passed for `topK`, then `create()` will clamp to `maxTopK`. (This includes `+Infinity` and numbers above `Number.MAX_SAFE_INTEGER`.)
 * If fractional values are passed for `topK`, they are rounded down (using the usual [IntegerPart](https://webidl.spec.whatwg.org/#abstract-opdef-integerpart) algorithm for web specs).
 
+### Thinking mode
+
+Modern language models increasingly support **reasoning** (or "thinking mode"), generating an intermediate scratchpad of reasoning tokens before producing a final response. This significantly improves accuracy on math, logic, code generation, and multi-step planning, at the cost of higher latency and compute.
+
+Developers can configure this reasoning process via the `thinking` option (`{ effort, includeThoughts }`), unlocking reasoning for complex prompts while dialing it back (or disabling it) on simple turns to save battery and latency.
+
+The allowed values for `effort` are:
+*   `"none"` (default): No intermediate reasoning tokens are generated before the response.
+*   `"low"`: A minimal reasoning budget for straightforward multi-step tasks.
+*   `"medium"`: A moderate reasoning budget balancing accuracy and latency.
+*   `"high"`: The maximum reasoning budget for complex math, logic, code generation, and planning tasks.
+
+Developers can check support via `LanguageModel.availability()`, set a baseline effort tier when creating a session, and override it on individual `prompt()` or `promptStreaming()` calls:
+
+```js
+const status = await LanguageModel.availability({
+  thinking: { effort: "high" }
+});
+
+if (status !== "unavailable") {
+  const session = await LanguageModel.create({
+    thinking: { effort: "high" }
+  });
+
+  // Turn 1: Uses the session's default ("high" effort) for a complex task.
+  // By default (includeThoughts: false), prompt() returns only the final answer string.
+  const code = await session.prompt(
+    "Write a function to find the shortest path in a weighted directed graph."
+  );
+
+  // Turn 2: Override to "none" for a simple follow-up to save latency and battery.
+  const formatted = await session.prompt(
+    "Add JSDoc comments to that function.",
+    { thinking: { effort: "none" } }
+  );
+}
+```
+
+#### Viewing intermediate thoughts
+
+By default, `includeThoughts` is `false` so applications only receive the final text response, matching the output with thinking disabled. When set to `true`, `promptStreaming()` and `prompt()` emit structured `{ type, value }` dictionaries (following the same pattern as [Tool use](#tool-use)) so applications can render a collapsible `"Thinking..."` UI:
+
+```js
+const session = await LanguageModel.create({
+  thinking: {
+    effort: "medium",
+    includeThoughts: true,
+  }
+});
+
+const stream = session.promptStreaming("Plan a 3-day itinerary for Tokyo.");
+
+for await (const chunk of stream) {
+  // Both "thought" and "text" chunks may contain Markdown; we append raw text here for simplicity.
+  if (chunk.type === "thought") {
+    thinkingContainer.append(chunk.value);
+  } else if (chunk.type === "text") {
+    responseContainer.append(chunk.value);
+  }
+}
+```
+
+Rather than exposing model-specific token counts, user agents map each `effort` tier to an appropriate reasoning budget for the underlying model. This budget acts as an upper bound: models stop thinking early once they reach a conclusion, or transition to the final answer if the ceiling is reached. Following standard reasoning-model behavior, intermediate thoughts are stripped from the conversation history after each turn completes and do not permanently accumulate in `session.contextUsage`.
+
+_Open questions include: offering an `"auto"` effort level, naming (`emitThoughts` vs `includeThoughts`), designating thoughts via a separate field rather than `type: "thought"` to support non-text thoughts (e.g., images, audio, or [Tool use](#tool-use)), and whether [`samplingMode`](#configuration-of-sampling-modes) options would apply during reasoning._
+
 ### Session persistence and cloning
 
 Each language model session consists of a persistent series of interactions with the model:
