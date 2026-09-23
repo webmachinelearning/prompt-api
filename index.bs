@@ -301,7 +301,7 @@ typedef (
       :: |options|["{{LanguageModelCreateCoreOptions/temperature}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
 
       : [=LanguageModel/sampling mode=]
-      :: |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] if it [=map/exists=]; otherwise null
+      :: |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] if it [=map/exists=]; otherwise null if |options|["{{LanguageModelCreateCoreOptions/topK}}"] [=map/exists=] or |options|["{{LanguageModelCreateCoreOptions/temperature}}"] [=map/exists=]; otherwise "{{LanguageModelSamplingMode/balanced}}"
 
       : [=LanguageModel/expected inputs=]
       :: |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
