@@ -89,7 +89,7 @@ interface LanguageModel : EventTarget {
   readonly attribute float temperature;
 
   // **EXPERIMENTAL**: Only available in experimental contexts.
-  readonly attribute LanguageModelSamplingMode samplingMode;
+  readonly attribute LanguageModelSamplingMode? samplingMode;
 
   Promise<LanguageModel> clone(optional LanguageModelCloneOptions options = {});
 };
@@ -209,6 +209,8 @@ typedef (
 <div algorithm>
   To <dfn>validate and canonicalize language model options</dfn> given a {{LanguageModelCreateCoreOptions}} |options|, perform the following steps. They mutate |options| in place to canonicalize and deduplicate language tags, and throw an exception if any are invalid.
 
+  1. If |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] [=map/exists=] and either |options|["{{LanguageModelCreateCoreOptions/topK}}"] [=map/exists=] or |options|["{{LanguageModelCreateCoreOptions/temperature}}"] [=map/exists=], then throw a {{TypeError}}.
+
   1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
 
@@ -297,6 +299,9 @@ typedef (
 
       : [=LanguageModel/temperature=]
       :: |options|["{{LanguageModelCreateCoreOptions/temperature}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+
+      : [=LanguageModel/sampling mode=]
+      :: |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] if it [=map/exists=]; otherwise null if |options|["{{LanguageModelCreateCoreOptions/topK}}"] [=map/exists=] or |options|["{{LanguageModelCreateCoreOptions/temperature}}"] [=map/exists=]; otherwise "{{LanguageModelSamplingMode/balanced}}"
 
       : [=LanguageModel/expected inputs=]
       :: |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
@@ -393,6 +398,8 @@ Every {{LanguageModel}} has a <dfn for="LanguageModel">top K</dfn>, an unsigned 
 
 Every {{LanguageModel}} has a <dfn for="LanguageModel">temperature</dfn>, a float, set during creation.
 
+Every {{LanguageModel}} has a <dfn for="LanguageModel">sampling mode</dfn>, a {{LanguageModelSamplingMode}} or null, set during creation.
+
 Every {{LanguageModel}} has an <dfn for="LanguageModel">expected inputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
 
 Every {{LanguageModel}} has an <dfn for="LanguageModel">expected outputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
@@ -416,6 +423,8 @@ The <dfn attribute for="LanguageModel">inputQuota</dfn> getter steps are to retu
 The <dfn attribute for="LanguageModel">topK</dfn> getter steps are to return [=this=]'s [=LanguageModel/top K=].
 
 The <dfn attribute for="LanguageModel">temperature</dfn> getter steps are to return [=this=]'s [=LanguageModel/temperature=].
+
+The <dfn attribute for="LanguageModel">samplingMode</dfn> getter steps are to return [=this=]'s [=LanguageModel/sampling mode=].
 
 <hr>
 
@@ -555,7 +564,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. In an [=implementation-defined=] manner, update the underlying model's internal state to include |messages|.
 
-     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], and |model|'s [=LanguageModel/tools=] to guide how the state is updated.
+     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/sampling mode=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], and |model|'s [=LanguageModel/tools=] to guide how the state is updated.
 
      The process must conform to the guidance given in [[#privacy]] and [[#security]].
 
@@ -587,7 +596,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. In an [=implementation-defined=] manner, subject to the following guidelines, begin the process of producing a response from the language model based on its current internal state.
 
-     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], |model|'s [=LanguageModel/tools=], and |responseConstraint| to guide the model's behavior.
+     The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/sampling mode=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], |model|'s [=LanguageModel/tools=], and |responseConstraint| to guide the model's behavior.
 
      The prompting process must conform to the guidance given in [[#privacy]] and [[#security]].
 
@@ -861,6 +870,7 @@ When prompting fails, the following possible reasons may be surfaced to the web 
         - [=LanguageModel/initial messages=] set to |model|'s [=LanguageModel/initial messages=].
         - [=LanguageModel/top K=] set to |model|'s [=LanguageModel/top K=].
         - [=LanguageModel/temperature=] set to |model|'s [=LanguageModel/temperature=].
+        - [=LanguageModel/sampling mode=] set to |model|'s [=LanguageModel/sampling mode=].
         - [=LanguageModel/expected inputs=] set to |model|'s [=LanguageModel/expected inputs=].
         - [=LanguageModel/expected outputs=] set to |model|'s [=LanguageModel/expected outputs=].
         - [=LanguageModel/tools=] set to |model|'s [=LanguageModel/tools=].
