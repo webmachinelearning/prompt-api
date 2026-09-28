@@ -244,7 +244,7 @@ await session.append([
 ]);
 ```
 
-Note that "role" and "type" now supports "tool-call" and "tool-result". 
+Note that `"role"` and `"type"` now support `"tool-call"` and `"tool-result"`. 
 `content.result` is a list of a dictionary of `type` and `value`, where `type` can be `{"text", "image", "audio", "object" }` and `value` is `any`.
 
 #### Open Loop:
