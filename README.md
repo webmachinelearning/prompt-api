@@ -1,41 +1,41 @@
 # Explainer for the Prompt API
 
-_This proposal is an early design sketch by the Chrome built-in AI team to describe the problem below and solicit feedback on the proposed solution. It has not been approved to ship in Chrome._
+_This explainer and the accompanied draft report are in active development by the Web Machine Learning Community Group. CG members are seeking feedback and support for this proposal to gain Working Group and implementer adoption. Implementations are experimentally available in [Google Chrome](https://developer.chrome.com/docs/ai/prompt-api) and [Microsoft Edge](https://learn.microsoft.com/en-us/microsoft-edge/web-platform/prompt-api)._
 
-Browsers and operating systems are increasingly expected to gain access to a language model. ([Example](https://developer.chrome.com/docs/ai/built-in), [example](https://blogs.windows.com/windowsdeveloper/2024/05/21/unlock-a-new-era-of-innovation-with-windows-copilot-runtime-and-copilot-pcs/), [example](https://www.apple.com/apple-intelligence/).) Language models are known for their versatility. With enough creative [prompting](https://developers.google.com/machine-learning/resources/prompt-eng), they can help accomplish tasks as diverse as:
+Browsers and operating systems are increasingly expected to gain access to language models. ([Example](https://developer.chrome.com/docs/ai/built-in), [example](https://learn.microsoft.com/windows/ai/apis/local-llms), [example](https://www.apple.com/apple-intelligence/).) Language models are known for their versatility. With enough creative [prompting](https://developers.google.com/machine-learning/resources/prompt-eng), they can help accomplish tasks as diverse as:
 
-* Classification, tagging, and keyword extraction of arbitrary text;
-* Helping users compose text, such as blog posts, reviews, or biographies;
-* Summarizing, e.g. of articles, user reviews, or chat logs;
+* Classification, tagging, and keyword extraction of arbitrary text
+* Helping users compose text, such as blog posts, reviews, or biographies
+* Summarizing, e.g. of articles, user reviews, or chat logs
 * Generating titles or headlines from article contents
 * Answering questions based on the unstructured contents of a web page
 * Translation between languages
 * Proofreading
 
-The Chrome built-in AI team and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proposals/issues/7)). This proposal additionally exploring a general-purpose "prompt API" which allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
+The Google Chrome, Microsoft Edge, and the Web Machine Learning Community Group are exploring purpose-built APIs for some of these use cases (namely [translator / language detector](https://github.com/webmachinelearning/translation-api), [summarizer / writer / rewriter](https://github.com/webmachinelearning/writing-assistance-apis), and [proofreader](https://github.com/webmachinelearning/proofreader-api)). This proposal additionally explores a general-purpose "Prompt API" that allows web developers to prompt a language model directly. This gives web developers access to many more capabilities, at the cost of requiring them to do their own prompt engineering.
 
-Currently, web developers wishing to use language models must either call out to cloud APIs, or bring their own and run them using technologies like WebAssembly and WebGPU. By providing access to the browser or operating system's existing language model, we can provide the following benefits compared to cloud APIs:
+Currently, web developers wishing to use language models must either call out to cloud APIs, or bring their own and run them using technologies like [WASM](https://webassembly.org/) and [WebGPU](https://www.w3.org/TR/webgpu/), usually through JS runtime frameworks. By providing web platform API access to the browser or operating system's existing language model, we can provide the following benefits compared to cloud APIs:
 
-* Local processing of sensitive data, e.g. allowing websites to combine AI features with end-to-end encryption.
-* Potentially faster results, since there is no server round-trip involved.
-* Offline usage.
-* Lower API costs for web developers.
-* Allowing hybrid approaches, e.g. free users of a website use on-device AI whereas paid users use a more powerful API-based model.
+* Local processing of sensitive data, e.g. allowing websites to combine AI features with end-to-end encryption
+* Potentially faster results, since there is no server round-trip involved
+* Offline usage
+* Lower API costs for web developers
+* Allowing hybrid approaches, e.g. free users of a website use on-device AI whereas paid users use a more powerful API-based model
 
-Similarly, compared to bring-your-own-AI approaches, using a built-in language model can save the user's bandwidth, likely benefit from more optimizations, and have a lower barrier to entry for web developers.
+Similarly, compared to developer-supplied model approaches, using a built-in language model can save the user's bandwidth, storage, and memory resources, while using a model that is optimized for the device. This pattern can also provide a lower barrier to entry for web developers by removing the need for developers to serve models and manage dependencies.
 
 ## Goals
 
 Our goals are to:
 
-* Provide web developers a uniform JavaScript API for accessing browser-provided language models.
-* Abstract away specific details of the language model in question as much as possible, e.g. tokenization, system messages, or control tokens.
+* Provide web developers a uniform JavaScript API for accessing browser-provided language models of varying capabilities.
+* Encapsulate model management and execution details as much as possible, e.g. downloads, updates, templating, parsing.
 * Guide web developers to gracefully handle failure cases, e.g. no browser-provided model being available.
-* Allow a variety of implementation strategies, including on-device or cloud-based models, while keeping these details abstracted from developers.
+* Develop formal implementations guidelines and definitions; e.g. initial on-device models, and possible cloud services.
 
 The following are explicit non-goals:
 
-* We do not intend to force every browser to ship or expose a language model; in particular, not all devices will be capable of storing or running one. It would be conforming to implement this API by always signaling that no language model is available, or to implement this API entirely by using cloud services instead of on-device models.
+* We do not intend to force every browser to ship or expose a language model; in particular, not all devices will be capable of storing or running one. It would be conforming to implement this API by always signaling that no language model is available; it may also be viable to implement this API entirely by using cloud services instead of on-device models.
 * We do not intend to provide guarantees of language model quality, stability, or interoperability between browsers. In particular, we cannot guarantee that the models exposed by these APIs are particularly good at any given use case. These are left as quality-of-implementation issues, similar to the [shape detection API](https://wicg.github.io/shape-detection-api/). (See also a [discussion of interop](https://www.w3.org/reports/ai-web-impact/#interop) in the W3C "AI & the Web" document.)
 
 The following are potential goals we are not yet certain of:
@@ -44,6 +44,32 @@ The following are potential goals we are not yet certain of:
 * Allow web developers to know some identifier for the language model in use, separate from the browser version. This would allow them to allowlist or blocklist specific models to maintain a desired level of quality, or restrict certain use cases to a specific model.
 
 Both of these potential goals could pose challenges to interoperability, so we want to investigate more how important such functionality is to developers to find the right tradeoff.
+
+## Experiments and Updates
+
+### Sampling Parameters
+
+Developers have expressed the value of tuning language model sampling parameters for testing and optimizing task-specific model behavior. At the same time, web standards engagements have highlighted the need for more interoperable API shapes for sampling parameters among different models.
+
+The API was initially made available in extension contexts with the following sampling parameter options and attributes:
+
+*   The static method `LanguageModel.params()`, which exposes default and maximum values for sampling parameters: `defaultTemperature`, `maxTemperature`, `defaultTopK`, `maxTopK`.
+*   The `temperature` and `topK` options, which may be provided to `LanguageModel.create()` to control the sampling behavior of individual language model sessions.
+*   The `temperature` and `topK` attributes on `LanguageModel` session instances, which expose the current values of the sampling parameters for that session.
+
+Access to these features is limited to extension and experimental web contexts. Ongoing experimentation and community engagement will explore different API shapes that satisfy developer requirements and address interoperability concerns.
+
+### Renamed Features
+
+The following features have been recently renamed. The legacy aliases are deprecated, and clients should update their code to use the new names. The legacy aliases will be removed from extension contexts in a future release.
+
+| Old Name (Deprecated in Extensions, Removed in Web) | New Name (Available in All Contexts)     |
+| :-------------------------------------------------- | :----------------------------------------|
+| `languageModel.inputUsage`                          | `languageModel.contextUsage`             |
+| `languageModel.inputQuota`                          | `languageModel.contextWindow`            |
+| `languageModel.measureInputUsage()`                 | `languageModel.measureContextUsage()`    |
+| `languagemodel.onquotaoverflow`                     | `languagemodel.oncontextoverflow`. |
+
 
 ## Examples
 
@@ -67,19 +93,27 @@ for await (const chunk of stream) {
 
 ### System prompts
 
-The language model can be configured with a special "system prompt" which gives it the context for future interactions. This is done using the `initialPrompts` option and the "chat completions API" `{ role, content }` format, which are expanded upon in [the following section](#n-shot-prompting).
+The language model can be configured with a special "system prompt" which gives it the context for future interactions. The system prompt must be the first message, whether passed via the `initialPrompts` option to `create()`, or as the first message to the first `prompt()` or `append()` method call.  Role and content formatting aligns with the "chat completions API" `{ role, content }` format, which are expanded upon in [the following section](#n-shot-prompting).
 
 ```js
-const session = await LanguageModel.create({
+// Option 1: Create a new session with a system prompt as the first message.
+const session1 = await LanguageModel.create({
   initialPrompts: [{ role: "system", content: "Pretend to be an eloquent hamster." }]
 });
+console.log(await session1.prompt("What is your favorite food?"));
 
-console.log(await session.prompt("What is your favorite food?"));
+// Option 2: Create a new session and append a system prompt as the first message.
+const session2 = await LanguageModel.create();
+await session2.append([{ role: "system", content: "Pretend to be an eloquent hamster." }]);
+console.log(await session2.prompt("What is your favorite food?"));
+
+// Option 3: Create a new session and prompt with a system prompt as the first message.
+const session3 = await LanguageModel.create();
+console.log(await session3.prompt([
+  { role: "system", content: "Pretend to be an eloquent hamster." },
+  { role: "user", content: "What is your favorite food?" }
+]));
 ```
-
-The system prompt is special, in that the language model will not respond to it, and it will be preserved even if the context window otherwise overflows due to too many calls to `prompt()`.
-
-If the system prompt is too large, then the promise will be rejected with a `QuotaExceededError` exception. See [below](#tokenization-context-window-length-limits-and-overflow) for more details on token counting and this new exception type.
 
 ### N-shot prompting
 
@@ -111,7 +145,7 @@ const result2 = await predictEmoji("This code is so good you should get promoted
 
 Some details on error cases:
 
-* Placing the `{ role: "system" }` prompt anywhere besides at the 0th position in `initialPrompts` will reject with a `TypeError`.
+* Placing the `{ role: "system" }` prompt anywhere besides at the 0th position of the first `LanguageModelMessage` sequence sent to any of `create()`, `append()`, or `prompt()` will reject with a `TypeError`.
 * If the combined token length of all the initial prompts is too large, then the promise will be rejected with a [`QuotaExceededError` exception](#tokenization-context-window-length-limits-and-overflow).
 
 ### Customizing the role per prompt
@@ -224,9 +258,11 @@ const session = await LanguageModel.create({
   initialPrompts: [
     {
       role: "system",
-      content: `You are a helpful assistant. You can use tools to help the user.`
-    }
+      content: `You are a helpful assistant. You can use tools to help the user.`,
+    },
   ],
+  expectedInputs: [{ type: "text", languages: ["en"] }, { type: "tool-response" }],
+  expectedOutputs: [{ type: "text", languages: ["en"] }, { type: "tool-call" }],
   tools: [
     {
       name: "getWeather",
@@ -242,13 +278,14 @@ const session = await LanguageModel.create({
         required: ["location"],
       },
       async execute({ location }) {
-        const res = await fetch("https://weatherapi.example/?location=" + location);
+        const res = await fetch(
+          "https://weatherapi.example/?location=" + location,
+        );
         // Returns the result as a JSON string.
         return JSON.stringify(await res.json());
       },
-    }
+    },
   ],
-toolUseConfig: {enabled: true},
 });
 
 const result = await session.prompt("What is the weather in Seattle?");
@@ -432,7 +469,7 @@ The returned value will be a string that matches the input `RegExp`. If the user
 
 If a value that is neither a `RegExp` object or a valid JSON schema object is given, the method will error with a `TypeError`.
 
-By default, the implementation may include the schema or regular expression as part of the message sent to the underlying language model, which will use up some of the [input quota](#tokenization-context-window-length-limits-and-overflow). You can measure how much it will use up by passing the `responseConstraint` option to `session.measureInputUsage()`. If you want to avoid this behavior, you can use the `omitResponseConstraintInput` option. In such cases, it's strongly recommended to include some guidance in the prompt string itself:
+By default, the implementation may include the schema or regular expression as part of the message sent to the underlying language model, which will use up some of the [context window](#tokenization-context-window-length-limits-and-overflow). You can measure how much it will use up by passing the `responseConstraint` option to `session.measureContextUsage()`. If you want to avoid this behavior, you can use the `omitResponseConstraintInput` option. In such cases, it's strongly recommended to include some guidance in the prompt string itself:
 
 ```js
 const result = await session.prompt(`
@@ -522,20 +559,52 @@ analyzeButton.onclick = async (e) => {
 
 The promise returned by `append()` will reject if the prompt cannot be appended (e.g., too big, invalid modalities for the session, etc.), or will fulfill once the prompt has been validated, processed, and appended to the session.
 
-Note that `append()` can also cause [overflow](#tokenization-context-window-length-limits-and-overflow), in which case it will evict the oldest non-system prompts from the session and fire the `"quotaoverflow"` event.
+Note that `append()` can also cause [overflow](#tokenization-context-window-length-limits-and-overflow), in which case it will evict the oldest non-system prompts from the session and fire the `"contextoverflow"` event.
 
-### Configuration of per-session parameters
+### Configuration of sampling modes
 
-In addition to the `initialPrompts` option shown above, the currently-configurable model parameters are [temperature](https://huggingface.co/blog/how-to-generate#sampling) and [top-K](https://huggingface.co/blog/how-to-generate#top-k-sampling). The `params()` API gives the default and maximum values for these parameters.
+Developers can specify a high-level `samplingMode` during session creation to configure the model's output variety and creativity without worrying about model-internal scalar parameters.
 
-_However, see [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42): sampling hyperparameters are not universal among models._
+The allowed values for `samplingMode` are:
+*   `"most-predictable"`: For tasks requiring strict consistency and reproducibility (e.g. testing, code generation, or content extraction).
+*   `"predictable"`: For focused outputs with minimal variation.
+*   `"slightly-predictable"`: For focused outputs with a bit more variation than `"predictable"`.
+*   `"balanced"` (default): The standard preset for most conversational interactions.
+*   `"slightly-creative"`: For creative outputs that are slightly more focused than `"creative"`.
+*   `"creative"`: For tasks where variety and creativity are preferred over strict reproducibility.
+*   `"most-creative"`: For maximum diversity of output and creative brainstorming.
+
+Example:
+```js
+const creativeSession = await LanguageModel.create({
+  samplingMode: "creative"
+});
+console.log(creativeSession.samplingMode); // "creative"
+```
+
+The resolved `samplingMode` used to create the session is exposed as a read-only attribute on the session object.
+
+### Legacy: Configuration of per-session raw parameters
+
+**Deprecation Notice:** The `topK` and `temperature` options for `LanguageModel.create()`, the `LanguageModel.params()` static method, and the `languageModel.topK` and `languageModel.temperature` instance attributes are now **deprecated**. These features are only functional within web extension contexts and will be ignored in standard web page contexts. They may be completely removed in a future release.
+
+To avoid breaking existing pages, standard web page contexts can still pass `topK` and `temperature` in the options object without throwing an error (a deprecation warning will be logged in the console), but they are ignored at runtime and the corresponding properties on the session object will be `undefined` (or fallback to default values).
+
+Furthermore, in contexts where raw parameters are supported (e.g. Web Extensions), passing both `samplingMode` and a raw parameter (`topK` or `temperature`) will reject the `create()` promise with a `TypeError`. When a session is created with `topK` or `temperature`, its `samplingMode` attribute will be `null`.
+
+The `LanguageModel.params()` API, only available in extensions, can be used to query the default and maximum values for these parameters.
+
+_The limited applicability and non-universal nature of these sampling hyperparameters are discussed further in [issue #42](https://github.com/webmachinelearning/prompt-api/issues/42) and [issue #203](https://github.com/webmachinelearning/prompt-api/issues/203)._
 
 ```js
+// The topK and temperature members of the options object are deprecated. They will only be considered when
+// LanguageModel.create() is called from within a web extension. In web page contexts, they are ignored.
 const customSession = await LanguageModel.create({
   temperature: 0.8,
   topK: 10
 });
-
+// This interface and all its attributes (`defaultTopK`, `maxTopK`, `defaultTemperature`, `maxTemperature`)
+// are now only available within web extension contexts. Web pages can no longer call this method.
 const params = await LanguageModel.params();
 const conditionalSession = await LanguageModel.create({
   temperature: isCreativeTask ? params.defaultTemperature * 1.1 : params.defaultTemperature * 0.8,
@@ -545,13 +614,79 @@ const conditionalSession = await LanguageModel.create({
 
 If the language model is not available at all in this browser, `params()` will fulfill with `null`.
 
-Error-handling behavior:
+Error-handling behavior (only applicable in contexts where legacy parameters are active, e.g. Web Extensions):
 
 * If values below 0 are passed for `temperature`, then `create()` will return a promise rejected with a `RangeError`.
 * If values above `maxTemperature` are passed for `temperature`, then `create()` will clamp to `maxTemperature`. (`+Infinity` is specifically allowed, as a way of requesting maximum temperature.)
 * If values below 1 are passed for `topK`, then `create()` will return a promise rejected with a `RangeError`.
 * If values above `maxTopK` are passed for `topK`, then `create()` will clamp to `maxTopK`. (This includes `+Infinity` and numbers above `Number.MAX_SAFE_INTEGER`.)
 * If fractional values are passed for `topK`, they are rounded down (using the usual [IntegerPart](https://webidl.spec.whatwg.org/#abstract-opdef-integerpart) algorithm for web specs).
+
+### Thinking mode
+
+Modern language models increasingly support **reasoning** (or "thinking mode"), generating an intermediate scratchpad of reasoning tokens before producing a final response. This significantly improves accuracy on math, logic, code generation, and multi-step planning, at the cost of higher latency and compute.
+
+Developers can configure this reasoning process via the `thinking` option (`{ effort, includeThoughts }`), unlocking reasoning for complex prompts while dialing it back (or disabling it) on simple turns to save battery and latency.
+
+The allowed values for `effort` are:
+*   `"none"` (default): No intermediate reasoning tokens are generated before the response.
+*   `"low"`: A minimal reasoning budget for straightforward multi-step tasks.
+*   `"medium"`: A moderate reasoning budget balancing accuracy and latency.
+*   `"high"`: The maximum reasoning budget for complex math, logic, code generation, and planning tasks.
+
+Developers can check support via `LanguageModel.availability()`, set a baseline effort tier when creating a session, and override it on individual `prompt()` or `promptStreaming()` calls:
+
+```js
+const status = await LanguageModel.availability({
+  thinking: { effort: "high" }
+});
+
+if (status !== "unavailable") {
+  const session = await LanguageModel.create({
+    thinking: { effort: "high" }
+  });
+
+  // Turn 1: Uses the session's default ("high" effort) for a complex task.
+  // By default (includeThoughts: false), prompt() returns only the final answer string.
+  const code = await session.prompt(
+    "Write a function to find the shortest path in a weighted directed graph."
+  );
+
+  // Turn 2: Override to "none" for a simple follow-up to save latency and battery.
+  const formatted = await session.prompt(
+    "Add JSDoc comments to that function.",
+    { thinking: { effort: "none" } }
+  );
+}
+```
+
+#### Viewing intermediate thoughts
+
+By default, `includeThoughts` is `false` so applications only receive the final text response, matching the output with thinking disabled. When set to `true`, `promptStreaming()` and `prompt()` emit structured `{ type, value }` dictionaries (following the same pattern as [Tool use](#tool-use)) so applications can render a collapsible `"Thinking..."` UI:
+
+```js
+const session = await LanguageModel.create({
+  thinking: {
+    effort: "medium",
+    includeThoughts: true,
+  }
+});
+
+const stream = session.promptStreaming("Plan a 3-day itinerary for Tokyo.");
+
+for await (const chunk of stream) {
+  // Both "thought" and "text" chunks may contain Markdown; we append raw text here for simplicity.
+  if (chunk.type === "thought") {
+    thinkingContainer.append(chunk.value);
+  } else if (chunk.type === "text") {
+    responseContainer.append(chunk.value);
+  }
+}
+```
+
+Rather than exposing model-specific token counts, user agents map each `effort` tier to an appropriate reasoning budget for the underlying model. This budget acts as an upper bound: models stop thinking early once they reach a conclusion, or transition to the final answer if the ceiling is reached. Following standard reasoning-model behavior, intermediate thoughts are stripped from the conversation history after each turn completes and do not permanently accumulate in `session.contextUsage`.
+
+_Open questions include: offering an `"auto"` effort level, naming (`emitThoughts` vs `includeThoughts`), designating thoughts via a separate field rather than `type: "thought"` to support non-text thoughts (e.g., images, audio, or [Tool use](#tool-use)), and whether [`samplingMode`](#configuration-of-sampling-modes) options would apply during reasoning._
 
 ### Session persistence and cloning
 
@@ -663,18 +798,18 @@ Finally, note that if either prompting or appending has caused an [overflow](#to
 
 ### Tokenization, context window length limits, and overflow
 
-A given language model session will have a maximum number of tokens it can process. Developers can check their current usage and progress toward that limit by using the following properties on the session object:
+A given language model session will have a maximum number of tokens it can process. Developers can check their current context usage and progress toward that limit by using the following properties on the session object:
 
 ```js
-console.log(`${session.inputUsage} tokens used, out of ${session.inputQuota} tokens available.`);
+console.log(`${session.contextUsage} tokens used, out of ${session.contextWindow} tokens available.`);
 ```
 
-To know how many tokens a prompt will consume, without actually processing it, developers can use the `measureInputUsage()` method. This method accepts the same input types as `prompt()`, including strings and multimodal input arrays:
+To know how many tokens a prompt will consume, without actually processing it, developers can use the `measureContextUsage()` method. This method accepts the same input types as `prompt()`, including strings and multimodal input arrays:
 
 ```js
-const stringUsage = await session.measureInputUsage(promptString);
+const stringUsage = await session.measureContextUsage(promptString);
 
-const audioUsage = await session.measureInputUsage([{
+const audioUsage = await session.measureContextUsage([{
   role: "user",
   content: [
     { type: "text", value: "My response to your critique:" },
@@ -687,23 +822,23 @@ Some notes on this API:
 
 * We do not expose the actual tokenization to developers since that would make it too easy to depend on model-specific details.
 * Implementations must include in their count any control tokens that will be necessary to process the prompt, e.g. ones indicating the start or end of the input.
-* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureInputUsage(promptString, { signal })`.
-* We use the phrases "input usage" and "input quota" in the API, to avoid being specific to the current language model tokenization paradigm. In the future, even if we change paradigms, we anticipate some concept of usage and quota still being applicable, even if it's just string length.
+* The counting process can be aborted by passing an `AbortSignal`, i.e. `session.measureContextUsage(promptString, { signal })`.
+* We use the phrases "context usage" and "context window" in the API, to avoid being specific to the current language model tokenization paradigm. In the future, even if we change paradigms, we anticipate some concept of usage and context window still being applicable, even if it's just string length.
 
-It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureInputUsage(promptString) > session.inputQuota - session.inputUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the [system prompt](#system-prompts), which is never removed.
+It's possible to send a prompt that causes the context window to overflow. That is, consider a case where `session.measureContextUsage(promptString) > session.contextWindow - session.contextUsage` before calling `session.prompt(promptString)`, and then the web developer calls `session.prompt(promptString)` anyway. In such cases, the initial portions of the conversation with the language model will be removed, one prompt/response pair at a time, until enough tokens are available to process the new prompt. The exception is the `initialPrompts`, which are never removed.
 
-Such overflows can be detected by listening for the `"quotaoverflow"` event on the session:
+Such overflows can be detected by listening for the `"contextoverflow"` event on the session:
 
 ```js
-session.addEventListener("quotaoverflow", () => {
-  console.log("We've gone past the quota, and some inputs will be dropped!");
+session.addEventListener("contextoverflow", () => {
+  console.log("We've gone past the context window, and some inputs will be dropped!");
 });
 ```
 
 If it's not possible to remove enough tokens from the conversation history to process the new prompt, then the `prompt()` or `promptStreaming()` call will fail with a `QuotaExceededError` exception and nothing will be removed. This is a proposed new type of exception, which subclasses `DOMException`, and replaces the web platform's existing `"QuotaExceededError"` `DOMException`. See [whatwg/webidl#1465](https://github.com/whatwg/webidl/pull/1465) for this proposal. For our purposes, the important part is that it has the following properties:
 
 * `requested`: how many tokens the input consists of
-* `quota`: how many tokens were available (which will be less than `requested`, and equal to the value of `session.inputQuota - session.inputUsage` at the time of the call)
+* `context window`: how many tokens were available (which will be less than `requested`, and equal to the value of `session.contextWindow - session.contextUsage` at the time of the call)
 
 ### Multilingual content and expected input languages
 
@@ -814,8 +949,7 @@ const options = {
   expectedInputs: [
     { type: "text", languages: ["en", "es"] },
     { type: "audio", languages: ["en", "es"] }
-  ],
-  temperature: 2
+  ]
 };
 
 const availability = await LanguageModel.availability(options);
@@ -897,7 +1031,7 @@ Note that although the API is not exposed to web platform workers, a browser cou
 To actually get a response back from the model given a prompt, the following possible stages are involved:
 
 1. Download the model, if necessary.
-2. Establish a session, including configuring per-session options and parameters.
+2. Establish a session, including configuring per-session options.
 3. Add an initial prompt to establish context. (This will not generate a response.)
 4. Execute a prompt and receive a response.
 
