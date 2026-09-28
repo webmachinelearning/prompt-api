@@ -260,7 +260,7 @@ const sessionOptions = structuredClone(options);
 sessionOptions.expectedOutputs.push(["tool-call"]);
 session = await LanguageModel.create(sessionOptions);
 
-var result = await session.prompt("What is the weather in Seattle?");
+let result = await session.prompt("What is the weather in Seattle?");
 if (result.type=="tool-call") {
   if (result.name == "get_weather") {
     const tool_result = getWeather(result.arguments.location);
