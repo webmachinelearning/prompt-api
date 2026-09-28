@@ -276,7 +276,7 @@ Note that we always require tool-response to immediately follow tool-call genera
 
 #### Closed Loop:
 
-To enable automatic execution, add a `execute` function for each tool's implementation, and add a `toolUseConfig` to indicate that execution is enabled and pose a max number of tool calls invoked in a single session generation:
+To enable automatic execution, add an `execute` function for each tool's implementation, and add a `toolUseConfig` to indicate that execution is enabled and pose a max number of tool calls invoked in a single session generation:
 
 ```js
 const session = await LanguageModel.create({
