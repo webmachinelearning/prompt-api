@@ -42,15 +42,15 @@ These APIs are part of a family of APIs expected to be powered by machine learni
 <h2 id="api">The API</h2>
 
 <xmp class="idl">
+// The return type from prompt() method and those alike.
+typedef (DOMString or sequence<LanguageModelMessageContent>) LanguageModelPromptResult;
+
 [Exposed=Window, SecureContext]
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
   static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   static Promise<LanguageModelParams?> params();
-
-  // The return type from prompt() method and those alike.
-  typedef (DOMString or sequence<LanguageModelMessageContent>) LanguageModelPromptResult;
 
   // These will throw "NotSupportedError" DOMExceptions if role = "system"
   Promise<LanguageModelPromptResult> prompt(
@@ -106,8 +106,6 @@ interface LanguageModelParams {
   readonly attribute float defaultTemperature;
   readonly attribute float maxTemperature;
 };
-
-callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
 
 // A description of a tool call that a language model can invoke.
 dictionary LanguageModelToolDeclaration {
@@ -188,7 +186,7 @@ dictionary LanguageModelMessageContent {
 
 enum LanguageModelSamplingMode { "most-predictable", "predictable", "slightly-predictable", "balanced", "slightly-creative", "creative", "most-creative" };
 
-enum LanguageModelMessageRole { "system", "user", "assistant", "tool-call", "tool-response"  };
+enum LanguageModelMessageRole { "system", "user", "assistant" };
 
 enum LanguageModelMessageType { "text", "image", "audio", "tool-call", "tool-response" };
 
@@ -210,21 +208,39 @@ dictionary LanguageModelToolResultContent {
 };
 
 // Represents a tool call requested by the language model.
-dictionary LanguageModelToolCall {
+[Exposed=Window, SecureContext]
+interface LanguageModelToolCall {
+  constructor(LanguageModelToolCallInit init);
+  readonly attribute DOMString callID;
+  readonly attribute DOMString name;
+  readonly attribute object? arguments;
+};
+
+dictionary LanguageModelToolCallInit {
   required DOMString callID;
   required DOMString name;
   object arguments;
 };
-
-// Successful tool execution result.
-dictionary LanguageModelToolSuccess {
+[Exposed=Window, SecureContext]
+interface LanguageModelToolSuccess {
+  constructor(LanguageModelToolSuccessInit init);
+  readonly attribute DOMString callID;
+  readonly attribute DOMString name;
+  readonly attribute FrozenArray<LanguageModelToolResultContent> result;
+};
+dictionary LanguageModelToolSuccessInit {
   required DOMString callID;
   required DOMString name;
   required sequence<LanguageModelToolResultContent> result;
 };
-
-// Failed tool execution result.
-dictionary LanguageModelToolError {
+[Exposed=Window, SecureContext]
+interface LanguageModelToolError {
+  constructor(LanguageModelToolErrorInit init);
+  readonly attribute DOMString callID;
+  readonly attribute DOMString name;
+  readonly attribute DOMString errorMessage;
+};
+dictionary LanguageModelToolErrorInit {
   required DOMString callID;
   required DOMString name;
   required DOMString errorMessage;
@@ -442,7 +458,7 @@ Every {{LanguageModel}} has an <dfn for="LanguageModel">expected inputs</dfn>, a
 
 Every {{LanguageModel}} has an <dfn for="LanguageModel">expected outputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
 
-Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] of {{LanguageModelTool}}s, set during creation.
+Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] of {{LanguageModelToolDeclaration}}s, set during creation.
 
 Every {{LanguageModel}} has a <dfn for="LanguageModel">context window size</dfn>, an unrestricted double, set during creation.
 
