@@ -256,7 +256,7 @@ When a tool needs to be called, the API will return an object with `callId` (a u
 Example:
 
 ```js
-sessionOptions = structuredClone(options);
+const sessionOptions = structuredClone(options);
 sessionOptions.expectedOutputs.push(["tool-call"]);
 session = await LanguageModel.create(sessionOptions);
 
