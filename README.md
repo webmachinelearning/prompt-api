@@ -212,10 +212,35 @@ Few shot examples of tool use can be appended like so:
 
 ```js
 await session.append([
-    {role: "user", content: "What is the weather in Seattle?"},
-    {role: "tool-call", content: {type: "tool-call", value: {callID:" get_weather_1", name: "get_weather", arguments: {location:"Seattle"}}},
-    {role: "tool-result", content:  {type: "tool-response", value: {callID: "get_weather_1", name: "get_weather", result: [{type:"object", value: {temperature: "55F", humidity: "67%"}}]}},
-    {role: "assistant", content: "The temperature in Seattle is 55F and humidity is 67%"},
+  { role: "user", content: "What is the weather in Seattle?" },
+  {
+    role: "tool-call",
+    content: {
+      type: "tool-call",
+      value: {
+        callID: " get_weather_1",
+        name: "get_weather",
+        arguments: { location: "Seattle" },
+      },
+    },
+  },
+  {
+    role: "tool-result",
+    content: {
+      type: "tool-response",
+      value: {
+        callID: "get_weather_1",
+        name: "get_weather",
+        result: [
+          { type: "object", value: { temperature: "55F", humidity: "67%" } },
+        ],
+      },
+    },
+  },
+  {
+    role: "assistant",
+    content: "The temperature in Seattle is 55F and humidity is 67%",
+  },
 ]);
 ```
 
