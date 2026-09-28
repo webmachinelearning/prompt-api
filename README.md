@@ -258,7 +258,7 @@ Example:
 ```js
 const sessionOptions = structuredClone(options);
 sessionOptions.expectedOutputs.push(["tool-call"]);
-session = await LanguageModel.create(sessionOptions);
+const session = await LanguageModel.create(sessionOptions);
 
 let result = await session.prompt("What is the weather in Seattle?");
 if (result.type=="tool-call") {
