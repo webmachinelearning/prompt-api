@@ -108,6 +108,9 @@ interface LanguageModelParams {
 };
 
 // A description of a tool call that a language model can invoke.
+// Note: When considering changes to this dictionary, authors should ensure
+// general alignment with ModelContextTool from WebMCP
+// (https://webmachinelearning.github.io/webmcp/#model-context-tool).
 dictionary LanguageModelToolDeclaration {
   required DOMString name;
   required DOMString description;
