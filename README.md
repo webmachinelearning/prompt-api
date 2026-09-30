@@ -221,7 +221,9 @@ await session.append([
       {
         type: "tool-call",
         value: new LanguageModelToolCall({
-          callID: "get_weather_1",
+          // In few-shot examples, `callID` can be any string as
+          // long as the corresponding tool-response uses the same `callID`.
+          callID: "example-call-1",
           name: "get_weather",
           arguments: { location: "Seattle" },
         }),
@@ -234,7 +236,7 @@ await session.append([
       {
         type: "tool-response",
         value: new LanguageModelToolSuccess({
-          callID: "get_weather_1",
+          callID: "example-call-1",
           name: "get_weather",
           result: [
             { type: "object", value: { temperature: "55F", humidity: "67%" } },
@@ -263,7 +265,7 @@ Open loop is enabled by specifying `{ type: "tool-call" }` in `expectedOutputs` 
 When the model does not invoke any tools, `session.prompt()` resolves to a `DOMString` as usual. When a tool needs to be called, `session.prompt()` resolves to an array of `LanguageModelMessageContent` dictionaries (`sequence<LanguageModelMessageContent>`). If the model outputs both text and tool calls, it's resolved to an array, where the text is included first (`{ type: "text", value: "..." }`), followed by `{ type: "tool-call", value: LanguageModelToolCall }` items.
 
 Each `LanguageModelToolCall` object contains:
-* `callID`: A unique string identifier for this tool call.
+* `callID`: An opaque string identifier for this tool call. Its format is implementation- and model-defined. Applications should not rely on any specific format and should simply pass `toolCall.callID` back in the corresponding `LanguageModelToolSuccess` or `LanguageModelToolError`.
 * `name`: The name of the tool to invoke.
 * `arguments`: A dictionary fitting the JSON `inputSchema` of the tool's declaration (which must have `type: "object"`).
 
@@ -281,6 +283,9 @@ if (Array.isArray(result)) {
   if (toolCallMsg && toolCallMsg.value.name === "get_weather") {
     const toolCall = toolCallMsg.value;
     const toolResult = getWeather(toolCall.arguments.location);
+    // For simplicity, this example assumes a single tool call followed by a
+    // final text response. In practice, the model may respond with additional
+    // tool calls, which would typically be handled in a loop.
     result = await session.prompt([
       {
         role: "user",
