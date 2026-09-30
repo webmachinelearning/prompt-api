@@ -221,9 +221,9 @@ await session.append([
       {
         type: "tool-call",
         value: new LanguageModelToolCall({
-          // In few-shot examples, `callID` can be any string as
-          // long as the corresponding tool-response uses the same `callID`.
-          callID: "example-call-1",
+          // In few-shot examples, `callId` can be any string as
+          // long as the corresponding tool-response uses the same `callId`.
+          callId: "example-call-1",
           name: "get_weather",
           arguments: { location: "Seattle" },
         }),
@@ -236,7 +236,7 @@ await session.append([
       {
         type: "tool-response",
         value: new LanguageModelToolSuccess({
-          callID: "example-call-1",
+          callId: "example-call-1",
           name: "get_weather",
           result: [
             { type: "object", value: { temperature: "55F", humidity: "67%" } },
@@ -254,8 +254,8 @@ await session.append([
 
 Note that:
 * Message `content` `type` supports `"tool-call"` and `"tool-response"`:
-  * `"tool-call"` content must use `role: "assistant"` and its `value` must be a `LanguageModelToolCall` instance (`new LanguageModelToolCall({ callID, name, arguments })`).
-  * `"tool-response"` content must use `role: "user"` and its `value` must be either a `LanguageModelToolSuccess` instance (`new LanguageModelToolSuccess({ callID, name, result })`) or a `LanguageModelToolError` instance (`new LanguageModelToolError({ callID, name, errorMessage })`).
+  * `"tool-call"` content must use `role: "assistant"` and its `value` must be a `LanguageModelToolCall` instance (`new LanguageModelToolCall({ callId, name, arguments })`).
+  * `"tool-response"` content must use `role: "user"` and its `value` must be either a `LanguageModelToolSuccess` instance (`new LanguageModelToolSuccess({ callId, name, result })`) or a `LanguageModelToolError` instance (`new LanguageModelToolError({ callId, name, errorMessage })`).
 * `LanguageModelToolSuccess.result` is a list of `{ type, value }` dictionaries, where `type` can be `"text"`, `"image"`, `"audio"`, or `"object"`, and `value` is `any`.
 
 #### Open Loop
@@ -265,7 +265,7 @@ Open loop is enabled by specifying `{ type: "tool-call" }` in `expectedOutputs` 
 When the model does not invoke any tools, `session.prompt()` resolves to a `DOMString` as usual. When a tool needs to be called, `session.prompt()` resolves to an array of `LanguageModelMessageContent` dictionaries (`sequence<LanguageModelMessageContent>`). If the model outputs both text and tool calls, it's resolved to an array, where the text is included first (`{ type: "text", value: "..." }`), followed by `{ type: "tool-call", value: LanguageModelToolCall }` items.
 
 Each `LanguageModelToolCall` object contains:
-* `callID`: An opaque string identifier for this tool call. Its format is implementation- and model-defined. Applications should not rely on any specific format and should simply pass `toolCall.callID` back in the corresponding `LanguageModelToolSuccess` or `LanguageModelToolError`.
+* `callId`: An opaque string identifier for this tool call. Its format is implementation- and model-defined. Applications should not rely on any specific format and should simply pass `toolCall.callId` back in the corresponding `LanguageModelToolSuccess` or `LanguageModelToolError`.
 * `name`: The name of the tool to invoke.
 * `arguments`: A dictionary fitting the JSON `inputSchema` of the tool's declaration (which must have `type: "object"`).
 
@@ -293,7 +293,7 @@ if (Array.isArray(result)) {
           {
             type: "tool-response",
             value: new LanguageModelToolSuccess({
-              callID: toolCall.callID,
+              callId: toolCall.callId,
               name: toolCall.name,
               result: [{ type: "object", value: toolResult }],
             }),
