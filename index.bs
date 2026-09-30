@@ -135,14 +135,14 @@ dictionary LanguageModelCreateCoreOptions {
 
   // Tools that the language model can use.
   // **EXPERIMENTAL**: Only available in experimental contexts.
-  sequence<LanguageModelToolDeclaration> tools;
+  sequence<LanguageModelToolDeclaration> tools = [];
 };
 
 dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
   AbortSignal signal;
   CreateMonitorCallback monitor;
 
-  sequence<LanguageModelMessage> initialPrompts;
+  sequence<LanguageModelMessage> initialPrompts = [];
 };
 
 dictionary LanguageModelPromptOptions {
@@ -214,37 +214,37 @@ dictionary LanguageModelToolResultContent {
 [Exposed=Window, SecureContext]
 interface LanguageModelToolCall {
   constructor(LanguageModelToolCallInit init);
-  readonly attribute DOMString callID;
+  readonly attribute DOMString callId;
   readonly attribute DOMString name;
   readonly attribute object? arguments;
 };
 
 dictionary LanguageModelToolCallInit {
-  required DOMString callID;
+  required DOMString callId;
   required DOMString name;
   object arguments;
 };
 [Exposed=Window, SecureContext]
 interface LanguageModelToolSuccess {
   constructor(LanguageModelToolSuccessInit init);
-  readonly attribute DOMString callID;
+  readonly attribute DOMString callId;
   readonly attribute DOMString name;
   readonly attribute FrozenArray<LanguageModelToolResultContent> result;
 };
 dictionary LanguageModelToolSuccessInit {
-  required DOMString callID;
+  required DOMString callId;
   required DOMString name;
   required sequence<LanguageModelToolResultContent> result;
 };
 [Exposed=Window, SecureContext]
 interface LanguageModelToolError {
   constructor(LanguageModelToolErrorInit init);
-  readonly attribute DOMString callID;
+  readonly attribute DOMString callId;
   readonly attribute DOMString name;
   readonly attribute DOMString errorMessage;
 };
 dictionary LanguageModelToolErrorInit {
-  required DOMString callID;
+  required DOMString callId;
   required DOMString name;
   required DOMString errorMessage;
 };
@@ -277,7 +277,7 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
     1. If |expected|["{{LanguageModelExpected/type}}"] is "{{LanguageModelMessageType/tool-call}}", then set |hasToolCallInExpectedOutputs| to true.
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
 
-  1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] [=map/exists=] and |options|["{{LanguageModelCreateCoreOptions/tools}}"] is not [=list/is empty|empty=], then:
+  1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] is not [=list/is empty|empty=], then:
     1. If |hasToolCallInExpectedOutputs| is false, then throw a {{TypeError}}.
     1. Let |toolNames| be an empty [=ordered set=] of [=strings=].
     1. [=list/For each=] |tool| of |options|["{{LanguageModelCreateCoreOptions/tools}}"]:
@@ -294,7 +294,7 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
       1. If |requiredValue| is not undefined and ? [$IsArray$](|requiredValue|) is false, then throw a {{TypeError}}.
       1. Perform ? [=serialize a JavaScript value to a JSON string=] given |schema|.
 
-  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=] and is not [=list/is empty|empty=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
     1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
@@ -326,13 +326,13 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
 
     This could include loading the appropriate model and any fine-tunings necessary to support |options| into memory.
 
-    1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+    1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] is not [=list/is empty|empty=], then:
       1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
       1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
       1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
       1. Load |initialMessages| into the model's context window.
 
-    1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] [=map/exists=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
+    1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] is not [=list/is empty|empty=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
 
   1. If initialization failed because the process of loading |options| resulted in using up all of the model's context window, then:
 
@@ -358,12 +358,12 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
 
   1. Let |initialMessages| be an empty [=list=] of {{LanguageModelMessage}}s.
 
-  1. Let |tools| be |options|["{{LanguageModelCreateCoreOptions/tools}}"] if it [=map/exists=]; otherwise an empty [=list=].
+  1. Let |tools| be |options|["{{LanguageModelCreateCoreOptions/tools}}"].
 
   1. Let |initialContextUsage| be 0.
 
   1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=] and is not [=list/empty=], then:
-    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
+    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"].
     1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
 
@@ -696,13 +696,13 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
     1. Otherwise, if a tool call is successfully produced:
 
-      1. Let |callID| be an [=implementation-defined=] non-empty [=string=] identifying the tool call.
+      1. Let |callId| be an [=implementation-defined=] non-empty [=string=] identifying the tool call.
 
       1. Let |name| be a [=string=] representing the name of the tool being called.
 
       1. Let |arguments| be an [=ECMAScript/Object=] representing the JSON object of arguments for the tool call, created in |model|'s [=relevant realm=]. (If the arguments cannot be converted to an [=ECMAScript/Object=], treat this as a "{{DataError}}" failure below.)
 
-      1. Let |toolCall| be a new {{LanguageModelToolCall}} created in |model|'s [=relevant realm=] with [=LanguageModelToolCall/call ID=] set to |callID|, [=LanguageModelToolCall/name=] set to |name|, and [=LanguageModelToolCall/arguments=] set to |arguments|.
+      1. Let |toolCall| be a new {{LanguageModelToolCall}} created in |model|'s [=relevant realm=] with [=LanguageModelToolCall/call ID=] set to |callId|, [=LanguageModelToolCall/name=] set to |name|, and [=LanguageModelToolCall/arguments=] set to |arguments|.
 
       1. Let |toolCallContent| be a {{LanguageModelMessageContent}} initialized with <span style="white-space: pre-wrap">«[
           "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/tool-call}}",
@@ -1027,14 +1027,14 @@ Every {{LanguageModelToolCall}} has an <dfn for="LanguageModelToolCall">argument
 <div algorithm>
   The <dfn constructor for="LanguageModelToolCall" lt="LanguageModelToolCall(init)">new LanguageModelToolCall(|init|)</dfn> constructor steps are:
 
-  1. Set [=this=]'s [=LanguageModelToolCall/call ID=] to |init|["{{LanguageModelToolCallInit/callID}}"].
+  1. Set [=this=]'s [=LanguageModelToolCall/call ID=] to |init|["{{LanguageModelToolCallInit/callId}}"].
 
   1. Set [=this=]'s [=LanguageModelToolCall/name=] to |init|["{{LanguageModelToolCallInit/name}}"].
 
   1. Set [=this=]'s [=LanguageModelToolCall/arguments=] to |init|["{{LanguageModelToolCallInit/arguments}}"] if it [=map/exists=]; otherwise null.
 </div>
 
-The <dfn attribute for="LanguageModelToolCall">callID</dfn> getter steps are to return [=this=]'s [=LanguageModelToolCall/call ID=].
+The <dfn attribute for="LanguageModelToolCall">callId</dfn> getter steps are to return [=this=]'s [=LanguageModelToolCall/call ID=].
 
 The <dfn attribute for="LanguageModelToolCall">name</dfn> getter steps are to return [=this=]'s [=LanguageModelToolCall/name=].
 
@@ -1051,14 +1051,14 @@ Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">res
 <div algorithm>
   The <dfn constructor for="LanguageModelToolSuccess" lt="LanguageModelToolSuccess(init)">new LanguageModelToolSuccess(|init|)</dfn> constructor steps are:
 
-  1. Set [=this=]'s [=LanguageModelToolSuccess/call ID=] to |init|["{{LanguageModelToolSuccessInit/callID}}"].
+  1. Set [=this=]'s [=LanguageModelToolSuccess/call ID=] to |init|["{{LanguageModelToolSuccessInit/callId}}"].
 
   1. Set [=this=]'s [=LanguageModelToolSuccess/name=] to |init|["{{LanguageModelToolSuccessInit/name}}"].
 
   1. Set [=this=]'s [=LanguageModelToolSuccess/result=] to the result of [=creating a frozen array=] from |init|["{{LanguageModelToolSuccessInit/result}}"].
 </div>
 
-The <dfn attribute for="LanguageModelToolSuccess">callID</dfn> getter steps are to return [=this=]'s [=LanguageModelToolSuccess/call ID=].
+The <dfn attribute for="LanguageModelToolSuccess">callId</dfn> getter steps are to return [=this=]'s [=LanguageModelToolSuccess/call ID=].
 
 The <dfn attribute for="LanguageModelToolSuccess">name</dfn> getter steps are to return [=this=]'s [=LanguageModelToolSuccess/name=].
 
@@ -1075,14 +1075,14 @@ Every {{LanguageModelToolError}} has an <dfn for="LanguageModelToolError">error 
 <div algorithm>
   The <dfn constructor for="LanguageModelToolError" lt="LanguageModelToolError(init)">new LanguageModelToolError(|init|)</dfn> constructor steps are:
 
-  1. Set [=this=]'s [=LanguageModelToolError/call ID=] to |init|["{{LanguageModelToolErrorInit/callID}}"].
+  1. Set [=this=]'s [=LanguageModelToolError/call ID=] to |init|["{{LanguageModelToolErrorInit/callId}}"].
 
   1. Set [=this=]'s [=LanguageModelToolError/name=] to |init|["{{LanguageModelToolErrorInit/name}}"].
 
   1. Set [=this=]'s [=LanguageModelToolError/error message=] to |init|["{{LanguageModelToolErrorInit/errorMessage}}"].
 </div>
 
-The <dfn attribute for="LanguageModelToolError">callID</dfn> getter steps are to return [=this=]'s [=LanguageModelToolError/call ID=].
+The <dfn attribute for="LanguageModelToolError">callId</dfn> getter steps are to return [=this=]'s [=LanguageModelToolError/call ID=].
 
 The <dfn attribute for="LanguageModelToolError">name</dfn> getter steps are to return [=this=]'s [=LanguageModelToolError/name=].
 
