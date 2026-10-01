@@ -288,11 +288,11 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
       1. [=set/Append=] |tool|["{{LanguageModelToolDeclaration/name}}"] to |toolNames|.
       1. If |tool|["{{LanguageModelToolDeclaration/description}}"] is the empty [=string=], then throw a {{TypeError}}.
       1. Let |schema| be |tool|["{{LanguageModelToolDeclaration/inputSchema}}"].
-      1. Let |typeValue| be ? [$Get$](|schema|, "`type`").
+      1. Let |typeValue| be ? [$Get$]\(|schema|, "type"\).
       1. If |typeValue| is not "`object`", then throw a {{TypeError}}.
-      1. Let |propertiesValue| be ? [$Get$](|schema|, "`properties`").
+      1. Let |propertiesValue| be ? [$Get$]\(|schema|, "properties"\).
       1. If |propertiesValue| is not undefined and |propertiesValue| is not an [=Object=], then throw a {{TypeError}}.
-      1. Let |requiredValue| be ? [$Get$](|schema|, "`required`").
+      1. Let |requiredValue| be ? [$Get$]\(|schema|, "required"\).
       1. If |requiredValue| is not undefined and ? [$IsArray$](|requiredValue|) is false, then throw a {{TypeError}}.
       1. Perform ? [=serialize a JavaScript value to a JSON string=] given |schema|.
 
