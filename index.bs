@@ -288,11 +288,11 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
       1. [=set/Append=] |tool|["{{LanguageModelToolDeclaration/name}}"] to |toolNames|.
       1. If |tool|["{{LanguageModelToolDeclaration/description}}"] is the empty [=string=], then throw a {{TypeError}}.
       1. Let |schema| be |tool|["{{LanguageModelToolDeclaration/inputSchema}}"].
-      1. Let |typeValue| be ? [$Get$](<|schema|, "`type`">).
+      1. Let |typeValue| be ? [$Get$](|schema|, "`type`").
       1. If |typeValue| is not "`object`", then throw a {{TypeError}}.
-      1. Let |propertiesValue| be ? [$Get$](<|schema|, "`properties`">).
+      1. Let |propertiesValue| be ? [$Get$](|schema|, "`properties`").
       1. If |propertiesValue| is not undefined and |propertiesValue| is not an [=Object=], then throw a {{TypeError}}.
-      1. Let |requiredValue| be ? [$Get$](<|schema|, "`required`">).
+      1. Let |requiredValue| be ? [$Get$](|schema|, "`required`").
       1. If |requiredValue| is not undefined and ? [$IsArray$](|requiredValue|) is false, then throw a {{TypeError}}.
       1. Perform ? [=serialize a JavaScript value to a JSON string=] given |schema|.
 
@@ -886,7 +886,11 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
         1. If |content|["{{LanguageModelMessageContent/value}}"] is a {{LanguageModelToolSuccess}}, then [=list/for each=] |resultItem| of |content|["{{LanguageModelMessageContent/value}}"]'s [=LanguageModelToolSuccess/result=]:
           1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/image}}" or "{{LanguageModelToolResultType/audio}}" and the user agent does not support multimodal tool result content, then throw a "{{NotSupportedError}}" {{DOMException}}.
-          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/text}}" or "{{LanguageModelToolResultType/object}}", then:
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/text}}" and |resultItem|["{{LanguageModelToolResultContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/image}}" and |resultItem|["{{LanguageModelToolResultContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/audio}}" and |resultItem|["{{LanguageModelToolResultContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/object}}", then:
+            1. If |resultItem|["{{LanguageModelToolResultContent/value}}"] is not an [=Object=], then throw a {{TypeError}}.
             1. If |resultItem|["{{LanguageModelToolResultContent/value}}"] is a [=platform object=], or cannot be serialized to JSON (for example, due to circular references or non-JSON-serializable values such as functions or BigInts), then throw a "{{DataError}}" {{DOMException}}.
 
     1. Let |contentWithContiguousTextCollapsed| be an empty [=list=] of {{LanguageModelMessageContent}}s.
