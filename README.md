@@ -368,6 +368,18 @@ Open loop is the lower-level primitive and remains necessary when the applicatio
 2. **Human-in-the-loop and non-destructive interception:** While a closed-loop `execute()` callback could abort an entire `prompt()` call via an `AbortSignal` (rejecting the promise and discarding the in-flight turn), open loop resolves with the proposed `LanguageModelToolCall` already committed to the session context. This makes it easy to pause for explicit user confirmation before executing a sensitive tool (such as `"place_order"`), and then either resume the session with `LanguageModelToolSuccess`, report a user rejection via `LanguageModelToolError` so the model can adjust, or handle the action directly in application UI without another model call.
 3. **Per-step `responseConstraint` and decoding control:** Because closed loop runs multiple generation steps inside a single `prompt()` call, it cannot easily apply different decoding options to individual steps. With open loop, each step is an explicit `prompt()` call, allowing the application to pass a `responseConstraint` (JSON Schema or regex) or an assistant response `prefix` on a specific turn (for example, constraining the model's final response after a tool returns).
 
+#### Concurrent tool use
+
+Developers should be aware that the model might call their tool multiple times, concurrently. For example, code such as
+
+```js
+const result = await session.prompt("Which of these locations currently has the highest temperature? Seattle, Tokyo, Berlin");
+```
+
+might call the above `"getWeather"` tool's `execute()` function three times. The model would wait for all tool call results to return, using the equivalent of `Promise.all()` internally, before it composes its final response.
+
+Similarly, the model might call multiple different tools, if it believes they all are relevant when responding to the given prompt.
+
 ### Multimodal inputs
 
 All of the above examples have been of text prompts. Some language models also support other inputs. Our design initially includes the potential to support images and audio clips as inputs. This is done by using objects in the form `{ type: "image", content }` and `{ type: "audio", content }` instead of strings. The `content` values can be the following:
