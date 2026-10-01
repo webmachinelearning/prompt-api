@@ -582,7 +582,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. If |hasNonTextExpectedOutput| is false, then return |promise|.
 
-  1. Return the result of [=reacting=] to |promise| with a fulfillment handler that returns |contents|.
+  1. Return the result of [=promise/reacting=] to |promise| with a fulfillment handler that returns |contents|.
 </div>
 
 <div algorithm>
@@ -1067,7 +1067,7 @@ Every {{LanguageModelToolCall}} has a <dfn for="LanguageModelToolCall">call ID</
 
 Every {{LanguageModelToolCall}} has a <dfn for="LanguageModelToolCall">name</dfn>, a [=string=], set during creation.
 
-Every {{LanguageModelToolCall}} has an <dfn for="LanguageModelToolCall">arguments</dfn>, an [=ECMAScript/object=] or null, set during creation.
+Every {{LanguageModelToolCall}} has an <dfn for="LanguageModelToolCall">arguments</dfn>, an [=Object=] or null, set during creation.
 
 <div algorithm>
   The <dfn constructor for="LanguageModelToolCall" lt="LanguageModelToolCall(init)">new LanguageModelToolCall(|init|)</dfn> constructor steps are:
@@ -1091,7 +1091,7 @@ Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">cal
 
 Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">name</dfn>, a [=string=], set during creation.
 
-Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">result</dfn>, a [=frozen array=] of {{LanguageModelToolResultContent}}s, set during creation.
+Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">result</dfn>, a <code>{{FrozenArray}}&lt;{{LanguageModelToolResultContent}}></code>, set during creation.
 
 <div algorithm>
   The <dfn constructor for="LanguageModelToolSuccess" lt="LanguageModelToolSuccess(init)">new LanguageModelToolSuccess(|init|)</dfn> constructor steps are:
