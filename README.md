@@ -187,7 +187,7 @@ const session = await LanguageModel.create({
       content: "You are a helpful assistant. You can use tools to help the user.",
     },
   ],
-  expectedInputs: [{ type: "tool-call" }, { type: "tool-response" }],
+  expectedInputs: [{ type: "tool-response" }],
   expectedOutputs: [{ type: "tool-call" }],
   tools: [
     {
@@ -208,7 +208,7 @@ const session = await LanguageModel.create({
 });
 ```
 
-In this example, the `tools` array defines a `get_weather` tool, specifying its name, description, and input schema. When `tools` are provided, `expectedOutputs` must include `{ type: "tool-call" }`. To supply tool calls and/or tool responses in `initialPrompts`, `append()`, or `prompt()`, `expectedInputs` must also include `{ type: "tool-call" }` and/or `{ type: "tool-response" }`.
+In this example, the `tools` array defines a `get_weather` tool, specifying its name, description, and input schema. When `tools` are provided, `expectedOutputs` must include `{ type: "tool-call" }`, and `expectedInputs` must include `{ type: "tool-response" }` so the application can send tool execution results back to the model. (`expectedInputs` only needs to include `{ type: "tool-call" }` if the application intends to pass assistant-role tool calls as input in `initialPrompts`, `append()`, or `prompt()`, such as to provide few-shot examples or restore a saved session's context.)
 
 Few-shot examples of tool use can be appended like so:
 
@@ -256,7 +256,12 @@ Note that:
 * Message `content` `type` supports `"tool-call"` and `"tool-response"`:
   * `"tool-call"` content must use `role: "assistant"` and its `value` must be a `LanguageModelToolCall` instance (`new LanguageModelToolCall({ callId, name, arguments })`).
   * `"tool-response"` content must use `role: "user"` and its `value` must be either a `LanguageModelToolSuccess` instance (`new LanguageModelToolSuccess({ callId, name, result })`) or a `LanguageModelToolError` instance (`new LanguageModelToolError({ callId, name, errorMessage })`).
-* `LanguageModelToolSuccess.result` is a list of `{ type, value }` dictionaries, where `type` can be `"text"`, `"image"`, `"audio"`, or `"object"`, and `value` is `any`.
+* `LanguageModelToolSuccess.result` is a list of `{ type, value }` dictionaries (`LanguageModelToolResultContent`), where `value` must match the stated `type`:
+  * `"text"`: a `DOMString`.
+  * `"image"`: an `ImageBitmapSource` or `BufferSource`.
+  * `"audio"`: an `AudioBuffer`, `BufferSource`, or `Blob`.
+  * `"object"`: a JSON-serializable JavaScript object.
+
 
 #### Open Loop
 
