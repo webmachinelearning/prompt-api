@@ -536,13 +536,53 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
 
+  1. Let |hasNonTextExpectedOutput| be false.
+
+  1. [=list/For each=] |expected| of [=this=]'s [=LanguageModel/expected outputs=]:
+    1. If |expected|["{{LanguageModelExpected/type}}"] is not "{{LanguageModelMessageType/text}}", then set |hasNonTextExpectedOutput| to true.
+
+  1. Let |contents| be an empty [=list=] of {{LanguageModelMessageContent}}s.
+
+  1. Let |text| be the empty [=string=].
+
   1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
 
     1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, |omitResponseConstraintInput|, |responseConstraint|, |error|, and |stopProducing|.
 
-    1. If |prefillSuccess| is true, then [=generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+    1. If |prefillSuccess| is false, then return.
 
-  1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+    1. If |hasNonTextExpectedOutput| is false:
+      1. [=Generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+      1. Return.
+
+    1. Let |onChunk| be an algorithm step which takes argument |chunk| and performs the following steps:
+      1. If |chunk| is a [=string=]:
+        1. Set |text| to the concatenation of |text| and |chunk|.
+      1. Otherwise:
+        1. [=Assert=]: |chunk| is a {{LanguageModelMessageContent}}.
+        1. If |text| is not the empty [=string=]:
+          1. [=list/Append=] <span style="white-space: pre-wrap">«[
+              "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+              "{{LanguageModelMessageContent/value}}" → |text|
+            ]»</span> to |contents|.
+          1. Set |text| to the empty [=string=].
+        1. [=list/Append=] |chunk| to |contents|.
+
+    1. Let |onDone| be an algorithm step which takes no arguments and performs the following steps:
+      1. If |text| is not the empty [=string=] or |contents| [=list/is empty=]:
+        1. [=list/Append=] <span style="white-space: pre-wrap">«[
+            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContent/value}}" → |text|
+          ]»</span> to |contents|.
+      1. If |done| is not null, then perform |done|.
+
+    1. [=Generate=] given [=this=], |responseConstraint|, |onChunk|, |onDone|, |error|, and |stopProducing|.
+
+  1. Let |promise| be the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+
+  1. If |hasNonTextExpectedOutput| is false, then return |promise|.
+
+  1. Return the result of [=reacting=] to |promise| with a fulfillment handler that returns |contents|.
 </div>
 
 <div algorithm>
