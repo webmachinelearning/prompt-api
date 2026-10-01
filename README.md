@@ -267,7 +267,9 @@ Note that:
 
 Open loop is enabled by specifying `{ type: "tool-call" }` in `expectedOutputs` when the session is created.
 
-When the model does not invoke any tools, `session.prompt()` resolves to a `DOMString` as usual. When a tool needs to be called, `session.prompt()` resolves to an array of `LanguageModelMessageContent` dictionaries (`sequence<LanguageModelMessageContent>`). If the model outputs both text and tool calls, it's resolved to an array, where the text is included first (`{ type: "text", value: "..." }`), followed by `{ type: "tool-call", value: LanguageModelToolCall }` items.
+When a session is configured with only `"text"` in `expectedOutputs` (or when `expectedOutputs` is omitted), `session.prompt()` resolves to a `DOMString` as usual.
+
+When `expectedOutputs` includes non-text types such as `{ type: "tool-call" }`, `session.prompt()` consistently resolves to an array of `LanguageModelMessageContent` dictionaries (`sequence<LanguageModelMessageContent>`), even if the model only produces text for a given turn (e.g., `[{ type: "text", value: "..." }]`). If the model outputs both text and tool calls, the text is included first (`{ type: "text", value: "..." }`), followed by `{ type: "tool-call", value: LanguageModelToolCall }` items.
 
 Each `LanguageModelToolCall` object contains:
 * `callId`: An opaque string identifier for this tool call. Its format is implementation- and model-defined. Applications should not rely on any specific format and should simply pass `toolCall.callId` back in the corresponding `LanguageModelToolSuccess` or `LanguageModelToolError`.
