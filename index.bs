@@ -52,7 +52,7 @@ interface LanguageModel : EventTarget {
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   static Promise<LanguageModelParams?> params();
 
-  // These will throw "TypeError" DOMExceptions if role = "system"
+  // These will throw a TypeError if role = "system"
   Promise<LanguageModelPromptResult> prompt(
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
@@ -186,7 +186,6 @@ dictionary LanguageModelMessageContent {
   required LanguageModelMessageValue value;
 };
 
-
 enum LanguageModelSamplingMode { "most-predictable", "predictable", "slightly-predictable", "balanced", "slightly-creative", "creative", "most-creative" };
 
 enum LanguageModelMessageRole { "system", "user", "assistant" };
@@ -224,6 +223,7 @@ dictionary LanguageModelToolCallInit {
   required DOMString name;
   object arguments;
 };
+
 [Exposed=Window, SecureContext]
 interface LanguageModelToolSuccess {
   constructor(LanguageModelToolSuccessInit init);
@@ -231,11 +231,13 @@ interface LanguageModelToolSuccess {
   readonly attribute DOMString name;
   readonly attribute FrozenArray<LanguageModelToolResultContent> result;
 };
+
 dictionary LanguageModelToolSuccessInit {
   required DOMString callId;
   required DOMString name;
   required sequence<LanguageModelToolResultContent> result;
 };
+
 [Exposed=Window, SecureContext]
 interface LanguageModelToolError {
   constructor(LanguageModelToolErrorInit init);
@@ -243,6 +245,7 @@ interface LanguageModelToolError {
   readonly attribute DOMString name;
   readonly attribute DOMString errorMessage;
 };
+
 dictionary LanguageModelToolErrorInit {
   required DOMString callId;
   required DOMString name;
@@ -251,7 +254,6 @@ dictionary LanguageModelToolErrorInit {
 
 // The response from executing a tool call - either success or error.
 typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolResponse;
-
 
 </xmp>
 
@@ -299,7 +301,6 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
     1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
 </div>
-
 
 <div algorithm>
   To <dfn>download the language model</dfn>, given a {{LanguageModelCreateCoreOptions}} |options|:
@@ -362,12 +363,12 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
 
   1. Let |initialContextUsage| be 0.
 
-  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=] and is not [=list/empty=], then:
-    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"].
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=] and is not [=list/is empty|empty=], then:
+    1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
     1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
 
-  1. If |initialMessages| is not [=list/empty=] or |tools| is not [=list/empty=], then:
+  1. If |initialMessages| is not [=list/is empty|empty=] or |tools| is not [=list/is empty|empty=], then:
     1. Set |initialContextUsage| to the amount of context window used to encode |initialMessages| and |tools|.
 
   1. Return a new {{LanguageModel}} object, created in |realm|, with
@@ -682,7 +683,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
      The prompting process must conform to the guidance given in [[#privacy]] and [[#security]].
 
-     If |model|'s [=LanguageModel/tools=] is not [=list/empty=], the model may produce one or more tool calls based on the declared tools in |model|'s [=LanguageModel/tools=], in addition to or instead of text.
+     If |model|'s [=LanguageModel/tools=] is not [=list/is empty|empty=], the model may produce one or more tool calls based on the declared tools in |model|'s [=LanguageModel/tools=], in addition to or instead of text.
 
   1. While true:
 
@@ -700,7 +701,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. Let |name| be a [=string=] representing the name of the tool being called.
 
-      1. Let |arguments| be an [=ECMAScript/Object=] representing the JSON object of arguments for the tool call, created in |model|'s [=relevant realm=]. (If the arguments cannot be converted to an [=ECMAScript/Object=], treat this as a "{{DataError}}" failure below.)
+      1. Let |arguments| be an [=Object=] representing the JSON object of arguments for the tool call, created in |model|'s [=relevant realm=].
 
       1. Let |toolCall| be a new {{LanguageModelToolCall}} created in |model|'s [=relevant realm=] with [=LanguageModelToolCall/call ID=] set to |callId|, [=LanguageModelToolCall/name=] set to |name|, and [=LanguageModelToolCall/arguments=] set to |arguments|.
 
@@ -1046,7 +1047,7 @@ Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">cal
 
 Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">name</dfn>, a [=string=], set during creation.
 
-Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">result</dfn>, a <code>{{FrozenArray}}&lt;{{LanguageModelToolResultContent}}></code>, set during creation.
+Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">result</dfn>, a [=frozen array=] of {{LanguageModelToolResultContent}}s, set during creation.
 
 <div algorithm>
   The <dfn constructor for="LanguageModelToolSuccess" lt="LanguageModelToolSuccess(init)">new LanguageModelToolSuccess(|init|)</dfn> constructor steps are:
