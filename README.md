@@ -173,23 +173,167 @@ Because of their special behavior of being preserved on context window overflow,
 
 ### Tool use
 
-The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is represented by an object that includes an `execute` member that specifies the JavaScript function to be called. When the language model initiates a tool use request, the user agent calls the corresponding `execute` function and sends the result back to the model.
+The Prompt API supports **tool use** via the `tools` option, allowing you to define external capabilities that a language model can invoke in a model-agnostic way. Each tool is declared with a `name`, `description`, and `inputSchema` (a JSON Schema object with `type: "object"`).
 
-Here’s an example of how to use the `tools` option:
+Tool use currently operates in **open loop** mode: when the model decides to invoke a tool, it returns tool call requests (`LanguageModelToolCall`) to the application, which executes the tool and sends the result (`LanguageModelToolSuccess` or `LanguageModelToolError`) back to the session in a follow-up prompt. (See [Future work: Automatic tool execution (Closed loop)](#future-work-automatic-tool-execution-closed-loop) below for planned automatic execution support.)
+
+Here is an example of creating a session with tool declarations:
 
 ```js
 const session = await LanguageModel.create({
   initialPrompts: [
     {
       role: "system",
-      content: `You are a helpful assistant. You can use tools to help the user.`,
+      content: "You are a helpful assistant. You can use tools to help the user.",
     },
   ],
-  expectedInputs: [{ type: "text", languages: ["en"] }, { type: "tool-response" }],
-  expectedOutputs: [{ type: "text", languages: ["en"] }, { type: "tool-call" }],
+  expectedInputs: [{ type: "tool-response" }],
+  expectedOutputs: [{ type: "tool-call" }],
   tools: [
     {
-      name: "getWeather",
+      name: "get_weather",
+      description: "Get the weather in a location.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          location: {
+            type: "string",
+            description: "The city to check for the weather condition.",
+          },
+        },
+        required: ["location"],
+      },
+    },
+  ],
+});
+```
+
+In this example, the `tools` array defines a `get_weather` tool, specifying its name, description, and input schema. When `tools` are provided, `expectedOutputs` must include `{ type: "tool-call" }`, and `expectedInputs` must include `{ type: "tool-response" }` so the application can send tool execution results back to the model. (`expectedInputs` only needs to include `{ type: "tool-call" }` if the application intends to pass assistant-role tool calls as input in `initialPrompts`, `append()`, or `prompt()`, such as to provide few-shot examples or restore a saved session's context.)
+
+#### Prompting with tools (Open loop)
+
+When a session is configured with only `"text"` in `expectedOutputs` (or when `expectedOutputs` is omitted), `session.prompt()` resolves to a `DOMString` as usual.
+
+When `expectedOutputs` includes non-text types such as `{ type: "tool-call" }`, `session.prompt()` consistently resolves to an array of `LanguageModelMessageContent` dictionaries (`sequence<LanguageModelMessageContent>`), even if the model only produces text for a given turn (e.g., `[{ type: "text", value: "..." }]`). If the model outputs both text and tool calls, the text is included first (`{ type: "text", value: "..." }`), followed by `{ type: "tool-call", value: LanguageModelToolCall }` items.
+
+Each `LanguageModelToolCall` object contains:
+* `callId`: An opaque string identifier for this tool call. Its format is implementation- and model-defined. Applications should not rely on any specific format and should simply pass `toolCall.callId` back in the corresponding `LanguageModelToolSuccess` or `LanguageModelToolError`.
+* `name`: The name of the tool to invoke.
+* `arguments`: A dictionary fitting the JSON `inputSchema` of the tool's declaration (which must have `type: "object"`).
+
+The application executes the requested tool and sends the result back to the session using `LanguageModelToolSuccess` (or `LanguageModelToolError` if execution failed):
+
+```js
+let response = await session.prompt("What is the weather in Seattle?");
+const toolCallMsg = response.find((msg) => msg.type === "tool-call");
+
+if (toolCallMsg && toolCallMsg.value.name === "get_weather") {
+  const toolCall = toolCallMsg.value;
+  const toolResult = await getWeather(toolCall.arguments.location);
+
+  // For simplicity, this example assumes a single tool call followed by a
+  // final text response. In practice, the model may respond with additional
+  // tool calls, which would typically be handled in a loop.
+  response = await session.prompt([
+    {
+      role: "user",
+      content: [
+        {
+          type: "tool-response",
+          value: new LanguageModelToolSuccess({
+            callId: toolCall.callId,
+            name: toolCall.name,
+            result: [{ type: "object", value: toolResult }],
+          }),
+        },
+      ],
+    },
+  ]);
+}
+
+const textMsg = response.find((msg) => msg.type === "text");
+console.log(textMsg?.value);
+```
+
+Note that a `"tool-response"` message should immediately follow the `"tool-call"` generated by the model.
+
+#### Seeding or restoring tool history
+
+If an application wants to supply assistant-role tool calls as input—for example, to provide few-shot examples or restore a saved conversation—it must also include `{ type: "tool-call" }` in `expectedInputs`:
+
+```js
+const sessionWithHistory = await LanguageModel.create({
+  expectedInputs: [{ type: "tool-call" }, { type: "tool-response" }],
+  expectedOutputs: [{ type: "tool-call" }],
+  tools: [/* ... */],
+});
+
+await sessionWithHistory.append([
+  { role: "user", content: "What is the weather in Seattle?" },
+  {
+    role: "assistant",
+    content: [
+      {
+        type: "tool-call",
+        value: new LanguageModelToolCall({
+          // In few-shot examples, `callId` can be any string as
+          // long as the corresponding tool-response uses the same `callId`.
+          callId: "example-call-1",
+          name: "get_weather",
+          arguments: { location: "Seattle" },
+        }),
+      },
+    ],
+  },
+  {
+    role: "user",
+    content: [
+      {
+        type: "tool-response",
+        value: new LanguageModelToolSuccess({
+          callId: "example-call-1",
+          name: "get_weather",
+          result: [
+            { type: "object", value: { temperature: "55F", humidity: "67%" } },
+          ],
+        }),
+      },
+    ],
+  },
+  {
+    role: "assistant",
+    content: "The temperature in Seattle is 55F and humidity is 67%.",
+  },
+]);
+```
+
+Summary of tool message types and values:
+* Message `content` `type` supports `"tool-call"` and `"tool-response"`:
+  * `"tool-call"` content must use `role: "assistant"` and its `value` must be a `LanguageModelToolCall` instance (`new LanguageModelToolCall({ callId, name, arguments })`).
+  * `"tool-response"` content must use `role: "user"` and its `value` must be either a `LanguageModelToolSuccess` instance (`new LanguageModelToolSuccess({ callId, name, result })`) or a `LanguageModelToolError` instance (`new LanguageModelToolError({ callId, name, errorMessage })`).
+* `LanguageModelToolSuccess.result` is a list of `{ type, value }` dictionaries (`LanguageModelToolResultContent`), where `value` must match the stated `type`:
+  * `"text"`: a `DOMString`.
+  * `"image"`: an `ImageBitmapSource` or `BufferSource`.
+  * `"audio"`: an `AudioBuffer`, `BufferSource`, or `Blob`.
+  * `"object"`: a JSON-serializable JavaScript object.
+
+#### Future work: Automatic tool execution (Closed loop)
+
+> **Note:** Closed-loop (automatic) tool execution is a planned future extension and is not yet part of the specification or implemented in browsers.
+
+In a future closed-loop mode, tool declarations could optionally include an `execute` callback so the user agent can automatically invoke tools and feed their results back to the model within a single `session.prompt()` call:
+
+```js
+const session = await LanguageModel.create({
+  initialPrompts: [
+    {
+      role: "system",
+      content: "You are a helpful assistant. You can use tools to help the user.",
+    },
+  ],
+  tools: [
+    {
+      name: "get_weather",
       description: "Get the weather in a location.",
       inputSchema: {
         type: "object",
@@ -203,10 +347,9 @@ const session = await LanguageModel.create({
       },
       async execute({ location }) {
         const res = await fetch(
-          "https://weatherapi.example/?location=" + location,
+          "https://weatherapi.example/?location=" + encodeURIComponent(location),
         );
-        // Returns the result as a JSON string.
-        return JSON.stringify(await res.json());
+        return await res.json();
       },
     },
   ],
@@ -215,7 +358,15 @@ const session = await LanguageModel.create({
 const result = await session.prompt("What is the weather in Seattle?");
 ```
 
-In this example, the `tools` array defines a `getWeather` tool, specifying its name, description, input schema, and `execute` implementation. When the language model determines that a tool call is needed, the user agent invokes the `getWeather` tool's `execute()` function with the provided arguments and returns the result to the model, which can then incorporate it into its response.
+##### When to use open loop vs. closed loop
+
+Automatic execution (closed loop) is convenient for straightforward tasks where the application wants the user agent to run the entire reason → action → observation loop automatically until the model produces a final answer.
+
+Open loop is the lower-level primitive and remains necessary when the application needs fine-grained control between model turns:
+
+1. **Context and history management:** In long-running sessions, tool outputs can quickly consume the context window. Open loop lets the application inspect `session.contextUsage`, summarize or truncate large tool results before sending them to the model, or compact stale tool call history into a fresh session (for example, keeping only the latest shopping cart state after multiple cart updates).
+2. **Human-in-the-loop and non-destructive interception:** While a closed-loop `execute()` callback could abort an entire `prompt()` call via an `AbortSignal` (rejecting the promise and discarding the in-flight turn), open loop resolves with the proposed `LanguageModelToolCall` already committed to the session context. This makes it easy to pause for explicit user confirmation before executing a sensitive tool (such as `"place_order"`), and then either resume the session with `LanguageModelToolSuccess`, report a user rejection via `LanguageModelToolError` so the model can adjust, or handle the action directly in application UI without another model call.
+3. **Per-step `responseConstraint` and decoding control:** Because closed loop runs multiple generation steps inside a single `prompt()` call, it cannot easily apply different decoding options to individual steps. With open loop, each step is an explicit `prompt()` call, allowing the application to pass a `responseConstraint` (JSON Schema or regex) or an assistant response `prefix` on a specific turn (for example, constraining the model's final response after a tool returns).
 
 #### Concurrent tool use
 

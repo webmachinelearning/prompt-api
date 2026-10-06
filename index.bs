@@ -42,6 +42,9 @@ These APIs are part of a family of APIs expected to be powered by machine learni
 <h2 id="api">The API</h2>
 
 <xmp class="idl">
+// The return type from prompt() method and those alike.
+typedef (DOMString or sequence<LanguageModelMessageContent>) LanguageModelPromptResult;
+
 [Exposed=Window, SecureContext]
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
@@ -49,8 +52,8 @@ interface LanguageModel : EventTarget {
   // **EXPERIMENTAL**: Only available in extension and experimental contexts.
   static Promise<LanguageModelParams?> params();
 
-  // These will throw "NotSupportedError" DOMExceptions if role = "system"
-  Promise<DOMString> prompt(
+  // These will throw a TypeError if role = "system"
+  Promise<LanguageModelPromptResult> prompt(
     LanguageModelPrompt input,
     optional LanguageModelPromptOptions options = {}
   );
@@ -104,16 +107,15 @@ interface LanguageModelParams {
   readonly attribute float maxTemperature;
 };
 
-callback LanguageModelToolFunction = Promise<DOMString> (any... arguments);
-
 // A description of a tool call that a language model can invoke.
-dictionary LanguageModelTool {
+// Note: When considering changes to this dictionary, authors should ensure
+// general alignment with ModelContextTool from WebMCP
+// (https://webmachinelearning.github.io/webmcp/#model-context-tool).
+dictionary LanguageModelToolDeclaration {
   required DOMString name;
   required DOMString description;
   // JSON schema for the input parameters.
   required object inputSchema;
-  // The function to be invoked by user agent on behalf of language model.
-  required LanguageModelToolFunction execute;
 };
 
 dictionary LanguageModelCreateCoreOptions {
@@ -133,14 +135,14 @@ dictionary LanguageModelCreateCoreOptions {
 
   // Tools that the language model can use.
   // **EXPERIMENTAL**: Only available in experimental contexts.
-  sequence<LanguageModelTool> tools;
+  sequence<LanguageModelToolDeclaration> tools = [];
 };
 
 dictionary LanguageModelCreateOptions : LanguageModelCreateCoreOptions {
   AbortSignal signal;
   CreateMonitorCallback monitor;
 
-  sequence<LanguageModelMessage> initialPrompts;
+  sequence<LanguageModelMessage> initialPrompts = [];
 };
 
 dictionary LanguageModelPromptOptions {
@@ -195,7 +197,64 @@ typedef (
   or AudioBuffer
   or BufferSource
   or DOMString
+  or LanguageModelToolCall
+  or LanguageModelToolResponse
 ) LanguageModelMessageValue;
+
+// The definitions of `LanguageModelToolCall` and `LanguageModelToolResponse` values
+enum LanguageModelToolResultType { "text", "image", "audio", "object" };
+
+dictionary LanguageModelToolResultContent {
+  required LanguageModelToolResultType type;
+  required any value;
+};
+
+// Represents a tool call requested by the language model.
+[Exposed=Window, SecureContext]
+interface LanguageModelToolCall {
+  constructor(LanguageModelToolCallInit init);
+  readonly attribute DOMString callId;
+  readonly attribute DOMString name;
+  readonly attribute object? arguments;
+};
+
+dictionary LanguageModelToolCallInit {
+  required DOMString callId;
+  required DOMString name;
+  object arguments;
+};
+
+[Exposed=Window, SecureContext]
+interface LanguageModelToolSuccess {
+  constructor(LanguageModelToolSuccessInit init);
+  readonly attribute DOMString callId;
+  readonly attribute DOMString name;
+  readonly attribute FrozenArray<LanguageModelToolResultContent> result;
+};
+
+dictionary LanguageModelToolSuccessInit {
+  required DOMString callId;
+  required DOMString name;
+  required sequence<LanguageModelToolResultContent> result;
+};
+
+[Exposed=Window, SecureContext]
+interface LanguageModelToolError {
+  constructor(LanguageModelToolErrorInit init);
+  readonly attribute DOMString callId;
+  readonly attribute DOMString name;
+  readonly attribute DOMString errorMessage;
+};
+
+dictionary LanguageModelToolErrorInit {
+  required DOMString callId;
+  required DOMString name;
+  required DOMString errorMessage;
+};
+
+// The response from executing a tool call - either success or error.
+typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolResponse;
+
 </xmp>
 
 <h3 id="language-model-creation">Creation</h3>
@@ -212,12 +271,32 @@ typedef (
   1. If |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] [=map/exists=] and either |options|["{{LanguageModelCreateCoreOptions/topK}}"] [=map/exists=] or |options|["{{LanguageModelCreateCoreOptions/temperature}}"] [=map/exists=], then throw a {{TypeError}}.
 
   1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
-    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+
+  1. Let |hasToolCallInExpectedOutputs| be false.
 
   1. If |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"]:
-    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=Validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
+    1. If |expected|["{{LanguageModelExpected/type}}"] is "{{LanguageModelMessageType/tool-call}}", then set |hasToolCallInExpectedOutputs| to true.
+    1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
 
-  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+  1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] is not [=list/is empty|empty=], then:
+    1. If |hasToolCallInExpectedOutputs| is false, then throw a {{TypeError}}.
+    1. Let |toolNames| be an empty [=ordered set=] of [=strings=].
+    1. [=list/For each=] |tool| of |options|["{{LanguageModelCreateCoreOptions/tools}}"]:
+      1. If |tool|["{{LanguageModelToolDeclaration/name}}"] is the empty [=string=], then throw a {{TypeError}}.
+      1. If |toolNames| [=set/contains=] |tool|["{{LanguageModelToolDeclaration/name}}"], then throw a {{TypeError}}.
+      1. [=set/Append=] |tool|["{{LanguageModelToolDeclaration/name}}"] to |toolNames|.
+      1. If |tool|["{{LanguageModelToolDeclaration/description}}"] is the empty [=string=], then throw a {{TypeError}}.
+      1. Let |schema| be |tool|["{{LanguageModelToolDeclaration/inputSchema}}"].
+      1. Let |typeValue| be ? [$Get$]\(|schema|, "type").
+      1. If |typeValue| is not "`object`", then throw a {{TypeError}}.
+      1. Let |propertiesValue| be ? [$Get$]\(|schema|, "properties").
+      1. If |propertiesValue| is not undefined and |propertiesValue| is not an [=Object=], then throw a {{TypeError}}.
+      1. Let |requiredValue| be ? [$Get$]\(|schema|, "required").
+      1. If |requiredValue| is not undefined and ? [$IsArray$](|requiredValue|) is false, then throw a {{TypeError}}.
+      1. Perform ? [=serialize a JavaScript value to a JSON string=] given |schema|.
+
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=] and is not [=list/is empty|empty=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
     1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Perform [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
@@ -248,13 +327,13 @@ typedef (
 
     This could include loading the appropriate model and any fine-tunings necessary to support |options| into memory.
 
-    1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+    1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] is not [=list/is empty|empty=], then:
       1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
       1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
       1. Let |initialMessages| be the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
       1. Load |initialMessages| into the model's context window.
 
-    1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] [=map/exists=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
+    1. If |options|["{{LanguageModelCreateCoreOptions/tools}}"] is not [=list/is empty|empty=], then load |options|["{{LanguageModelCreateCoreOptions/tools}}"] into the model's context window.
 
   1. If initialization failed because the process of loading |options| resulted in using up all of the model's context window, then:
 
@@ -280,13 +359,17 @@ typedef (
 
   1. Let |initialMessages| be an empty [=list=] of {{LanguageModelMessage}}s.
 
-  1. Let |initialMessagesUsage| be 0.
+  1. Let |tools| be |options|["{{LanguageModelCreateCoreOptions/tools}}"].
 
-  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=], then:
+  1. Let |initialContextUsage| be 0.
+
+  1. If |options|["{{LanguageModelCreateOptions/initialPrompts}}"] [=map/exists=] and is not [=list/is empty|empty=], then:
     1. Let |expectedInputs| be |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] if it [=map/exists=]; otherwise an empty [=list=].
     1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |expectedInputs|.
     1. Set |initialMessages| to the result of [=validating and canonicalizing a prompt=] given |options|["{{LanguageModelCreateOptions/initialPrompts}}"], |expectedInputTypes|, and false.
-    1. Set |initialMessagesUsage| to the result of [=measure language model context usage=] given |initialMessages|, and |options|["{{LanguageModelCreateOptions/signal}}"].
+
+  1. If |initialMessages| is not [=list/is empty|empty=] or |tools| is not [=list/is empty|empty=], then:
+    1. Set |initialContextUsage| to the amount of context window used to encode |initialMessages| and |tools|.
 
   1. Return a new {{LanguageModel}} object, created in |realm|, with
 
@@ -310,13 +393,13 @@ typedef (
       :: |options|["{{LanguageModelCreateCoreOptions/expectedOutputs}}"] if it [=map/exists=]; otherwise an empty [=list=]
 
       : [=LanguageModel/tools=]
-      :: |options|["{{LanguageModelCreateCoreOptions/tools}}"] if it [=map/exists=]; otherwise an empty [=list=]
+      :: |tools|
 
       : [=LanguageModel/context window size=]
       :: |contextWindowSize|
 
       : [=LanguageModel/current context usage=]
-      :: |initialMessagesUsage|
+      :: |initialContextUsage|
     </dl>
 </div>
 
@@ -404,7 +487,7 @@ Every {{LanguageModel}} has an <dfn for="LanguageModel">expected inputs</dfn>, a
 
 Every {{LanguageModel}} has an <dfn for="LanguageModel">expected outputs</dfn>, a [=list=] of {{LanguageModelExpected}}s, set during creation.
 
-Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] of {{LanguageModelTool}}s, set during creation.
+Every {{LanguageModel}} has a <dfn for="LanguageModel">tools</dfn>, a [=list=] of {{LanguageModelToolDeclaration}}s, set during creation.
 
 Every {{LanguageModel}} has a <dfn for="LanguageModel">context window size</dfn>, an unrestricted double, set during creation.
 
@@ -453,13 +536,53 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. Let |omitResponseConstraintInput| be |options|["{{LanguageModelPromptOptions/omitResponseConstraintInput}}"].
 
+  1. Let |hasNonTextExpectedOutput| be false.
+
+  1. [=list/For each=] |expected| of [=this=]'s [=LanguageModel/expected outputs=]:
+    1. If |expected|["{{LanguageModelExpected/type}}"] is not "{{LanguageModelMessageType/text}}", then set |hasNonTextExpectedOutput| to true.
+
+  1. Let |contents| be an empty [=list=] of {{LanguageModelMessageContent}}s.
+
+  1. Let |text| be the empty [=string=].
+
   1. Let |operation| be an algorithm step which takes arguments |chunkProduced|, |done|, |error|, and |stopProducing|, and performs the following steps:
 
     1. Let |prefillSuccess| be the result of [=prefilling=] given [=this=], |input|, |omitResponseConstraintInput|, |responseConstraint|, |error|, and |stopProducing|.
 
-    1. If |prefillSuccess| is true, then [=generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+    1. If |prefillSuccess| is false, then return.
 
-  1. Return the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+    1. If |hasNonTextExpectedOutput| is false:
+      1. [=Generate=] given [=this=], |responseConstraint|, |chunkProduced|, |done|, |error|, and |stopProducing|.
+      1. Return.
+
+    1. Let |onChunk| be an algorithm step which takes argument |chunk| and performs the following steps:
+      1. If |chunk| is a [=string=]:
+        1. Set |text| to the concatenation of |text| and |chunk|.
+      1. Otherwise:
+        1. [=Assert=]: |chunk| is a {{LanguageModelMessageContent}}.
+        1. If |text| is not the empty [=string=]:
+          1. [=list/Append=] <span style="white-space: pre-wrap">«[
+              "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+              "{{LanguageModelMessageContent/value}}" → |text|
+            ]»</span> to |contents|.
+          1. Set |text| to the empty [=string=].
+        1. [=list/Append=] |chunk| to |contents|.
+
+    1. Let |onDone| be an algorithm step which takes no arguments and performs the following steps:
+      1. If |text| is not the empty [=string=] or |contents| [=list/is empty=]:
+        1. [=list/Append=] <span style="white-space: pre-wrap">«[
+            "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
+            "{{LanguageModelMessageContent/value}}" → |text|
+          ]»</span> to |contents|.
+      1. If |done| is not null, then perform |done|.
+
+    1. [=Generate=] given [=this=], |responseConstraint|, |onChunk|, |onDone|, |error|, and |stopProducing|.
+
+  1. Let |promise| be the result of [=getting an aggregated AI model result=] given [=this=], |options|, and |operation|.
+
+  1. If |hasNonTextExpectedOutput| is false, then return |promise|.
+
+  1. Return the result of [=promise/reacting=] to |promise| with a fulfillment handler that returns |contents|.
 </div>
 
 <div algorithm>
@@ -536,6 +659,8 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   1. [=Assert=]: this algorithm is running [=in parallel=].
 
+  1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |model|'s [=LanguageModel/expected inputs=].
+
   1. Let |messages| be the result of [=validating and canonicalizing a prompt=] given |input|, |expectedInputTypes|, and true if |model|'s [=LanguageModel/current context usage=] is greater than 0, otherwise false.
 
     If this throws an exception |e|, then:
@@ -560,8 +685,6 @@ The following are the [=event handlers=] (and their corresponding [=event handle
       1. Perform |error| given |errorInfo|.
     1. Return false.
 
-  1. Let |expectedInputTypes| be the result of [=get the expected content types=] given |model|'s [=LanguageModel/expected inputs=].
-
   1. In an [=implementation-defined=] manner, update the underlying model's internal state to include |messages|.
 
      The process should use |model|'s [=LanguageModel/initial messages=], |model|'s [=LanguageModel/sampling mode=], |model|'s [=LanguageModel/top K=], |model|'s [=LanguageModel/temperature=], |model|'s [=LanguageModel/expected inputs=], |model|'s [=LanguageModel/expected outputs=], and |model|'s [=LanguageModel/tools=] to guide how the state is updated.
@@ -585,7 +708,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
   * a {{LanguageModel}} |model|,
   * an object-or-null |responseConstraint|,
-  * an algorithm-or-null |chunkProduced| that takes a [=string=] and returns nothing,
+  * an algorithm-or-null |chunkProduced| that takes a [=string=] or a {{LanguageModelMessageContent}} and returns nothing,
   * an algorithm-or-null |done| that takes no arguments and returns nothing,
   * an algorithm-or-null |error| that takes [=error information=] and returns nothing, and
   * an algorithm-or-null |stopProducing| that takes no arguments and returns a boolean,
@@ -600,19 +723,38 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
      The prompting process must conform to the guidance given in [[#privacy]] and [[#security]].
 
-     If |model|'s [=LanguageModel/tools=] is not empty, the model may use the provided tools by calling their <var ignore>execute</var> functions.
+     If |model|'s [=LanguageModel/tools=] is not [=list/is empty|empty=], the model may produce one or more tool calls based on the declared tools in |model|'s [=LanguageModel/tools=], in addition to or instead of text.
 
   1. While true:
 
-    1. Wait for the next chunk of response data to be produced, for the process to finish, or for the result of calling |stopProducing| to become true.
+    1. Wait for the next chunk of response data (text or a tool call) to be produced, for the process to finish, or for the result of calling |stopProducing| to become true.
 
-    1. If such a chunk is successfully produced:
+    1. If a text chunk is successfully produced:
 
       1. Let it be represented as a [=string=] |chunk|.
 
       1. If |chunkProduced| is not null, perform |chunkProduced| given |chunk|.
 
+    1. Otherwise, if a tool call is successfully produced:
+
+      1. Let |callId| be an [=implementation-defined=] non-empty [=string=] identifying the tool call.
+
+      1. Let |name| be a [=string=] representing the name of the tool being called.
+
+      1. Let |arguments| be an [=Object=] representing the JSON object of arguments for the tool call, created in |model|'s [=relevant realm=].
+
+      1. Let |toolCall| be a new {{LanguageModelToolCall}} created in |model|'s [=relevant realm=] with [=LanguageModelToolCall/call ID=] set to |callId|, [=LanguageModelToolCall/name=] set to |name|, and [=LanguageModelToolCall/arguments=] set to |arguments|.
+
+      1. Let |toolCallContent| be a {{LanguageModelMessageContent}} initialized with <span style="white-space: pre-wrap">«[
+          "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/tool-call}}",
+          "{{LanguageModelMessageContent/value}}" → |toolCall|
+        ]»</span>.
+
+      1. If |chunkProduced| is not null, perform |chunkProduced| given |toolCallContent|.
+
     1. Otherwise, if the process has finished:
+
+      1. In an [=implementation-defined=] manner, update the underlying model's internal state and |model|'s [=LanguageModel/current context usage=] to include the generated response (both text and any tool calls).
 
       1. If |done| is not null, perform |done|.
 
@@ -628,6 +770,7 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. [=iteration/Break=].
 </div>
+
 
 <h4 id="language-model-usage">Usage</h4>
 
@@ -727,11 +870,11 @@ The following are the [=event handlers=] (and their corresponding [=event handle
 
       1. If |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/assistant}}", then throw a "{{SyntaxError}}" {{DOMException}}.
 
-      1. If |message| is not the last item in |messages|, then throw a "{{SyntaxError}}" {{DOMException}}.
+      1. If |message| is not the last item in |input|, then throw a "{{SyntaxError}}" {{DOMException}}.
 
     1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/system}}", then:
 
-      1. If |hasAppendedInput| is true, then throw a "{{TypeError}}" {{DOMException}}.
+      1. If |hasAppendedInput| is true, then throw a {{TypeError}}.
 
     1. If |message|["{{LanguageModelMessage/content}}"] is an empty [=list=], then:
 
@@ -739,26 +882,56 @@ The following are the [=event handlers=] (and their corresponding [=event handle
           "{{LanguageModelMessageContent/type}}" → "{{LanguageModelMessageType/text}}",
           "{{LanguageModelMessageContent/value}}" → ""
         ]»</span>.
-      
-      1. [=list/append=] |emptyContent| to |message|["{{LanguageModelMessage/content}}"].
-    
+
+      1. [=list/Append=] |emptyContent| to |message|["{{LanguageModelMessage/content}}"].
+
     1. [=list/For each=] |content| of |message|["{{LanguageModelMessage/content}}"]:
 
-      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is not "{{LanguageModelMessageType/text}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/tool-call}}" and |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/assistant}}", then throw a {{TypeError}}.
 
-      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a "{{TypeError}}" {{DOMException}}.
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/tool-response}}" and |message|["{{LanguageModelMessage/role}}"] is not "{{LanguageModelMessageRole/user}}", then throw a {{TypeError}}.
+
+      1. If |message|["{{LanguageModelMessage/role}}"] is "{{LanguageModelMessageRole/assistant}}" and |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/image}}" or "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/text}}" and |content|["{{LanguageModelMessageContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
 
       1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/image}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/image}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a "{{TypeError}}" {{DOMException}}.
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
 
       1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/audio}}", then:
 
         1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/audio}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
 
-        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a "{{TypeError}}" {{DOMException}}.
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/tool-call}}", then:
+
+        1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/tool-call}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not a {{LanguageModelToolCall}}, then throw a {{TypeError}}.
+
+        1. Let |arguments| be |content|["{{LanguageModelMessageContent/value}}"]'s [=LanguageModelToolCall/arguments=].
+
+        1. If |arguments| is not null, then:
+          1. If ? [$IsArray$](|arguments|) is true, or |arguments| is a [=platform object=], or |arguments| cannot be serialized to a JSON object (for example, due to circular references or non-JSON-serializable values such as functions or BigInts), then throw a "{{DataError}}" {{DOMException}}.
+
+      1. If |content|["{{LanguageModelMessageContent/type}}"] is "{{LanguageModelMessageType/tool-response}}", then:
+
+        1. If |expectedTypes| does not [=list/contain=] "{{LanguageModelMessageType/tool-response}}", then throw a "{{NotSupportedError}}" {{DOMException}}.
+
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is not a {{LanguageModelToolResponse}}, then throw a {{TypeError}}.
+
+        1. If |content|["{{LanguageModelMessageContent/value}}"] is a {{LanguageModelToolSuccess}}, then [=list/for each=] |resultItem| of |content|["{{LanguageModelMessageContent/value}}"]'s [=LanguageModelToolSuccess/result=]:
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/image}}" or "{{LanguageModelToolResultType/audio}}" and the user agent does not support multimodal tool result content, then throw a "{{NotSupportedError}}" {{DOMException}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/text}}" and |resultItem|["{{LanguageModelToolResultContent/value}}"] is not a [=string=], then throw a {{TypeError}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/image}}" and |resultItem|["{{LanguageModelToolResultContent/value}}"] is not an {{ImageBitmapSource}} or {{BufferSource}}, then throw a {{TypeError}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/audio}}" and |resultItem|["{{LanguageModelToolResultContent/value}}"] is not an {{AudioBuffer}}, {{BufferSource}}, or {{Blob}}, then throw a {{TypeError}}.
+          1. If |resultItem|["{{LanguageModelToolResultContent/type}}"] is "{{LanguageModelToolResultType/object}}", then:
+            1. If |resultItem|["{{LanguageModelToolResultContent/value}}"] is not an [=Object=], then throw a {{TypeError}}.
+            1. If |resultItem|["{{LanguageModelToolResultContent/value}}"] is a [=platform object=], or cannot be serialized to JSON (for example, due to circular references or non-JSON-serializable values such as functions or BigInts), then throw a "{{DataError}}" {{DOMException}}.
 
     1. Let |contentWithContiguousTextCollapsed| be an empty [=list=] of {{LanguageModelMessageContent}}s.
 
@@ -887,6 +1060,79 @@ When prompting fails, the following possible reasons may be surfaced to the web 
 
   1. Return |promise|.
 </div>
+
+<h3 id="the-languagemodeltoolcall-class">The {{LanguageModelToolCall}} class</h3>
+
+Every {{LanguageModelToolCall}} has a <dfn for="LanguageModelToolCall">call ID</dfn>, a [=string=], set during creation.
+
+Every {{LanguageModelToolCall}} has a <dfn for="LanguageModelToolCall">name</dfn>, a [=string=], set during creation.
+
+Every {{LanguageModelToolCall}} has an <dfn for="LanguageModelToolCall">arguments</dfn>, an [=Object=] or null, set during creation.
+
+<div algorithm>
+  The <dfn constructor for="LanguageModelToolCall" lt="LanguageModelToolCall(init)">new LanguageModelToolCall(|init|)</dfn> constructor steps are:
+
+  1. Set [=this=]'s [=LanguageModelToolCall/call ID=] to |init|["{{LanguageModelToolCallInit/callId}}"].
+
+  1. Set [=this=]'s [=LanguageModelToolCall/name=] to |init|["{{LanguageModelToolCallInit/name}}"].
+
+  1. Set [=this=]'s [=LanguageModelToolCall/arguments=] to |init|["{{LanguageModelToolCallInit/arguments}}"] if it [=map/exists=]; otherwise null.
+</div>
+
+The <dfn attribute for="LanguageModelToolCall">callId</dfn> getter steps are to return [=this=]'s [=LanguageModelToolCall/call ID=].
+
+The <dfn attribute for="LanguageModelToolCall">name</dfn> getter steps are to return [=this=]'s [=LanguageModelToolCall/name=].
+
+The <dfn attribute for="LanguageModelToolCall">arguments</dfn> getter steps are to return [=this=]'s [=LanguageModelToolCall/arguments=].
+
+<h3 id="the-languagemodeltoolsuccess-class">The {{LanguageModelToolSuccess}} class</h3>
+
+Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">call ID</dfn>, a [=string=], set during creation.
+
+Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">name</dfn>, a [=string=], set during creation.
+
+Every {{LanguageModelToolSuccess}} has a <dfn for="LanguageModelToolSuccess">result</dfn>, a <code>{{FrozenArray}}&lt;{{LanguageModelToolResultContent}}></code>, set during creation.
+
+<div algorithm>
+  The <dfn constructor for="LanguageModelToolSuccess" lt="LanguageModelToolSuccess(init)">new LanguageModelToolSuccess(|init|)</dfn> constructor steps are:
+
+  1. Set [=this=]'s [=LanguageModelToolSuccess/call ID=] to |init|["{{LanguageModelToolSuccessInit/callId}}"].
+
+  1. Set [=this=]'s [=LanguageModelToolSuccess/name=] to |init|["{{LanguageModelToolSuccessInit/name}}"].
+
+  1. Set [=this=]'s [=LanguageModelToolSuccess/result=] to the result of [=creating a frozen array=] from |init|["{{LanguageModelToolSuccessInit/result}}"].
+</div>
+
+The <dfn attribute for="LanguageModelToolSuccess">callId</dfn> getter steps are to return [=this=]'s [=LanguageModelToolSuccess/call ID=].
+
+The <dfn attribute for="LanguageModelToolSuccess">name</dfn> getter steps are to return [=this=]'s [=LanguageModelToolSuccess/name=].
+
+The <dfn attribute for="LanguageModelToolSuccess">result</dfn> getter steps are to return [=this=]'s [=LanguageModelToolSuccess/result=].
+
+<h3 id="the-languagemodeltoolerror-class">The {{LanguageModelToolError}} class</h3>
+
+Every {{LanguageModelToolError}} has a <dfn for="LanguageModelToolError">call ID</dfn>, a [=string=], set during creation.
+
+Every {{LanguageModelToolError}} has a <dfn for="LanguageModelToolError">name</dfn>, a [=string=], set during creation.
+
+Every {{LanguageModelToolError}} has an <dfn for="LanguageModelToolError">error message</dfn>, a [=string=], set during creation.
+
+<div algorithm>
+  The <dfn constructor for="LanguageModelToolError" lt="LanguageModelToolError(init)">new LanguageModelToolError(|init|)</dfn> constructor steps are:
+
+  1. Set [=this=]'s [=LanguageModelToolError/call ID=] to |init|["{{LanguageModelToolErrorInit/callId}}"].
+
+  1. Set [=this=]'s [=LanguageModelToolError/name=] to |init|["{{LanguageModelToolErrorInit/name}}"].
+
+  1. Set [=this=]'s [=LanguageModelToolError/error message=] to |init|["{{LanguageModelToolErrorInit/errorMessage}}"].
+</div>
+
+The <dfn attribute for="LanguageModelToolError">callId</dfn> getter steps are to return [=this=]'s [=LanguageModelToolError/call ID=].
+
+The <dfn attribute for="LanguageModelToolError">name</dfn> getter steps are to return [=this=]'s [=LanguageModelToolError/name=].
+
+The <dfn attribute for="LanguageModelToolError">errorMessage</dfn> getter steps are to return [=this=]'s [=LanguageModelToolError/error message=].
+
 
 <h3 id="permissions-policy">Permissions policy integration</h3>
 
