@@ -523,9 +523,9 @@ Error-handling behavior (only applicable in contexts where legacy parameters are
 
 Modern language models increasingly support **reasoning** (or "thinking mode"), generating an intermediate scratchpad of reasoning tokens before producing a final response. This significantly improves accuracy on math, logic, code generation, and multi-step planning, at the cost of higher latency and compute.
 
-Developers can configure this reasoning process via the `thinking` option (`{ effort, includeThoughts }`), unlocking reasoning for complex prompts while dialing it back (or disabling it) on simple turns to save battery and latency.
+Developers can configure this reasoning process via the `thinkingEffort` option, unlocking reasoning for complex prompts while dialing it back (or disabling it) on simple turns to save battery and latency.
 
-The allowed values for `effort` are:
+The allowed values for `thinkingEffort` are:
 *   `"none"` (default): No intermediate reasoning tokens are generated before the response.
 *   `"low"`: A minimal reasoning budget for straightforward multi-step tasks.
 *   `"medium"`: A moderate reasoning budget balancing accuracy and latency.
@@ -535,16 +535,16 @@ Developers can check support via `LanguageModel.availability()`, set a baseline 
 
 ```js
 const status = await LanguageModel.availability({
-  thinking: { effort: "high" }
+  thinkingEffort: "high",
 });
 
 if (status !== "unavailable") {
   const session = await LanguageModel.create({
-    thinking: { effort: "high" }
+    thinkingEffort: "high",
   });
 
   // Turn 1: Uses the session's default ("high" effort) for a complex task.
-  // By default (includeThoughts: false), prompt() returns only the final answer string.
+  // By default, prompt() returns only the final answer string.
   const code = await session.prompt(
     "Write a function to find the shortest path in a weighted directed graph."
   );
@@ -552,21 +552,19 @@ if (status !== "unavailable") {
   // Turn 2: Override to "none" for a simple follow-up to save latency and battery.
   const formatted = await session.prompt(
     "Add JSDoc comments to that function.",
-    { thinking: { effort: "none" } }
+    { thinkingEffort: "none" }
   );
 }
 ```
 
 #### Viewing intermediate thoughts
 
-By default, `includeThoughts` is `false` so applications only receive the final text response, matching the output with thinking disabled. When set to `true`, `promptStreaming()` and `prompt()` emit structured `{ type, value }` dictionaries (following the same pattern as [Tool use](#tool-use)) so applications can render a collapsible `"Thinking..."` UI:
+By default, intermediate thoughts are hidden so applications only receive the final text response, matching the output with thinking disabled. When `expectedOutputs` includes `{ type: "thought" }`, `promptStreaming()` and `prompt()` emit structured `{ type, value }` dictionaries (following the same pattern as [Tool use](#tool-use)) so applications can render a collapsible `"Thinking..."` UI:
 
 ```js
 const session = await LanguageModel.create({
-  thinking: {
-    effort: "medium",
-    includeThoughts: true,
-  }
+  thinkingEffort: "medium",
+  expectedOutputs: [{ type: "text", languages: ["en"] }, { type: "thought" }],
 });
 
 const stream = session.promptStreaming("Plan a 3-day itinerary for Tokyo.");
@@ -581,9 +579,9 @@ for await (const chunk of stream) {
 }
 ```
 
-Rather than exposing model-specific token counts, user agents map each `effort` tier to an appropriate reasoning budget for the underlying model. This budget acts as an upper bound: models stop thinking early once they reach a conclusion, or transition to the final answer if the ceiling is reached. Following standard reasoning-model behavior, intermediate thoughts are stripped from the conversation history after each turn completes and do not permanently accumulate in `session.contextUsage`.
+Rather than exposing model-specific token counts, user agents map each `thinkingEffort` tier to an appropriate reasoning budget for the underlying model. This budget acts as an upper bound: models stop thinking early once they reach a conclusion, or transition to the final answer if the ceiling is reached. Following standard reasoning-model behavior, intermediate thoughts are stripped from the conversation history after each turn completes and do not permanently accumulate in `session.contextUsage`.
 
-_Open questions include: offering an `"auto"` effort level, naming (`emitThoughts` vs `includeThoughts`), designating thoughts via a separate field rather than `type: "thought"` to support non-text thoughts (e.g., images, audio, or [Tool use](#tool-use)), and whether [`samplingMode`](#configuration-of-sampling-modes) options would apply during reasoning._
+_Open questions include: offering an `"auto"` effort level, designating thoughts via a separate field rather than `type: "thought"` to support non-text thoughts (e.g., images, audio, or [Tool use](#tool-use)), and whether [`samplingMode`](#configuration-of-sampling-modes) options would apply during reasoning._
 
 ### Session persistence and cloning
 
