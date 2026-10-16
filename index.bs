@@ -49,7 +49,7 @@ typedef (DOMString or sequence<LanguageModelMessageContent>) LanguageModelPrompt
 interface LanguageModel : EventTarget {
   static Promise<LanguageModel> create(optional LanguageModelCreateOptions options = {});
   static Promise<Availability> availability(optional LanguageModelCreateCoreOptions options = {});
-  // **EXPERIMENTAL**: Only available in extension and experimental contexts.
+  // **DEPRECATED**: This method will be removed; use samplingMode instead. Only available in extension contexts.
   static Promise<LanguageModelParams?> params();
 
   // These will throw a TypeError if role = "system"
@@ -86,9 +86,9 @@ interface LanguageModel : EventTarget {
   // **DEPRECATED**: This attribute is only available in extension contexts.
   attribute EventHandler onquotaoverflow;
 
-  // **DEPRECATED**: This attribute is only available in extension contexts.
+  // **DEPRECATED**: This attribute will be removed; use samplingMode instead. Only available in extension contexts.
   readonly attribute unsigned long topK;
-  // **DEPRECATED**: This attribute is only available in extension contexts.
+  // **DEPRECATED**: This attribute will be removed; use samplingMode instead. Only available in extension contexts.
   readonly attribute float temperature;
 
   // **EXPERIMENTAL**: Only available in experimental contexts.
@@ -98,7 +98,7 @@ interface LanguageModel : EventTarget {
 };
 LanguageModel includes DestroyableModel;
 
-// **DEPRECATED**: Only available in extension contexts.
+// **DEPRECATED**: This interface will be removed; use samplingMode instead. Only available in extension contexts.
 [Exposed=Window, SecureContext]
 interface LanguageModelParams {
   readonly attribute unsigned long defaultTopK;
@@ -121,9 +121,9 @@ dictionary LanguageModelToolDeclaration {
 dictionary LanguageModelCreateCoreOptions {
   // Note: these two have custom out-of-range handling behavior, not in the IDL layer.
   // They are unrestricted double so as to allow +Infinity without failing.
-  // **DEPRECATED**: Only available in extension contexts.
+  // **DEPRECATED**: This option will be removed; use samplingMode instead. Only available in extension contexts.
   unrestricted double topK;
-  // **DEPRECATED**: Only available in extension contexts.
+  // **DEPRECATED**: This option will be removed; use samplingMode instead. Only available in extension contexts.
   unrestricted double temperature;
 
   // **EXPERIMENTAL**: Only available in experimental contexts.
@@ -268,8 +268,6 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
 <div algorithm>
   To <dfn>validate and canonicalize language model options</dfn> given a {{LanguageModelCreateCoreOptions}} |options|, perform the following steps. They mutate |options| in place to canonicalize and deduplicate language tags, and throw an exception if any are invalid.
 
-  1. If |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] [=map/exists=] and either |options|["{{LanguageModelCreateCoreOptions/topK}}"] [=map/exists=] or |options|["{{LanguageModelCreateCoreOptions/temperature}}"] [=map/exists=], then throw a {{TypeError}}.
-
   1. If |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"] [=map/exists=], then [=list/for each=] |expected| of |options|["{{LanguageModelCreateCoreOptions/expectedInputs}}"]:
     1. If |expected|["{{LanguageModelExpected/languages}}"] [=map/exists=], then [=validate and canonicalize language tags=] given |expected| and "{{LanguageModelExpected/languages}}".
 
@@ -378,10 +376,10 @@ typedef (LanguageModelToolSuccess or LanguageModelToolError) LanguageModelToolRe
       :: |initialMessages|
 
       : [=LanguageModel/top K=]
-      :: |options|["{{LanguageModelCreateCoreOptions/topK}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+      :: |options|["{{LanguageModelCreateCoreOptions/topK}}"] if it [=map/exists=] and |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] does not [=map/exist=]; otherwise an [=implementation-defined=] value
 
       : [=LanguageModel/temperature=]
-      :: |options|["{{LanguageModelCreateCoreOptions/temperature}}"] if it [=map/exists=]; otherwise an [=implementation-defined=] value
+      :: |options|["{{LanguageModelCreateCoreOptions/temperature}}"] if it [=map/exists=] and |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] does not [=map/exist=]; otherwise an [=implementation-defined=] value
 
       : [=LanguageModel/sampling mode=]
       :: |options|["{{LanguageModelCreateCoreOptions/samplingMode}}"] if it [=map/exists=]; otherwise null if |options|["{{LanguageModelCreateCoreOptions/topK}}"] [=map/exists=] or |options|["{{LanguageModelCreateCoreOptions/temperature}}"] [=map/exists=]; otherwise "{{LanguageModelSamplingMode/balanced}}"
