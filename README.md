@@ -45,19 +45,22 @@ The following are potential goals we are not yet certain of:
 
 Both of these potential goals could pose challenges to interoperability, so we want to investigate more how important such functionality is to developers to find the right tradeoff.
 
-## Experiments and Updates
+## Updates and Deprecations
 
 ### Sampling Parameters
 
 Developers have expressed the value of tuning language model sampling parameters for testing and optimizing task-specific model behavior. At the same time, web standards engagements have highlighted the need for more interoperable API shapes for sampling parameters among different models.
 
-The API was initially made available in extension contexts with the following sampling parameter options and attributes:
+The API was initially made available in extension contexts with the following raw sampling parameter features:
 
 *   The static method `LanguageModel.params()`, which exposes default and maximum values for sampling parameters: `defaultTemperature`, `maxTemperature`, `defaultTopK`, `maxTopK`.
 *   The `temperature` and `topK` options, which may be provided to `LanguageModel.create()` to control the sampling behavior of individual language model sessions.
 *   The `temperature` and `topK` attributes on `LanguageModel` session instances, which expose the current values of the sampling parameters for that session.
 
-Access to these features is limited to extension and experimental web contexts. Ongoing experimentation and community engagement will explore different API shapes that satisfy developer requirements and address interoperability concerns.
+Support for raw sampling parameters is now deprecated and only functional within web extension contexts (see [Legacy: Configuration of per-session raw parameters](#legacy-configuration-of-per-session-raw-parameters)). Instead, developers can configure output variety and creativity using interoperable [`samplingMode`](#configuration-of-sampling-modes) presets:
+
+*   The `samplingMode` option on `LanguageModel.create()` and `LanguageModel.availability()`, which accepts a `LanguageModelSamplingMode` preset (`"most-predictable"`, `"predictable"`, `"slightly-predictable"`, `"balanced"`, `"slightly-creative"`, `"creative"`, or `"most-creative"`).
+*   The `samplingMode` attribute on `LanguageModel` session instances, which exposes the resolved preset for that session.
 
 ### Renamed Features
 
@@ -1008,7 +1011,7 @@ if (availability !== "unavailable") {
   const session = await LanguageModel.create(options);
   // ... Use session ...
 } else {
-  // Either the API overall, or the expected languages and temperature setting, is not available.
+  // Either the API overall, or the expected input types and languages, is not available.
   console.error("No language model for us :(");
 }
 ```
