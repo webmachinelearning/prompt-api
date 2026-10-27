@@ -8,7 +8,7 @@
   <meta content="Bikeshed version 49e9fdd4f, updated Tue Oct 13 14:27:53 2026 -0700" name="generator">
   <link href="https://webmachinelearning.github.io/prompt-api" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="6dac677d5425d1175f4697e73dadd572a1ad6483" name="revision">
+  <meta content="c2b926621dcb5d7be303c37d499104a32103e432" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>/* Boilerplate: style-autolinks */
@@ -774,7 +774,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
 </p>
    <h1 class="no-ref p-name" id="title">Prompt API</h1>
    <p id="w3c-state"><a href="https://www.w3.org/standards/types/#CG-DRAFT">Draft Community Group Report</a>,
-    <time class="dt-updated" datetime="2026-10-16">16 October 2026</time></p>
+    <time class="dt-updated" datetime="2026-10-27">27 October 2026</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -913,7 +913,6 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   // **DEPRECATED**: This attribute will be removed; use samplingMode instead. Only available in extension contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float" id="ref-for-idl-float"><c- b>float</c-></a> <a class="idl-code" data-link-type="attribute" data-readonly data-type="float" href="#dom-languagemodel-temperature" id="ref-for-dom-languagemodel-temperature"><c- g>temperature</c-></a>;
 
-  // **EXPERIMENTAL**: Only available in experimental contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode" id="ref-for-enumdef-languagemodelsamplingmode"><c- n>LanguageModelSamplingMode</c-></a>? <a class="idl-code" data-link-type="attribute" data-readonly data-type="LanguageModelSamplingMode?" href="#dom-languagemodel-samplingmode" id="ref-for-dom-languagemodel-samplingmode"><c- g>samplingMode</c-></a>;
 
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise" id="ref-for-idl-promise⑦"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel" id="ref-for-languagemodel①"><c- n>LanguageModel</c-></a>> <a class="idl-code" data-link-type="method" href="#dom-languagemodel-clone" id="ref-for-dom-languagemodel-clone"><c- g>clone</c-></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcloneoptions" id="ref-for-dictdef-languagemodelcloneoptions"><c- n>LanguageModelCloneOptions</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModel/clone(options), LanguageModel/clone()" data-dfn-type="argument" data-export id="dom-languagemodel-clone-options-options"><code><c- g>options</c-></code></dfn> = {});
@@ -948,7 +947,6 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   // **DEPRECATED**: This option will be removed; use samplingMode instead. Only available in extension contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double" id="ref-for-idl-unrestricted-double③"><c- b>unrestricted</c-> <c- b>double</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="unrestricted double" id="dom-languagemodelcreatecoreoptions-temperature"><code><c- g>temperature</c-></code></dfn>;
 
-  // **EXPERIMENTAL**: Only available in experimental contexts.
   <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode" id="ref-for-enumdef-languagemodelsamplingmode①"><c- n>LanguageModelSamplingMode</c-></a> <dfn class="dfn-paneled idl-code" data-dfn-for="LanguageModelCreateCoreOptions" data-dfn-type="dict-member" data-export data-type="LanguageModelSamplingMode" id="dom-languagemodelcreatecoreoptions-samplingmode"><code><c- g>samplingMode</c-></code></dfn>;
 
   // The expected types and languages for the session.
@@ -2690,7 +2688,6 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   // **DEPRECATED**: This attribute will be removed; use samplingMode instead. Only available in extension contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-float"><c- b>float</c-></a> <a class="idl-code" data-link-type="attribute" data-readonly data-type="float" href="#dom-languagemodel-temperature"><c- g>temperature</c-></a>;
 
-  // **EXPERIMENTAL**: Only available in experimental contexts.
   <c- b>readonly</c-> <c- b>attribute</c-> <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode"><c- n>LanguageModelSamplingMode</c-></a>? <a class="idl-code" data-link-type="attribute" data-readonly data-type="LanguageModelSamplingMode?" href="#dom-languagemodel-samplingmode"><c- g>samplingMode</c-></a>;
 
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-promise"><c- b>Promise</c-></a>&lt;<a data-link-type="idl-name" href="#languagemodel"><c- n>LanguageModel</c-></a>> <a class="idl-code" data-link-type="method" href="#dom-languagemodel-clone"><c- g>clone</c-></a>(<c- b>optional</c-> <a data-link-type="idl-name" href="#dictdef-languagemodelcloneoptions"><c- n>LanguageModelCloneOptions</c-></a> <a href="#dom-languagemodel-clone-options-options"><code><c- g>options</c-></code></a> = {});
@@ -2725,7 +2722,6 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
   // **DEPRECATED**: This option will be removed; use samplingMode instead. Only available in extension contexts.
   <a class="idl-code" data-link-type="interface" href="https://webidl.spec.whatwg.org/#idl-unrestricted-double"><c- b>unrestricted</c-> <c- b>double</c-></a> <a data-type="unrestricted double" href="#dom-languagemodelcreatecoreoptions-temperature"><code><c- g>temperature</c-></code></a>;
 
-  // **EXPERIMENTAL**: Only available in experimental contexts.
   <a data-link-type="idl-name" href="#enumdef-languagemodelsamplingmode"><c- n>LanguageModelSamplingMode</c-></a> <a data-type="LanguageModelSamplingMode" href="#dom-languagemodelcreatecoreoptions-samplingmode"><code><c- g>samplingMode</c-></code></a>;
 
   // The expected types and languages for the session.
